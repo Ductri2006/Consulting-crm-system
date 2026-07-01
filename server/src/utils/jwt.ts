@@ -1,0 +1,35 @@
+import { UserRole } from "@prisma/client";
+import jwt, {
+  JsonWebTokenError,
+  type SignOptions,
+} from "jsonwebtoken";
+import { z } from "zod";
+
+import { env } from "../config/env";
+
+const accessTokenPayloadSchema = z.object({
+  sub: z.uuid(),
+  role: z.enum(UserRole),
+  email: z.email(),
+});
+
+export type AccessTokenPayload = z.infer<typeof accessTokenPayloadSchema>;
+
+export const signAccessToken = (payload: AccessTokenPayload): string => {
+  const options: SignOptions = {
+    expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"],
+  };
+
+  return jwt.sign(payload, env.JWT_SECRET, options);
+};
+
+export const verifyAccessToken = (token: string): AccessTokenPayload => {
+  const decoded = jwt.verify(token, env.JWT_SECRET);
+  const result = accessTokenPayloadSchema.safeParse(decoded);
+
+  if (!result.success) {
+    throw new JsonWebTokenError("Invalid access token payload.");
+  }
+
+  return result.data;
+};

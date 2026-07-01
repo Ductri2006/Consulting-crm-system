@@ -28,6 +28,15 @@ const envSchema = z.object({
     protocol: /^https?$/,
     error: "CLIENT_URL must be a valid HTTP or HTTPS URL.",
   }),
+  JWT_SECRET: z
+    .string({ error: "JWT_SECRET is required." })
+    .trim()
+    .min(32, "JWT_SECRET must contain at least 32 characters."),
+  JWT_EXPIRES_IN: z
+    .string({ error: "JWT_EXPIRES_IN is required." })
+    .trim()
+    .min(1, "JWT_EXPIRES_IN cannot be empty.")
+    .default("7d"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

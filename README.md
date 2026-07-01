@@ -338,13 +338,14 @@ This project is designed to practice:
 - [x] Set up the Express, TypeScript, and Prisma backend foundation
 - [x] Add environment validation, health checks, and global error handling
 - [x] Define the initial PostgreSQL schema and local seed data
-- [ ] Implement authentication and authorization
+- [x] Implement JWT authentication and role-based authorization
+- [x] Add protected current-user and admin-only user endpoints
 - [ ] Implement core CRM APIs
 - [ ] Implement the internal dashboard
 - [ ] Deploy a live demonstration
 
 ## Repository Status
 
-**Current phase:** Phase 3 complete — Backend Foundation
+**Current phase:** Phase 4 complete — Authentication and Authorization Foundation
 
-The public website and backend foundation are production-build ready. Authentication, domain APIs, the internal CRM dashboard, and deployment will be added in later phases.
+The public website, backend foundation, and authentication layer are production-build ready. Domain APIs, the internal CRM dashboard, and deployment will be added in later phases.

@@ -1,7 +1,13 @@
-import type { ErrorRequestHandler } from "express";
+import type {
+  ErrorRequestHandler,
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 
 import { env } from "../config/env";
-import { HTTP_STATUS, type HttpStatusCode } from "../constants/httpStatus";
+import { HTTP_STATUS } from "../constants/httpStatus";
+import { AppError } from "../utils/AppError";
 import { errorResponse } from "../utils/apiResponse";
 
 type ErrorRecord = Record<string, unknown>;
@@ -9,63 +15,42 @@ type ErrorRecord = Record<string, unknown>;
 const isErrorRecord = (error: unknown): error is ErrorRecord =>
   typeof error === "object" && error !== null;
 
-const getStatusCode = (error: unknown): HttpStatusCode => {
+const getStatusCode = (error: unknown): number => {
+  if (error instanceof AppError) {
+    return error.statusCode;
+  }
+
   if (!isErrorRecord(error)) {
     return HTTP_STATUS.INTERNAL_SERVER_ERROR;
   }
 
   const statusCode = error.statusCode ?? error.status;
 
-  if (
-    typeof statusCode === "number" &&
+  return typeof statusCode === "number" &&
     Number.isInteger(statusCode) &&
     statusCode >= 400 &&
     statusCode <= 599
-  ) {
-    return statusCode as HttpStatusCode;
-  }
-
-  return HTTP_STATUS.INTERNAL_SERVER_ERROR;
+    ? statusCode
+    : HTTP_STATUS.INTERNAL_SERVER_ERROR;
 };
 
-const getMessage = (error: unknown): string => {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  if (
-    isErrorRecord(error) &&
-    typeof error.message === "string" &&
-    error.message.trim()
-  ) {
-    return error.message;
-  }
-
-  return "Internal server error.";
-};
-
-const getErrors = (error: unknown): unknown[] => {
-  if (isErrorRecord(error) && Array.isArray(error.errors)) {
-    return error.errors;
-  }
-
-  return [];
-};
-
-export const errorMiddleware: ErrorRequestHandler = (
-  error,
-  _request,
-  response,
-  _next,
+const handleError = (
+  error: unknown,
+  _request: Request,
+  response: Response,
+  _next: NextFunction,
 ): void => {
+  const isAppError = error instanceof AppError;
   const statusCode = getStatusCode(error);
   const isProductionServerError =
     env.NODE_ENV === "production" &&
     statusCode >= HTTP_STATUS.INTERNAL_SERVER_ERROR;
   const message = isProductionServerError
     ? "Internal server error."
-    : getMessage(error);
-  const errors = isProductionServerError ? [] : getErrors(error);
+    : error instanceof Error
+      ? error.message
+      : "Internal server error.";
+  const errors = isProductionServerError || !isAppError ? [] : error.errors;
   const body = {
     ...errorResponse(message, errors),
     ...(env.NODE_ENV === "development" &&
@@ -74,3 +59,5 @@ export const errorMiddleware: ErrorRequestHandler = (
 
   response.status(statusCode).json(body);
 };
+
+export const errorMiddleware: ErrorRequestHandler = handleError;
