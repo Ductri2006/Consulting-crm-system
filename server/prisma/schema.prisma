@@ -1,0 +1,330 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+  CUSTOMER
+}
+
+enum CaseStatus {
+  RECEIVED
+  VERIFYING
+  PROPOSING_SOLUTION
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum RequestStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
+}
+
+enum AppointmentMethod {
+  OFFLINE
+  ONLINE
+  PHONE
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum DocumentType {
+  IDENTITY_DOCUMENT
+  REAL_ESTATE_DOCUMENT
+  CONTRACT
+  LEGAL_DOCUMENT
+  CONSTRUCTION_DOCUMENT
+  OTHER
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  phone        String?
+  role         UserRole @default(STAFF)
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignedCases       CaseProfile[] @relation("AssignedCases")
+  caseHistories       CaseHistory[]
+  managedAppointments Appointment[] @relation("AppointmentStaff")
+  createdTasks        Task[]        @relation("CreatedTasks")
+  assignedTasks       Task[]        @relation("AssignedTasks")
+  uploadedDocuments   Document[]
+  news                News[]
+  activityLogs        ActivityLog[]
+
+  @@index([role, isActive])
+}
+
+model Customer {
+  id             String    @id @default(uuid())
+  fullName       String
+  phone          String
+  email          String?
+  address        String?
+  identityNumber String?   @unique
+  birthday       DateTime? @db.Date
+  source         String?
+  note           String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  cases          CaseProfile[]
+  appointments   Appointment[]
+  documents      Document[]
+  sourceRequests ConsultationRequest[] @relation("ConvertedCustomer")
+
+  @@index([phone])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cases    CaseProfile[]
+  requests ConsultationRequest[]
+
+  @@index([isActive])
+}
+
+model ConsultationRequest {
+  id                     String        @id @default(uuid())
+  fullName               String
+  phone                  String
+  email                  String?
+  serviceId              String?
+  message                String?
+  status                 RequestStatus @default(NEW)
+  convertedCustomerId    String?
+  convertedCaseProfileId String?       @unique
+  convertedAt            DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  service              Service?     @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  convertedCustomer    Customer?    @relation("ConvertedCustomer", fields: [convertedCustomerId], references: [id], onDelete: SetNull)
+  convertedCaseProfile CaseProfile? @relation("ConvertedCase", fields: [convertedCaseProfileId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([serviceId, status])
+  @@index([phone])
+  @@index([email])
+  @@index([convertedCustomerId])
+}
+
+model CaseProfile {
+  id           String     @id @default(uuid())
+  caseCode     String     @unique
+  customerId   String
+  serviceId    String
+  assignedToId String?
+  title        String
+  description  String?
+  note         String?
+  status       CaseStatus @default(RECEIVED)
+  priority     Priority   @default(MEDIUM)
+  deadline     DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  customer      Customer             @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  service       Service              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  assignedTo    User?                @relation("AssignedCases", fields: [assignedToId], references: [id], onDelete: SetNull)
+  sourceRequest ConsultationRequest? @relation("ConvertedCase")
+  histories     CaseHistory[]
+  documents     Document[]
+  appointments  Appointment[]
+  tasks         Task[]
+
+  @@index([customerId, createdAt])
+  @@index([serviceId, status])
+  @@index([assignedToId, status])
+  @@index([status, priority])
+  @@index([status, deadline])
+  @@index([createdAt])
+}
+
+model CaseHistory {
+  id            String      @id @default(uuid())
+  caseProfileId String
+  userId        String?
+  action        String
+  oldStatus     CaseStatus?
+  newStatus     CaseStatus?
+  note          String?
+  createdAt     DateTime    @default(now())
+
+  caseProfile CaseProfile @relation(fields: [caseProfileId], references: [id], onDelete: Restrict)
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([caseProfileId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  customerId      String
+  caseProfileId   String?
+  staffId         String?
+  appointmentDate DateTime          @db.Date
+  startTime       String
+  endTime         String?
+  method          AppointmentMethod @default(OFFLINE)
+  status          AppointmentStatus @default(PENDING)
+  note            String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  staff       User?        @relation("AppointmentStaff", fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@index([appointmentDate, status])
+  @@index([staffId, appointmentDate])
+  @@index([customerId, appointmentDate])
+  @@index([caseProfileId])
+}
+
+model Task {
+  id            String     @id @default(uuid())
+  caseProfileId String?
+  title         String
+  description   String?
+  assignedToId  String?
+  createdById   String?
+  status        TaskStatus @default(TODO)
+  priority      Priority   @default(MEDIUM)
+  deadline      DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  assignedTo  User?        @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy   User?        @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([assignedToId, status])
+  @@index([caseProfileId, status])
+  @@index([status, deadline])
+  @@index([createdById])
+}
+
+model Document {
+  id            String       @id @default(uuid())
+  caseProfileId String?
+  customerId    String?
+  uploadedById  String?
+  fileName      String
+  fileUrl       String
+  fileType      DocumentType @default(OTHER)
+  mimeType      String?
+  size          Int?
+  createdAt     DateTime     @default(now())
+
+  caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  uploadedBy  User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([caseProfileId, createdAt])
+  @@index([customerId, createdAt])
+  @@index([uploadedById])
+  @@index([fileType])
+}
+
+model News {
+  id        String        @id @default(uuid())
+  title     String
+  slug      String        @unique
+  thumbnail String?
+  content   String
+  status    PublishStatus @default(DRAFT)
+  authorId  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([authorId])
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  description String?
+  thumbnail   String?
+  images      String[]      @default([])
+  location    String?
+  status      PublishStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  entityType  String?
+  entityId    String?
+  description String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

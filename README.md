@@ -270,6 +270,18 @@ npm run build
 
 The current public website uses typed mock data and does not require a backend or environment variables.
 
+## Run the Backend Foundation Locally
+
+```bash
+cd server
+npm install
+cp .env.example .env
+npm run prisma:generate
+npm run dev
+```
+
+The health endpoint is available at `GET /api/health`. See the [backend README](server/README.md) for Windows setup notes, Prisma commands, and the local seed account.
+
 ## Development Roadmap
 
 1. **Project foundation and documentation** — repository structure, requirements, data model, API plan, and roadmap
@@ -323,12 +335,16 @@ This project is designed to practice:
 - [x] Build the responsive public layout and routes
 - [x] Add typed mock data for services, projects, and news
 - [x] Implement public pages and validated request forms
-- [ ] Implement the backend API
+- [x] Set up the Express, TypeScript, and Prisma backend foundation
+- [x] Add environment validation, health checks, and global error handling
+- [x] Define the initial PostgreSQL schema and local seed data
+- [ ] Implement authentication and authorization
+- [ ] Implement core CRM APIs
 - [ ] Implement the internal dashboard
 - [ ] Deploy a live demonstration
 
 ## Repository Status
 
-**Current phase:** Phase 2 complete — Frontend Public Website
+**Current phase:** Phase 3 complete — Backend Foundation
 
-The public website UI/MVP is complete and production-build ready. Backend integration, the internal CRM dashboard, and deployment will be added in later phases.
+The public website and backend foundation are production-build ready. Authentication, domain APIs, the internal CRM dashboard, and deployment will be added in later phases.
