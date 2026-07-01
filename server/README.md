@@ -1,6 +1,6 @@
 # Consulting CRM API
 
-Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the initial Prisma data model, and JWT-based authentication and role authorization. Domain CRUD APIs are intentionally reserved for later phases.
+Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the initial Prisma data model, JWT-based authentication and role authorization, and the first core CRM APIs.
 
 ## Tech stack
 
@@ -157,6 +157,78 @@ Authorization: Bearer <token>
 
 Both endpoints require an active authenticated user with the `ADMIN` role. They are read-only in this phase and never include `passwordHash`. Missing or invalid authentication returns `401`, insufficient permissions returns `403`, and a missing user record returns `404`.
 
+## Core CRM APIs
+
+Public routes do not require an access token. Protected routes require:
+
+```http
+Authorization: Bearer <token>
+```
+
+### Customers
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/customers` | `ADMIN`, `MANAGER`, `STAFF` |
+| `GET` | `/api/customers/:id` | `ADMIN`, `MANAGER`, `STAFF` |
+| `POST` | `/api/customers` | `ADMIN`, `MANAGER`, `STAFF` |
+| `PATCH` | `/api/customers/:id` | `ADMIN`, `MANAGER`, `STAFF` |
+| `DELETE` | `/api/customers/:id` | `ADMIN`, `MANAGER` |
+
+The list endpoint supports `search`, `page`, and `limit`. The maximum page size is 100.
+
+### Services
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/public/services` | Public |
+| `GET` | `/api/services` | `ADMIN`, `MANAGER`, `STAFF` |
+| `GET` | `/api/services/:id` | `ADMIN`, `MANAGER`, `STAFF` |
+| `POST` | `/api/services` | `ADMIN`, `MANAGER` |
+| `PATCH` | `/api/services/:id` | `ADMIN`, `MANAGER` |
+| `DELETE` | `/api/services/:id` | `ADMIN` |
+
+Only active services appear in the public response. Internal service lists support `search`, `isActive`, `page`, and `limit`.
+
+### Consultation requests
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `POST` | `/api/public/consultation-requests` | Public |
+| `GET` | `/api/consultation-requests` | `ADMIN`, `MANAGER`, `STAFF` |
+| `GET` | `/api/consultation-requests/:id` | `ADMIN`, `MANAGER`, `STAFF` |
+| `PATCH` | `/api/consultation-requests/:id/status` | `ADMIN`, `MANAGER`, `STAFF` |
+
+Example public submission:
+
+```json
+{
+  "fullName": "Nguyen Van A",
+  "phone": "0909000000",
+  "email": "customer@example.com",
+  "serviceId": "00000000-0000-0000-0000-000000000000",
+  "message": "I need legal consulting support."
+}
+```
+
+`serviceId` is optional, but it must identify an active service when supplied. The internal list supports `search`, `status`, `serviceId`, `page`, and `limit`. Status updates accept `NEW`, `CONTACTED`, or `CLOSED`; `CONVERTED` is reserved for the future transactional conversion workflow.
+
+List responses use a consistent pagination envelope:
+
+```json
+{
+  "items": [],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 0,
+    "totalPages": 0
+  }
+}
+```
+
+Public form submissions are validated but should additionally receive production rate limiting and abuse protection before deployment. Protected CRM routes enforce authorization on the server; hiding controls in a client is not a security boundary.
+
 ## Prisma commands
 
 ```bash
@@ -193,16 +265,16 @@ JWT secrets must be unique, randomly generated, and supplied through environment
 
 ## Implementation status
 
-Phase 4 includes login, current-user lookup, stateless logout, JWT verification, role-based authorization, and read-only administrator user lookup. It does not include refresh tokens, token revocation, password recovery, account management, or domain CRUD.
+Phase 5 includes customer and service management, public active-service discovery, public consultation submission, and protected consultation-request triage. It does not include request-to-customer conversion, case workflows, appointments, tasks, documents, or file uploads.
 
 ## Future phases
 
 - Refresh tokens, token revocation, password recovery, and account management
-- Consultation-request conversion workflows
-- Customer, case, appointment, task, and document APIs
+- Consultation-request conversion and case-profile workflows
+- Appointment, task, and document APIs
 - Case-history transactions and activity auditing
 - Public news and project content APIs
 - Rate limiting, abuse protection, private file storage, and production observability
 - Custom database checks for document ownership and other cross-field rules documented in `docs/database-design.md`
 
-This foundation does not yet expose customer, case, task, or other domain CRUD APIs.
+Customer, service, and consultation-request APIs are available. Case, appointment, task, document, and other domain workflows remain future work.

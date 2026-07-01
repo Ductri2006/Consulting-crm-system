@@ -340,12 +340,14 @@ This project is designed to practice:
 - [x] Define the initial PostgreSQL schema and local seed data
 - [x] Implement JWT authentication and role-based authorization
 - [x] Add protected current-user and admin-only user endpoints
-- [ ] Implement core CRM APIs
+- [x] Implement customer, service, and consultation request APIs
+- [x] Add public service discovery and consultation submission endpoints
+- [ ] Implement case profile workflow APIs
 - [ ] Implement the internal dashboard
 - [ ] Deploy a live demonstration
 
 ## Repository Status
 
-**Current phase:** Phase 4 complete — Authentication and Authorization Foundation
+**Current phase:** Phase 5 complete — Core CRM APIs Foundation
 
-The public website, backend foundation, and authentication layer are production-build ready. Domain APIs, the internal CRM dashboard, and deployment will be added in later phases.
+The public website, backend foundation, authentication layer, and first CRM domain APIs are production-build ready. Case workflows, the internal CRM dashboard, and deployment will be added in later phases.
