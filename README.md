@@ -342,12 +342,14 @@ This project is designed to practice:
 - [x] Add protected current-user and admin-only user endpoints
 - [x] Implement customer, service, and consultation request APIs
 - [x] Add public service discovery and consultation submission endpoints
-- [ ] Implement case profile workflow APIs
+- [x] Implement case profile workflow and history APIs
+- [ ] Implement appointment and task APIs
+- [ ] Implement document management
 - [ ] Implement the internal dashboard
 - [ ] Deploy a live demonstration
 
 ## Repository Status
 
-**Current phase:** Phase 5 complete — Core CRM APIs Foundation
+**Current phase:** Phase 6 complete — Case Profile Workflow APIs
 
-The public website, backend foundation, authentication layer, and first CRM domain APIs are production-build ready. Case workflows, the internal CRM dashboard, and deployment will be added in later phases.
+The public website, backend foundation, authentication layer, and core case workflow APIs are production-build ready. Scheduling, task and document management, the internal CRM dashboard, and deployment will be added in later phases.

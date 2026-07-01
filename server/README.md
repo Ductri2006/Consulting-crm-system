@@ -229,6 +229,42 @@ List responses use a consistent pagination envelope:
 
 Public form submissions are validated but should additionally receive production rate limiting and abuse protection before deployment. Protected CRM routes enforce authorization on the server; hiding controls in a client is not a security boundary.
 
+### Case profiles
+
+All case-profile routes require an access token:
+
+```http
+Authorization: Bearer <token>
+```
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/cases` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `GET` | `/api/cases/overdue` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `GET` | `/api/cases/:id` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `POST` | `/api/cases` | `ADMIN`, `MANAGER`, `STAFF` |
+| `PATCH` | `/api/cases/:id` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `PATCH` | `/api/cases/:id/status` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `PATCH` | `/api/cases/:id/assign` | `ADMIN`, `MANAGER` |
+| `GET` | `/api/cases/:id/history` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `DELETE` | `/api/cases/:id` | `ADMIN`, `MANAGER` |
+
+Administrators and managers can manage all case profiles. Staff members can
+create cases but can only read or update cases assigned to them; staff cannot
+reassign or delete cases. List, overdue, and history endpoints are paginated.
+Deleting a case is rejected when it has related documents, tasks, or
+appointments.
+
+The supported forward workflow is:
+
+```text
+RECEIVED -> VERIFYING -> PROPOSING_SOLUTION -> PROCESSING -> COMPLETED
+```
+
+Any non-terminal status can transition to `CANCELLED`. `COMPLETED` and
+`CANCELLED` are terminal states, backward transitions are rejected, and status
+changes are recorded in case history.
+
 ## Prisma commands
 
 ```bash
@@ -265,16 +301,16 @@ JWT secrets must be unique, randomly generated, and supplied through environment
 
 ## Implementation status
 
-Phase 5 includes customer and service management, public active-service discovery, public consultation submission, and protected consultation-request triage. It does not include request-to-customer conversion, case workflows, appointments, tasks, documents, or file uploads.
+Phase 6 includes customer and service management, consultation-request triage, and protected case-profile workflows with assignment, status transitions, overdue queries, and history. It does not include request-to-customer conversion, appointments, tasks, documents, or file uploads.
 
 ## Future phases
 
 - Refresh tokens, token revocation, password recovery, and account management
-- Consultation-request conversion and case-profile workflows
+- Consultation-request conversion
 - Appointment, task, and document APIs
-- Case-history transactions and activity auditing
+- Extended activity auditing and case-history retention policies
 - Public news and project content APIs
 - Rate limiting, abuse protection, private file storage, and production observability
 - Custom database checks for document ownership and other cross-field rules documented in `docs/database-design.md`
 
-Customer, service, and consultation-request APIs are available. Case, appointment, task, document, and other domain workflows remain future work.
+Customer, service, consultation-request, and case-profile workflow APIs are available. Appointment, task, document, and other domain workflows remain future work.

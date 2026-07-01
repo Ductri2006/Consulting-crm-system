@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { authRouter } from "../modules/auth/auth.routes";
+import { caseRouter } from "../modules/cases/case.routes";
 import {
   consultationRequestRouter,
   publicConsultationRequestRouter,
@@ -26,5 +27,6 @@ apiRouter.use("/users", userRouter);
 apiRouter.use("/customers", customerRouter);
 apiRouter.use("/services", serviceRouter);
 apiRouter.use("/consultation-requests", consultationRequestRouter);
+apiRouter.use("/cases", caseRouter);
 
 export { apiRouter };
