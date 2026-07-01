@@ -254,6 +254,22 @@ consulting-crm-system/
 | [API Documentation](docs/api-documentation.md) | Planned REST resources, endpoints, payloads, and response conventions |
 | [Development Roadmap](docs/development-roadmap.md) | Phased delivery plan from project foundation to advanced features |
 
+## Run the Public Website Locally
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Create a production build with:
+
+```bash
+npm run build
+```
+
+The current public website uses typed mock data and does not require a backend or environment variables.
+
 ## Development Roadmap
 
 1. **Project foundation and documentation** — repository structure, requirements, data model, API plan, and roadmap
@@ -295,9 +311,7 @@ This project is designed to practice:
 - Technical documentation
 - Professional GitHub portfolio presentation
 
-## Repository Status
-
-**Current phase:** Phase 1 — Project Foundation and Documentation
+## Current Progress
 
 - [x] Create the initial project structure
 - [x] Document business requirements
@@ -305,9 +319,16 @@ This project is designed to practice:
 - [x] Plan the database schema
 - [x] Plan REST API endpoints
 - [x] Create the development roadmap
-- [ ] Implement the public website
+- [x] Set up the React, TypeScript, Vite, and Tailwind CSS frontend
+- [x] Build the responsive public layout and routes
+- [x] Add typed mock data for services, projects, and news
+- [x] Implement public pages and validated request forms
 - [ ] Implement the backend API
 - [ ] Implement the internal dashboard
 - [ ] Deploy a live demonstration
 
-Frontend and backend implementation will be added in later phases.
+## Repository Status
+
+**Current phase:** Phase 2 complete — Frontend Public Website
+
+The public website UI/MVP is complete and production-build ready. Backend integration, the internal CRM dashboard, and deployment will be added in later phases.

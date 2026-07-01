@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply m-0 min-w-80 bg-slate-50 font-sans text-slate-800 antialiased;
+  }
+
+  ::selection {
+    @apply bg-blue-200 text-slate-950;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+}
+
+@layer components {
+  .field-input {
+    @apply mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100;
+  }
+
+  .field-label {
+    @apply text-sm font-semibold text-slate-700;
+  }
+
+  .field-error {
+    @apply mt-1.5 text-sm text-rose-600;
+  }
+}
