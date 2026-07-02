@@ -335,13 +335,13 @@ This project is designed to practice:
 - [x] Document management APIs
 - [x] Dashboard and reporting APIs
 - [x] Real database migration and seed verification workflow
+- [x] Live PostgreSQL migration, seed, and API verification
 - [ ] Admin dashboard
 - [ ] Deployment
 
 ## Repository Status
 
-**Current phase:** Phase 10 complete — Real Database Migration and Seed
-Verification readiness
+**Current phase:** Phase 10.5 complete — Live PostgreSQL Verification
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -350,9 +350,10 @@ and reporting APIs. The repository now includes the versioned migration,
 idempotent seed, database verification command, and real-database test
 documentation.
 
-Database-ready documentation and verification tooling are complete. A
-successful migration/seed against a live PostgreSQL instance has not been
-recorded from the current development environment; the operator must run the
-migration, seed, verification command, and API checklist using a real
-PostgreSQL connection. The internal admin dashboard and deployment remain
+The committed migrations, idempotent seed, database verification command,
+health endpoint, and administrator login have passed against a live Neon
+PostgreSQL database. The connection URL remains configured only in the local
+`server/.env` file and is not committed. See the
+[live database verification record](server/docs/live-database-verification.md)
+for the sanitized result. The internal admin dashboard and deployment remain
 future phases.

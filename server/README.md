@@ -85,6 +85,11 @@ npm run dev
 database. `db:verify` confirms that the demo administrator and all four seeded
 services exist; it does not print the connection string or password.
 
+The committed migration, seed, database verification, health check, and
+administrator login have passed against a live Neon PostgreSQL database. See
+the sanitized [live database verification record](docs/live-database-verification.md).
+The real connection URL remains in local `server/.env` and is not committed.
+
 Do not commit `.env`. Managed PostgreSQL providers may require
 `sslmode=require` and a direct/non-transaction-pooled URL for migrations;
 follow the provider's connection instructions. When applying the already
@@ -535,12 +540,13 @@ JWT secrets must be unique, randomly generated, and supplied through environment
 
 ## Implementation status
 
-Phase 10 makes the backend database-ready with a versioned initial PostgreSQL
-migration, idempotent seed, database verification command, setup instructions,
-and a real-database API checklist. A successful migration/seed against a live
-PostgreSQL instance has not been recorded from the current development
-environment; run `prisma:migrate`, `seed`, `db:verify`, and the API checklist
-against the target database before describing that instance as verified.
+Phase 10.5 records a successful live Neon PostgreSQL verification. The
+committed migration deployed successfully, the idempotent seed completed, and
+`db:verify` confirmed one seeded administrator and all four required active
+services. The health endpoint and administrator login also passed, with a
+sanitized user response that did not expose `passwordHash`. The full sanitized
+result is available in the
+[live database verification record](docs/live-database-verification.md).
 
 The backend includes customer and service management, consultation-request
 triage, protected case-profile workflows, appointment scheduling, internal
