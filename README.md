@@ -333,15 +333,17 @@ This project is designed to practice:
 - [x] Case profile workflow APIs
 - [x] Appointment and task APIs
 - [x] Document management APIs
-- [ ] Dashboard and reporting APIs
+- [x] Dashboard and reporting APIs
+- [ ] Real database migration and seed verification
 - [ ] Admin dashboard
 - [ ] Deployment
 
 ## Repository Status
 
-**Current phase:** Phase 8 complete — Document Management APIs
+**Current phase:** Phase 9 complete — Dashboard and Reporting APIs
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
-authenticated local-development document management. Dashboard and reporting
-APIs, the internal dashboard, and deployment will be added in later phases.
+authenticated local-development document management, plus role-aware dashboard
+and reporting APIs. Real database migration verification, the internal
+dashboard, and deployment will be added in later phases.

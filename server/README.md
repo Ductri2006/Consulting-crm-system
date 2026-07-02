@@ -1,6 +1,6 @@
 # Consulting CRM API
 
-Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the Prisma data model, JWT-based authentication and role authorization, and the core CRM, scheduling, task, and document APIs.
+Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the Prisma data model, JWT-based authentication and role authorization, and the core CRM, scheduling, document, dashboard, and reporting APIs.
 
 ## Tech stack
 
@@ -420,6 +420,56 @@ private object storage such as Amazon S3, Cloudinary, or Supabase Storage,
 together with authenticated or short-lived signed access. OCR and cloud
 storage integration are outside Phase 8.
 
+### Dashboard and reporting
+
+All dashboard routes require an access token:
+
+```http
+Authorization: Bearer <token>
+```
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/dashboard/overview` | `ADMIN`, `MANAGER`, scoped `STAFF` |
+| `GET` | `/api/dashboard/cases-by-status` | `ADMIN`, `MANAGER`, scoped `STAFF` |
+| `GET` | `/api/dashboard/cases-by-month` | `ADMIN`, `MANAGER`, scoped `STAFF` |
+| `GET` | `/api/dashboard/upcoming-deadlines` | `ADMIN`, `MANAGER`, scoped `STAFF` |
+| `GET` | `/api/dashboard/staff-performance` | `ADMIN`, `MANAGER` |
+| `GET` | `/api/dashboard/recent-activities` | `ADMIN`, `MANAGER`, scoped `STAFF` |
+
+Administrators and managers receive global dashboard data. Staff receive only
+metrics and records related to their assigned cases and appointments, tasks
+they created or that are assigned to them, and documents they uploaded or that
+belong to an assigned case. Staff cannot access the staff-performance report.
+Dashboard responses use sanitized user projections and never include
+`passwordHash`.
+
+The overview reports customer, case, overdue-case, today's-appointment, task,
+overdue-task, document, and new-consultation-request totals. Cases by status
+includes every case status, including statuses whose count is zero. Staff
+results for both endpoints are restricted to their own operational scope.
+
+`cases-by-month` accepts optional ISO calendar-date `fromDate` and `toDate`
+query parameters and reports created and completed cases by month. When no
+range is supplied, it defaults to the most recent six months. Date ranges are
+inclusive and `fromDate` must not be after `toDate`.
+
+`upcoming-deadlines` combines open case and task deadlines with non-cancelled
+appointment dates, sorts them chronologically, and accepts `days` from 1 to 30
+(default 7) and `limit` up to 50 (default 10).
+
+`staff-performance` accepts optional `fromDate`, `toDate`, and `limit` query
+parameters and defaults to the most recent 30 days when no date range is
+provided. It reports assigned and completed cases, completed tasks, and
+completed appointments for active CRM users, ordered by completion metrics.
+This endpoint is restricted to administrators and managers.
+
+`recent-activities` accepts `limit` up to 50 (default 10). Recent activity is
+currently based on case-history records because general activity logging is
+not yet populated consistently. Administrators and managers receive all case
+history; staff receive history only for cases assigned to them. Each item
+contains safe actor and basic case-profile information.
+
 ## Prisma commands
 
 ```bash
@@ -456,12 +506,13 @@ JWT secrets must be unique, randomly generated, and supplied through environment
 
 ## Implementation status
 
-Phase 8 includes customer and service management, consultation-request triage,
+Phase 9 includes customer and service management, consultation-request triage,
 protected case-profile workflows, appointment scheduling, internal task
-management, and authenticated document metadata, upload, listing, detail, and
-deletion APIs. Document files use local development storage with role-aware
-access. It does not include request-to-customer conversion, OCR, cloud object
-storage, reporting APIs, or the admin dashboard.
+management, authenticated document management, and role-aware dashboard and
+reporting APIs. Reporting covers operational totals, case trends, upcoming
+deadlines, staff performance, and recent case-history activity. It does not
+include request-to-customer conversion, OCR, cloud object storage, report
+exports, realtime updates, or the admin dashboard UI.
 
 ## Future phases
 
@@ -474,5 +525,5 @@ storage, reporting APIs, or the admin dashboard.
 - Custom database checks for document ownership and other cross-field rules documented in `docs/database-design.md`
 
 Customer, service, consultation-request, case-profile workflow, appointment,
-task, and document-management APIs are available. Dashboard, reporting,
-content, and other domain workflows remain future work.
+task, document-management, dashboard, and reporting APIs are available.
+Content-management and other domain workflows remain future work.
