@@ -259,6 +259,7 @@ consulting-crm-system/
 ```bash
 cd client
 npm install
+cp .env.example .env
 npm run dev
 ```
 
@@ -268,7 +269,9 @@ Create a production build with:
 npm run build
 ```
 
-The current public website uses typed mock data and does not require a backend or environment variables.
+The public pages use typed local content. The admin dashboard requires the
+backend at `http://localhost:5000` and reads its API base URL from
+`VITE_API_BASE_URL`.
 
 ## Run the Backend Foundation Locally
 
@@ -334,14 +337,15 @@ This project is designed to practice:
 - [x] Appointment and task APIs
 - [x] Document management APIs
 - [x] Dashboard and reporting APIs
-- [x] Real database migration and seed verification workflow
-- [x] Live PostgreSQL migration, seed, and API verification
-- [ ] Admin dashboard
+- [x] Real database migration and seed verification
+- [x] Live Neon PostgreSQL verification
+- [x] Admin dashboard frontend foundation
+- [ ] Admin CRUD pages
 - [ ] Deployment
 
 ## Repository Status
 
-**Current phase:** Phase 10.5 complete — Live PostgreSQL Verification
+**Current phase:** Phase 11 complete — Admin Dashboard Frontend Foundation
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -355,5 +359,9 @@ health endpoint, and administrator login have passed against a live Neon
 PostgreSQL database. The connection URL remains configured only in the local
 `server/.env` file and is not committed. See the
 [live database verification record](server/docs/live-database-verification.md)
-for the sanitized result. The internal admin dashboard and deployment remain
-future phases.
+for the sanitized result.
+
+The frontend now includes the admin login flow, persisted authentication,
+protected admin routing, responsive dashboard layout, and dashboard overview
+powered by the backend APIs. Admin CRUD pages and deployment remain future
+phases.
