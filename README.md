@@ -343,13 +343,13 @@ This project is designed to practice:
 - [x] Implement customer, service, and consultation request APIs
 - [x] Add public service discovery and consultation submission endpoints
 - [x] Implement case profile workflow and history APIs
-- [ ] Implement appointment and task APIs
+- [x] Implement appointment scheduling and task management APIs
 - [ ] Implement document management
 - [ ] Implement the internal dashboard
 - [ ] Deploy a live demonstration
 
 ## Repository Status
 
-**Current phase:** Phase 6 complete — Case Profile Workflow APIs
+**Current phase:** Phase 7 complete — Appointment and Task APIs
 
-The public website, backend foundation, authentication layer, and core case workflow APIs are production-build ready. Scheduling, task and document management, the internal CRM dashboard, and deployment will be added in later phases.
+The public website and core CRM backend now cover authentication, customers, services, consultation requests, case workflows, appointments, and tasks. Document management, the internal dashboard, and deployment will be added in later phases.

@@ -1,6 +1,6 @@
 # Consulting CRM API
 
-Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the initial Prisma data model, JWT-based authentication and role authorization, and the first core CRM APIs.
+Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the Prisma data model, JWT-based authentication and role authorization, and the core CRM, appointment, and task APIs.
 
 ## Tech stack
 
@@ -265,6 +265,96 @@ Any non-terminal status can transition to `CANCELLED`. `COMPLETED` and
 `CANCELLED` are terminal states, backward transitions are rejected, and status
 changes are recorded in case history.
 
+### Appointments
+
+All appointment routes require an access token:
+
+```http
+Authorization: Bearer <token>
+```
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/appointments` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `GET` | `/api/appointments/today` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `GET` | `/api/appointments/:id` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `POST` | `/api/appointments` | `ADMIN`, `MANAGER`, `STAFF` for self |
+| `PATCH` | `/api/appointments/:id` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `PATCH` | `/api/appointments/:id/status` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `DELETE` | `/api/appointments/:id` | `ADMIN`, `MANAGER`, eligible assigned `STAFF` |
+
+Administrators and managers can manage all appointments. Staff members only
+see and manage appointments assigned to them. When staff list appointments or
+today's appointments, the API enforces their own user ID even if another
+`staffId` is supplied. Staff-created appointments are assigned to the actor and
+cannot be reassigned to another user. Staff can delete their own appointments
+only while they are `PENDING` or `CANCELLED`; completed appointments cannot be
+deleted by any role.
+
+The appointment list supports `search`, `status`, `method`, `customerId`,
+`caseProfileId`, `staffId`, `date`, `fromDate`, `toDate`, `page`, and `limit`.
+The today endpoint returns non-cancelled appointments whose appointment date is
+the current server date and optionally filters by `staffId` for administrators
+and managers. Appointment responses include basic customer, case-profile, and
+sanitized staff information.
+
+The supported appointment workflow is:
+
+```text
+PENDING -> CONFIRMED -> COMPLETED
+       \-> CANCELLED
+CONFIRMED -> CANCELLED
+```
+
+`COMPLETED` and `CANCELLED` are terminal states. Repeating the current status is
+rejected with `400`, while any other unsupported transition is rejected with
+`409`.
+
+### Tasks
+
+All task routes require an access token:
+
+```http
+Authorization: Bearer <token>
+```
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/tasks` | `ADMIN`, `MANAGER`, related `STAFF` |
+| `GET` | `/api/tasks/overdue` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `GET` | `/api/tasks/:id` | `ADMIN`, `MANAGER`, related `STAFF` |
+| `POST` | `/api/tasks` | `ADMIN`, `MANAGER`, `STAFF` for self |
+| `PATCH` | `/api/tasks/:id` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `PATCH` | `/api/tasks/:id/status` | `ADMIN`, `MANAGER`, assigned `STAFF` |
+| `DELETE` | `/api/tasks/:id` | `ADMIN`, `MANAGER`, eligible related `STAFF` |
+
+Administrators and managers can manage all tasks and assign them to any active
+CRM user. Staff members can list and view tasks that they created or that are
+assigned to them, but they can update task fields and statuses only when they
+are the assignee. Staff-created tasks are self-assigned, and a linked case must
+also be assigned to that staff member. Staff can delete a task when they are
+its creator or assignee and it is not `DONE`; completed tasks cannot be deleted
+by any role.
+
+The task list supports `search`, `status`, `priority`, `assignedToId`,
+`createdById`, `caseProfileId`, `page`, and `limit`. The overdue endpoint
+returns paginated tasks whose deadline is before the current time and whose
+status is neither `DONE` nor `CANCELLED`; staff only receive overdue tasks
+assigned to them. Task responses include basic case-profile information and
+sanitized assignee and creator information.
+
+The supported task workflow is:
+
+```text
+TODO -> IN_PROGRESS -> DONE
+    \-> CANCELLED
+IN_PROGRESS -> CANCELLED
+```
+
+`DONE` and `CANCELLED` are terminal states. Repeating the current status is
+rejected with `400`, while any other unsupported transition is rejected with
+`409`.
+
 ## Prisma commands
 
 ```bash
@@ -301,16 +391,22 @@ JWT secrets must be unique, randomly generated, and supplied through environment
 
 ## Implementation status
 
-Phase 6 includes customer and service management, consultation-request triage, and protected case-profile workflows with assignment, status transitions, overdue queries, and history. It does not include request-to-customer conversion, appointments, tasks, documents, or file uploads.
+Phase 7 includes customer and service management, consultation-request triage,
+protected case-profile workflows, appointment scheduling, and internal task
+management with role-aware lists, assignments, status transitions, and
+deadline queries. It does not include request-to-customer conversion, document
+management, or file uploads.
 
 ## Future phases
 
 - Refresh tokens, token revocation, password recovery, and account management
 - Consultation-request conversion
-- Appointment, task, and document APIs
+- Document APIs and private file uploads
 - Extended activity auditing and case-history retention policies
 - Public news and project content APIs
 - Rate limiting, abuse protection, private file storage, and production observability
 - Custom database checks for document ownership and other cross-field rules documented in `docs/database-design.md`
 
-Customer, service, consultation-request, and case-profile workflow APIs are available. Appointment, task, document, and other domain workflows remain future work.
+Customer, service, consultation-request, case-profile workflow, appointment,
+and task APIs are available. Document and other domain workflows remain future
+work.

@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { appointmentRouter } from "../modules/appointments/appointment.routes";
 import { authRouter } from "../modules/auth/auth.routes";
 import { caseRouter } from "../modules/cases/case.routes";
 import {
@@ -11,6 +12,7 @@ import {
   publicServiceRouter,
   serviceRouter,
 } from "../modules/services/service.routes";
+import { taskRouter } from "../modules/tasks/task.routes";
 import { userRouter } from "../modules/users/user.routes";
 import { healthRouter } from "./health.routes";
 
@@ -28,5 +30,7 @@ apiRouter.use("/customers", customerRouter);
 apiRouter.use("/services", serviceRouter);
 apiRouter.use("/consultation-requests", consultationRequestRouter);
 apiRouter.use("/cases", caseRouter);
+apiRouter.use("/appointments", appointmentRouter);
+apiRouter.use("/tasks", taskRouter);
 
 export { apiRouter };
