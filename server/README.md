@@ -1,6 +1,6 @@
 # Consulting CRM API
 
-Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the Prisma data model, JWT-based authentication and role authorization, and the core CRM, appointment, and task APIs.
+Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the Prisma data model, JWT-based authentication and role authorization, and the core CRM, scheduling, task, and document APIs.
 
 ## Tech stack
 
@@ -11,6 +11,7 @@ Backend API for the Consulting CRM System. It provides a secure, typed Express a
 - Helmet, CORS, and Morgan
 - bcryptjs for password hashing
 - JSON Web Tokens for stateless Bearer authentication
+- Multer for authenticated local-development file uploads
 
 ## Folder structure
 
@@ -45,6 +46,8 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `CLIENT_URL` | Yes | Allowed frontend origin for CORS |
 | `JWT_SECRET` | Yes | Secret used to sign access tokens; use at least 32 characters |
 | `JWT_EXPIRES_IN` | Yes | Access-token lifetime, for example `7d` |
+| `UPLOAD_DIR` | No | Local-development upload directory, defaults to `uploads` |
+| `MAX_FILE_SIZE_MB` | No | Per-file upload limit from 1 to 50 MB, defaults to `10` |
 
 Example:
 
@@ -55,6 +58,8 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/consulting_crm_syste
 CLIENT_URL="http://localhost:5173"
 JWT_SECRET="replace-this-with-a-secure-secret-of-at-least-32-characters"
 JWT_EXPIRES_IN="7d"
+UPLOAD_DIR="uploads"
+MAX_FILE_SIZE_MB=10
 ```
 
 Do not commit `.env` or use the example database credentials in a shared or production environment.
@@ -355,6 +360,66 @@ IN_PROGRESS -> CANCELLED
 rejected with `400`, while any other unsupported transition is rejected with
 `409`.
 
+### Documents
+
+All document routes require an access token:
+
+```http
+Authorization: Bearer <token>
+```
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/documents` | `ADMIN`, `MANAGER`, authorized `STAFF` |
+| `GET` | `/api/documents/:id` | `ADMIN`, `MANAGER`, authorized `STAFF` |
+| `GET` | `/api/documents/:id/download` | `ADMIN`, `MANAGER`, authorized `STAFF` |
+| `POST` | `/api/documents/upload` | `ADMIN`, `MANAGER`, scoped `STAFF` |
+| `DELETE` | `/api/documents/:id` | `ADMIN`, `MANAGER`, eligible uploader `STAFF` |
+
+The upload endpoint accepts `multipart/form-data` with these fields:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `file` | Yes | PDF, JPEG, PNG, WebP, Word, or Excel file |
+| `customerId` | Conditional | Customer UUID; either this field or `caseProfileId` is required |
+| `caseProfileId` | Conditional | Case-profile UUID; either this field or `customerId` is required |
+| `fileType` | No | A `DocumentType` value; defaults to `OTHER` |
+
+When only `caseProfileId` is supplied, the document automatically receives the
+case's `customerId`. When both relation IDs are supplied, the customer must
+match the case's customer. The authenticated user is recorded as the uploader.
+
+Administrators and managers can list, view, upload, and delete documents across
+the CRM. Staff can view documents they uploaded or documents attached to cases
+assigned to them. Staff can upload to an assigned case or create a
+customer-only document as its uploader. Staff can delete only their own
+documents, and cannot delete one attached to another staff member's case.
+
+The document list supports `search`, `fileType`, `customerId`,
+`caseProfileId`, `uploadedById`, `page`, and `limit`. Staff queries remain
+scoped to documents they are authorized to access. Responses include basic
+customer and case-profile data and sanitized uploader data; they never include
+`passwordHash` or an absolute filesystem path. The protected download endpoint
+applies the same access rules and returns `404` when the metadata or physical
+file is missing.
+
+#### Local file storage and security
+
+Development uploads are stored under `server/uploads` by default. The upload
+directory and maximum file size are configured with `UPLOAD_DIR` and
+`MAX_FILE_SIZE_MB`. Uploaded files are ignored by Git and must not be committed.
+
+The upload pipeline checks both the extension and declared MIME type, rejects
+executable and script formats, generates a randomized physical filename, and
+does not log file contents or expose local absolute paths. If metadata
+validation or database persistence fails, the already-written local file is
+removed.
+
+Local disk is intended for development only. Production deployments should use
+private object storage such as Amazon S3, Cloudinary, or Supabase Storage,
+together with authenticated or short-lived signed access. OCR and cloud
+storage integration are outside Phase 8.
+
 ## Prisma commands
 
 ```bash
@@ -391,22 +456,23 @@ JWT secrets must be unique, randomly generated, and supplied through environment
 
 ## Implementation status
 
-Phase 7 includes customer and service management, consultation-request triage,
-protected case-profile workflows, appointment scheduling, and internal task
-management with role-aware lists, assignments, status transitions, and
-deadline queries. It does not include request-to-customer conversion, document
-management, or file uploads.
+Phase 8 includes customer and service management, consultation-request triage,
+protected case-profile workflows, appointment scheduling, internal task
+management, and authenticated document metadata, upload, listing, detail, and
+deletion APIs. Document files use local development storage with role-aware
+access. It does not include request-to-customer conversion, OCR, cloud object
+storage, reporting APIs, or the admin dashboard.
 
 ## Future phases
 
 - Refresh tokens, token revocation, password recovery, and account management
 - Consultation-request conversion
-- Document APIs and private file uploads
+- Cloud object storage, signed file delivery, malware scanning, and OCR
 - Extended activity auditing and case-history retention policies
 - Public news and project content APIs
 - Rate limiting, abuse protection, private file storage, and production observability
 - Custom database checks for document ownership and other cross-field rules documented in `docs/database-design.md`
 
 Customer, service, consultation-request, case-profile workflow, appointment,
-and task APIs are available. Document and other domain workflows remain future
-work.
+task, and document-management APIs are available. Dashboard, reporting,
+content, and other domain workflows remain future work.

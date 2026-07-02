@@ -1,0 +1,27 @@
+import { z } from "zod";
+
+import {
+  documentIdParamsSchema,
+  documentListQuerySchema,
+  uploadDocumentMetadataSchema,
+} from "./document.validation";
+
+export type DocumentIdParams = z.infer<typeof documentIdParamsSchema>;
+export type DocumentListQuery = z.infer<
+  typeof documentListQuerySchema
+>;
+export type UploadDocumentInput = z.infer<
+  typeof uploadDocumentMetadataSchema
+>;
+
+export interface DocumentUploadFile {
+  originalName: string;
+  mimeType: string;
+  size: number;
+  buffer: Buffer;
+}
+
+export interface DocumentDownload {
+  fileName: string;
+  localPath: string;
+}

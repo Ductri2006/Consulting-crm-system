@@ -26,6 +26,7 @@
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
+    "multer": "^2.2.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -33,6 +34,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.2.0",
     "@types/node": "^26.1.0",
     "oxlint": "^1.72.0",
     "prisma": "^6.19.3",

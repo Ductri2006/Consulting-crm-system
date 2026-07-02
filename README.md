@@ -325,31 +325,23 @@ This project is designed to practice:
 
 ## Current Progress
 
-- [x] Create the initial project structure
-- [x] Document business requirements
-- [x] Define system modules
-- [x] Plan the database schema
-- [x] Plan REST API endpoints
-- [x] Create the development roadmap
-- [x] Set up the React, TypeScript, Vite, and Tailwind CSS frontend
-- [x] Build the responsive public layout and routes
-- [x] Add typed mock data for services, projects, and news
-- [x] Implement public pages and validated request forms
-- [x] Set up the Express, TypeScript, and Prisma backend foundation
-- [x] Add environment validation, health checks, and global error handling
-- [x] Define the initial PostgreSQL schema and local seed data
-- [x] Implement JWT authentication and role-based authorization
-- [x] Add protected current-user and admin-only user endpoints
-- [x] Implement customer, service, and consultation request APIs
-- [x] Add public service discovery and consultation submission endpoints
-- [x] Implement case profile workflow and history APIs
-- [x] Implement appointment scheduling and task management APIs
-- [ ] Implement document management
-- [ ] Implement the internal dashboard
-- [ ] Deploy a live demonstration
+- [x] Project foundation and documentation
+- [x] Frontend public website
+- [x] Backend foundation setup
+- [x] Authentication and authorization foundation
+- [x] Customer, service, and consultation request APIs
+- [x] Case profile workflow APIs
+- [x] Appointment and task APIs
+- [x] Document management APIs
+- [ ] Dashboard and reporting APIs
+- [ ] Admin dashboard
+- [ ] Deployment
 
 ## Repository Status
 
-**Current phase:** Phase 7 complete — Appointment and Task APIs
+**Current phase:** Phase 8 complete — Document Management APIs
 
-The public website and core CRM backend now cover authentication, customers, services, consultation requests, case workflows, appointments, and tasks. Document management, the internal dashboard, and deployment will be added in later phases.
+The public website and core CRM backend now cover authentication, customers,
+services, consultation requests, case workflows, appointments, tasks, and
+authenticated local-development document management. Dashboard and reporting
+APIs, the internal dashboard, and deployment will be added in later phases.

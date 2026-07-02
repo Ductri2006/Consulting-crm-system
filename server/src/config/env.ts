@@ -37,6 +37,16 @@ const envSchema = z.object({
     .trim()
     .min(1, "JWT_EXPIRES_IN cannot be empty.")
     .default("7d"),
+  UPLOAD_DIR: z
+    .string()
+    .trim()
+    .min(1, "UPLOAD_DIR cannot be empty.")
+    .default("uploads"),
+  MAX_FILE_SIZE_MB: z.coerce
+    .number()
+    .min(1, "MAX_FILE_SIZE_MB must be between 1 and 50.")
+    .max(50, "MAX_FILE_SIZE_MB must be between 1 and 50.")
+    .default(10),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

@@ -44,6 +44,7 @@ Thumbs.db
 
 # Uploads and temporary files
 uploads/
+server/uploads/
 tmp/
 temp/
 
