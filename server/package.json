@@ -11,8 +11,11 @@
     "lint": "oxlint src prisma",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:reset": "prisma migrate reset",
     "prisma:studio": "prisma studio",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "db:verify": "tsx src/scripts/verifyDatabase.ts"
   },
   "engines": {
     "node": ">=20"

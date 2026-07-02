@@ -64,18 +64,32 @@ MAX_FILE_SIZE_MB=10
 
 Do not commit `.env` or use the example database credentials in a shared or production environment.
 
-## Run locally
+## Run with a real database
 
-From the `server` directory:
+Choose and configure either local PostgreSQL or Supabase/Neon by following
+[the database setup guide](docs/database-setup.md). From the `server`
+directory in Windows PowerShell:
 
-```bash
+```powershell
 npm install
-cp .env.example .env
+Copy-Item .env.example .env
+# Edit .env and set DATABASE_URL before continuing.
 npm run prisma:generate
+npm run prisma:migrate
+npm run seed
+npm run db:verify
 npm run dev
 ```
 
-In Windows PowerShell, use `Copy-Item .env.example .env` instead of `cp` if no `cp` alias is available.
+`prisma:migrate`, `seed`, and `db:verify` require a reachable PostgreSQL
+database. `db:verify` confirms that the demo administrator and all four seeded
+services exist; it does not print the connection string or password.
+
+Do not commit `.env`. Managed PostgreSQL providers may require
+`sslmode=require` and a direct/non-transaction-pooled URL for migrations;
+follow the provider's connection instructions. When applying the already
+committed migrations to a shared or managed database, use
+`npm run prisma:deploy` instead of the development migration command.
 
 Build and run the compiled application:
 
@@ -472,19 +486,34 @@ contains safe actor and basic case-profile information.
 
 ## Prisma commands
 
-```bash
+```powershell
 npm run prisma:generate
 npm run prisma:migrate
+npm run prisma:deploy
+npm run prisma:reset
 npm run prisma:studio
 npm run seed
+npm run db:verify
 ```
 
 - `prisma:generate` generates the type-safe Prisma Client.
 - `prisma:migrate` creates and applies a development migration. Review generated SQL before applying it to shared environments.
+- `prisma:deploy` applies committed migrations to staging or production
+  without creating a new migration.
+- `prisma:reset` destroys and recreates the configured database, then reapplies
+  committed migrations. Use it only for disposable development databases and
+  run `npm run seed` afterward.
 - `prisma:studio` opens the local data browser.
 - `seed` upserts the local demo administrator and four initial consulting services.
+- `db:verify` checks connectivity, the seeded administrator, and the four
+  expected service slugs.
 
 A running PostgreSQL database is required for migrations and seeding. Generating the client only requires a syntactically valid `DATABASE_URL`.
+
+After the database check passes, use the
+[real-database API checklist](docs/api-smoke-test.md) or its
+[compact PowerShell curl version](docs/curl-smoke-test.md) to verify login,
+core workflows, upload/download, and dashboard data.
 
 ## Local demo account
 
@@ -506,13 +535,19 @@ JWT secrets must be unique, randomly generated, and supplied through environment
 
 ## Implementation status
 
-Phase 9 includes customer and service management, consultation-request triage,
-protected case-profile workflows, appointment scheduling, internal task
-management, authenticated document management, and role-aware dashboard and
-reporting APIs. Reporting covers operational totals, case trends, upcoming
-deadlines, staff performance, and recent case-history activity. It does not
-include request-to-customer conversion, OCR, cloud object storage, report
-exports, realtime updates, or the admin dashboard UI.
+Phase 10 makes the backend database-ready with a versioned initial PostgreSQL
+migration, idempotent seed, database verification command, setup instructions,
+and a real-database API checklist. A successful migration/seed against a live
+PostgreSQL instance has not been recorded from the current development
+environment; run `prisma:migrate`, `seed`, `db:verify`, and the API checklist
+against the target database before describing that instance as verified.
+
+The backend includes customer and service management, consultation-request
+triage, protected case-profile workflows, appointment scheduling, internal
+task management, authenticated document management, and role-aware dashboard
+and reporting APIs. It does not include request-to-customer conversion, OCR,
+cloud object storage, report exports, realtime updates, or the admin dashboard
+UI.
 
 ## Future phases
 

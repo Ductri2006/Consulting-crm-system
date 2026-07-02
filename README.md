@@ -334,16 +334,25 @@ This project is designed to practice:
 - [x] Appointment and task APIs
 - [x] Document management APIs
 - [x] Dashboard and reporting APIs
-- [ ] Real database migration and seed verification
+- [x] Real database migration and seed verification workflow
 - [ ] Admin dashboard
 - [ ] Deployment
 
 ## Repository Status
 
-**Current phase:** Phase 9 complete — Dashboard and Reporting APIs
+**Current phase:** Phase 10 complete — Real Database Migration and Seed
+Verification readiness
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
 authenticated local-development document management, plus role-aware dashboard
-and reporting APIs. Real database migration verification, the internal
-dashboard, and deployment will be added in later phases.
+and reporting APIs. The repository now includes the versioned migration,
+idempotent seed, database verification command, and real-database test
+documentation.
+
+Database-ready documentation and verification tooling are complete. A
+successful migration/seed against a live PostgreSQL instance has not been
+recorded from the current development environment; the operator must run the
+migration, seed, verification command, and API checklist using a real
+PostgreSQL connection. The internal admin dashboard and deployment remain
+future phases.
