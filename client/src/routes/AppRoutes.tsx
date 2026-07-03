@@ -14,6 +14,7 @@ import { ProjectsPage } from '../pages/ProjectsPage'
 import { ServiceDetailPage } from '../pages/ServiceDetailPage'
 import { ServicesPage } from '../pages/ServicesPage'
 import {
+  AdminCasesPage,
   AdminConsultationRequestsPage,
   AdminCustomersPage,
   AdminDashboardPage,
@@ -51,6 +52,7 @@ export function AppRoutes() {
         >
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="customers" element={<AdminCustomersPage />} />
+          <Route path="cases" element={<AdminCasesPage />} />
           <Route
             path="consultation-requests"
             element={<AdminConsultationRequestsPage />}

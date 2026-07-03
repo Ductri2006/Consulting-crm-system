@@ -49,6 +49,7 @@ npm run build
 - Dashboard: `/admin/dashboard`
 - Customers: `/admin/customers`
 - Consultation requests: `/admin/consultation-requests`
+- Cases: `/admin/cases`
 - Demo account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
 
@@ -57,4 +58,7 @@ environment. Do not commit local environment files, tokens, or other secrets.
 The public website routes remain available alongside the protected admin
 workspace. The customer page supports list, search, pagination, create, edit,
 and delete workflows. The consultation request page supports list, search,
-status filtering, request details, and status updates.
+status filtering, request details, and status updates. The case management page
+supports search, status and priority filters, overdue cases, pagination,
+creation, editing, status transitions, staff assignment, history, and deletion
+subject to role and backend workflow rules.

@@ -341,13 +341,14 @@ This project is designed to practice:
 - [x] Live Neon PostgreSQL verification
 - [x] Admin dashboard frontend foundation
 - [x] Admin customers and consultation requests UI
-- [ ] Admin case management UI
-- [ ] Admin appointment/task/document UI
+- [x] Admin case management UI
+- [ ] Admin appointment and task UI
+- [ ] Admin document management UI
 - [ ] Deployment
 
 ## Repository Status
 
-**Current phase:** Phase 12 complete — Admin Customers and Consultation Requests UI
+**Current phase:** Phase 13 complete — Admin Case Management UI
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -367,5 +368,7 @@ The frontend now includes the admin login flow, persisted authentication,
 protected admin routing, responsive dashboard layout, and dashboard overview
 powered by the backend APIs. The first admin management pages add customer
 list, search, pagination, create, edit, and delete workflows plus consultation
-request list, filtering, details, and status updates. Case,
-appointment/task/document management pages and deployment remain future phases.
+request list, filtering, details, and status updates. The case management page
+adds case search, workflow filters, overdue review, creation, editing, status
+transitions, staff assignment, history, and role-aware deletion. Appointment,
+task, and document management pages and deployment remain future phases.
