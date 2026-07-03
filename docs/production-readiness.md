@@ -1,8 +1,8 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System after Phase 17. It prepares the project for a future deployment, but it
-does not perform a real production deployment.
+System through Phase 18B. It prepares the project for a future staging and
+production deployment, but it does not perform a real provider deployment.
 
 ## Current Production Readiness Status
 
@@ -11,6 +11,8 @@ treat this repository as approved for real sensitive production data until the
 known limitations below are resolved or explicitly accepted.
 
 - Live Neon PostgreSQL verification: PASS.
+- Staging deployment checklist: prepared in
+  [Staging Deployment Checklist](staging-deployment-checklist.md).
 - Frontend build and lint have passed in recent verification.
 - Backend build, lint, Prisma generate, and Prisma validation must pass before
   every deployment candidate.
@@ -141,6 +143,8 @@ Recommended later upgrade:
 
 ## Deployment Checklist
 
+- [ ] Complete the staging-specific checklist in
+  [Staging Deployment Checklist](staging-deployment-checklist.md).
 - [ ] Configure production `DATABASE_URL`.
 - [ ] Configure production `JWT_SECRET`.
 - [ ] Configure server `CLIENT_URL`.
@@ -158,6 +162,8 @@ Recommended later upgrade:
 ## Known Limitations
 
 - No real production deployment has been performed yet.
+- No real staging deployment has been performed yet; Phase 18B only prepares
+  staging deployment documentation and checks.
 - `/api/health` is a liveness endpoint, not a database readiness check.
 - File storage is local and development-oriented.
 - No refresh tokens or token revocation workflow yet.
@@ -172,12 +178,13 @@ Recommended later upgrade:
 ## Recommended Next Steps
 
 1. Choose frontend hosting, backend Node runtime, and persistent object storage.
-2. Create production environment variables outside the repository.
-3. Run the full verification commands listed in the deployment checklist.
-4. Deploy to a staging environment before production.
-5. Complete `docs/final-qa-checklist.md` on staging.
-6. Replace local/demo credentials with secure production provisioning.
-7. Review token storage and consider HttpOnly secure cookies before handling
+2. Create staging environment variables outside the repository.
+3. Complete `docs/staging-deployment-checklist.md`.
+4. Run the full verification commands listed in the deployment checklist.
+5. Deploy to a staging environment before production.
+6. Complete `docs/final-qa-checklist.md` on staging.
+7. Replace local/demo credentials with secure production provisioning.
+8. Review token storage and consider HttpOnly secure cookies before handling
    real customer data.
-8. Add rate limiting, monitoring, backups, and private object storage before
+9. Add rate limiting, monitoring, backups, and private object storage before
    handling real customer data.

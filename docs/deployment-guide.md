@@ -4,6 +4,10 @@ This guide describes a provider-neutral production deployment path for the
 Consulting CRM System. It intentionally uses placeholders and does not include
 real URLs, tokens, or connection strings.
 
+For a staging-specific environment matrix, checklist, smoke test, rollback
+plan, and go/no-go decision record, use the
+[Staging Deployment Checklist](staging-deployment-checklist.md).
+
 ## Deployment Architecture
 
 - Frontend: static React/Vite app served from a frontend hosting platform.
@@ -19,6 +23,8 @@ real URLs, tokens, or connection strings.
 - A PostgreSQL database connection string.
 - Separate server and client environment variables.
 - A production-grade `JWT_SECRET`.
+- For staging, a dedicated staging database, staging JWT secret, and exact
+  staging frontend/backend origins.
 
 ## Frontend Deployment Requirements
 
@@ -155,6 +161,11 @@ VITE_API_BASE_URL=<api-base-url>/api
 The browser URL used by testers must match one of the allowed backend CORS
 origins exactly.
 
+For staging, do not leave localhost in `CLIENT_URL` unless it is intentionally
+allowed for a short test window. `CLIENT_URL` should normally be the exact
+staging frontend origin, and `VITE_API_BASE_URL` should be the staging backend
+API URL including `/api`.
+
 ## Authentication Note
 
 The current admin client uses Bearer access tokens stored in browser local
@@ -189,7 +200,8 @@ database is reachable.
 
 ## Smoke Test
 
-After deployment, verify:
+After deployment, verify the items below. For a staging go/no-go pass, use the
+full [Staging Deployment Checklist](staging-deployment-checklist.md).
 
 - `GET /api/health`.
 - Admin login.

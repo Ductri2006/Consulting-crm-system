@@ -244,6 +244,7 @@ consulting-crm-system/
 |   |-- development-roadmap.md
 |   |-- production-readiness.md
 |   |-- deployment-guide.md
+|   |-- staging-deployment-checklist.md
 |   |-- final-qa-checklist.md
 |   `-- demo-walkthrough.md
 |-- .gitignore
@@ -261,18 +262,24 @@ consulting-crm-system/
 | [Development Roadmap](docs/development-roadmap.md) | Phased delivery plan from project foundation to advanced features |
 | [Production Readiness](docs/production-readiness.md) | Production readiness status, environment guidance, security checklist, and known limitations |
 | [Deployment Guide](docs/deployment-guide.md) | Provider-neutral deployment architecture, commands, environment variables, and smoke checks |
+| [Staging Deployment Checklist](docs/staging-deployment-checklist.md) | Provider-neutral staging environment matrix, deployment checklist, smoke tests, rollback, and go/no-go criteria |
 | [Final QA Checklist](docs/final-qa-checklist.md) | Manual QA checklist for public pages, admin CRM modules, security, and production smoke testing |
 | [Demo Walkthrough](docs/demo-walkthrough.md) | Suggested portfolio demo flow, local QA notes, and honest limitations |
 
 ## Production And QA Preparation
 
-Phase 18A adds final local QA and portfolio demo polish without performing a
-real production deployment. Before demoing or deploying, review:
+Phase 18B adds staging deployment preparation without performing a real
+provider deployment. Before demoing, staging, or deploying, review:
 
 - [Production Readiness](docs/production-readiness.md)
 - [Deployment Guide](docs/deployment-guide.md)
+- [Staging Deployment Checklist](docs/staging-deployment-checklist.md)
 - [Final QA Checklist](docs/final-qa-checklist.md)
 - [Demo Walkthrough](docs/demo-walkthrough.md)
+
+Use the staging checklist to record a deployment run and go/no-go decision. Use
+the final QA checklist for full functional verification after staging is
+reachable.
 
 ## Portfolio Demo
 
@@ -402,6 +409,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, documents, and reports |
 | Backend API | Implemented for auth, CRM workflows, documents, dashboard, and reports |
 | Database | Prisma schema, migration, seed, and Neon verification completed |
+| Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Production deployment | Not deployed yet |
 | Document storage | Local development storage only; persistent private object storage remains future work |
 | Auth hardening | JWT Bearer flow implemented; HttpOnly cookie session strategy remains future work |
@@ -409,6 +417,8 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 ## Known Limitations
 
 - No real production or staging deployment has been performed yet.
+- Staging deployment guidance is documented, but provider credentials and real
+  staging URLs are intentionally not committed.
 - Local disk uploads are for development only.
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create backend records yet.
@@ -452,12 +462,13 @@ This project is designed to practice:
 - [x] Route-based bundle optimization
 - [x] Production readiness and final QA preparation
 - [x] Final local QA and portfolio polish
+- [x] Staging deployment preparation
 - [ ] Staging deployment
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Phase 18A complete - Final local QA and portfolio polish
+**Current phase:** Phase 18B complete - Staging deployment preparation
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -491,5 +502,7 @@ route-lazy-loaded for better bundle splitting. Phase 17 adds production
 readiness documentation, a provider-neutral deployment guide, final QA
 checklists, CORS production guidance, environment-variable guidance, and file
 upload/storage warnings. Phase 18A adds local smoke-test coverage, README
-portfolio polish, and a guided demo walkthrough. Staging and real production
-deployment remain future phases.
+portfolio polish, and a guided demo walkthrough. Phase 18B adds a
+provider-neutral staging deployment checklist with environment-variable matrix,
+CORS checks, migration steps, smoke tests, rollback planning, and go/no-go
+criteria. Real staging and production deployments remain future phases.

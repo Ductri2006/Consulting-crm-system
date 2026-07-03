@@ -3,6 +3,10 @@
 Use this manual checklist before promoting the Consulting CRM System from a
 deployment candidate to a public portfolio or production-like environment.
 
+For staging environment setup, CORS checks, migration steps, smoke tests,
+rollback planning, and go/no-go criteria, see
+[Staging Deployment Checklist](staging-deployment-checklist.md).
+
 ## Test Environment
 
 - Environment:
@@ -130,7 +134,10 @@ Reports:
 - [ ] CORS allows only the configured frontend origin or allowlist.
 - [ ] Staff users see only data scoped to their backend permissions.
 
-## Production Smoke
+## Staging/Production Smoke
+
+Use these checks for staging smoke testing as well as later production smoke
+testing.
 
 - [ ] `GET /api/health` returns success.
 - [ ] Admin login returns a sanitized user and access token.
