@@ -281,6 +281,7 @@ backend at `http://localhost:5000` and reads its API base URL from
 - `/admin/cases`
 - `/admin/appointments`
 - `/admin/tasks`
+- `/admin/documents`
 
 ## Run the Backend Foundation Locally
 
@@ -353,12 +354,13 @@ This project is designed to practice:
 - [x] Admin case management UI
 - [x] Assignable users endpoint fix
 - [x] Admin appointments and tasks UI
-- [ ] Admin document management UI
+- [x] Admin document management UI
+- [ ] Reports polish
 - [ ] Deployment
 
 ## Repository Status
 
-**Current phase:** Phase 14 complete - Admin Appointments and Tasks UI
+**Current phase:** Phase 15 complete - Admin Document Management UI
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -383,4 +385,6 @@ adds case search, workflow filters, overdue review, creation, editing, status
 transitions, staff assignment, history, and role-aware deletion. Appointment and
 task management now cover list filters, pagination, create/edit/status/delete
 flows, today appointments, overdue tasks, and role-aware destructive actions.
-Document management pages and deployment remain future phases.
+Document management now covers list/search/filter/pagination, multipart upload,
+detail review, protected download, and role-aware deletion. Reports polish and
+deployment remain future phases.

@@ -50,6 +50,9 @@ npm run build
 - Customers: `/admin/customers`
 - Consultation requests: `/admin/consultation-requests`
 - Cases: `/admin/cases`
+- Appointments: `/admin/appointments`
+- Tasks: `/admin/tasks`
+- Documents: `/admin/documents`
 - Demo account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
 
@@ -61,4 +64,7 @@ and delete workflows. The consultation request page supports list, search,
 status filtering, request details, and status updates. The case management page
 supports search, status and priority filters, overdue cases, pagination,
 creation, editing, status transitions, staff assignment, history, and deletion
-subject to role and backend workflow rules.
+subject to role and backend workflow rules. Appointment and task management add
+schedule filters, today appointments, overdue tasks, creation, editing, status
+updates, and role-aware deletion. Document management adds search, filters,
+multipart upload, protected download, detail review, and role-aware deletion.

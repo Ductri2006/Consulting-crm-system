@@ -19,6 +19,7 @@ import {
   AdminConsultationRequestsPage,
   AdminCustomersPage,
   AdminDashboardPage,
+  AdminDocumentsPage,
   AdminLoginPage,
   AdminNotFoundPage,
   AdminTasksPage,
@@ -57,6 +58,7 @@ export function AppRoutes() {
           <Route path="cases" element={<AdminCasesPage />} />
           <Route path="appointments" element={<AdminAppointmentsPage />} />
           <Route path="tasks" element={<AdminTasksPage />} />
+          <Route path="documents" element={<AdminDocumentsPage />} />
           <Route
             path="consultation-requests"
             element={<AdminConsultationRequestsPage />}
