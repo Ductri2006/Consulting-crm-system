@@ -23,8 +23,8 @@ const navigation = [
     active: true,
   },
   { label: 'Cases', icon: FolderKanban, to: '/admin/cases', active: true },
-  { label: 'Appointments', icon: CalendarDays, active: false },
-  { label: 'Tasks', icon: ClipboardCheck, active: false },
+  { label: 'Appointments', icon: CalendarDays, to: '/admin/appointments', active: true },
+  { label: 'Tasks', icon: ClipboardCheck, to: '/admin/tasks', active: true },
   { label: 'Documents', icon: Files, active: false },
   { label: 'Reports', icon: BarChart3, active: false },
 ]

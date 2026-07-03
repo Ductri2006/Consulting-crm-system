@@ -273,6 +273,15 @@ The public pages use typed local content. The admin dashboard requires the
 backend at `http://localhost:5000` and reads its API base URL from
 `VITE_API_BASE_URL`.
 
+## Admin Pages
+
+- `/admin/dashboard`
+- `/admin/customers`
+- `/admin/consultation-requests`
+- `/admin/cases`
+- `/admin/appointments`
+- `/admin/tasks`
+
 ## Run the Backend Foundation Locally
 
 ```bash
@@ -342,13 +351,14 @@ This project is designed to practice:
 - [x] Admin dashboard frontend foundation
 - [x] Admin customers and consultation requests UI
 - [x] Admin case management UI
-- [ ] Admin appointment and task UI
+- [x] Assignable users endpoint fix
+- [x] Admin appointments and tasks UI
 - [ ] Admin document management UI
 - [ ] Deployment
 
 ## Repository Status
 
-**Current phase:** Phase 13 complete — Admin Case Management UI
+**Current phase:** Phase 14 complete - Admin Appointments and Tasks UI
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -370,5 +380,7 @@ powered by the backend APIs. The first admin management pages add customer
 list, search, pagination, create, edit, and delete workflows plus consultation
 request list, filtering, details, and status updates. The case management page
 adds case search, workflow filters, overdue review, creation, editing, status
-transitions, staff assignment, history, and role-aware deletion. Appointment,
-task, and document management pages and deployment remain future phases.
+transitions, staff assignment, history, and role-aware deletion. Appointment and
+task management now cover list filters, pagination, create/edit/status/delete
+flows, today appointments, overdue tasks, and role-aware destructive actions.
+Document management pages and deployment remain future phases.

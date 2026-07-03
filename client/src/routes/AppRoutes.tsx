@@ -14,12 +14,14 @@ import { ProjectsPage } from '../pages/ProjectsPage'
 import { ServiceDetailPage } from '../pages/ServiceDetailPage'
 import { ServicesPage } from '../pages/ServicesPage'
 import {
+  AdminAppointmentsPage,
   AdminCasesPage,
   AdminConsultationRequestsPage,
   AdminCustomersPage,
   AdminDashboardPage,
   AdminLoginPage,
   AdminNotFoundPage,
+  AdminTasksPage,
 } from '../pages/admin'
 
 function AdminIndexRoute() {
@@ -53,6 +55,8 @@ export function AppRoutes() {
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="customers" element={<AdminCustomersPage />} />
           <Route path="cases" element={<AdminCasesPage />} />
+          <Route path="appointments" element={<AdminAppointmentsPage />} />
+          <Route path="tasks" element={<AdminTasksPage />} />
           <Route
             path="consultation-requests"
             element={<AdminConsultationRequestsPage />}
