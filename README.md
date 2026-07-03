@@ -4,7 +4,10 @@
 
 ## Introduction
 
-Consulting CRM System is a planned fullstack web application for consulting businesses. It brings together a public-facing business website and an internal CRM dashboard for managing customers, consultation requests, case profiles, appointments, tasks, documents, users, and business reports.
+Consulting CRM System is a fullstack portfolio application for consulting
+business operations. It combines a public-facing consulting website with a
+protected internal CRM dashboard for managing customers, consultation requests,
+case profiles, appointments, tasks, documents, users, dashboards, and reports.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -13,7 +16,8 @@ The project models the day-to-day operations of a consulting organization workin
 The purpose of this project is to simulate a real-world business management system rather than only a landing page or a basic CRUD application. It focuses on a complete operational workflow:
 
 1. A customer visits the public website.
-2. The customer submits a consultation request or books an appointment.
+2. The customer submits a consultation request or reviews contact and
+   appointment request flows.
 3. Internal staff receive and review the request.
 4. A customer record and consulting case profile are created.
 5. The case follows a defined business workflow.
@@ -53,9 +57,9 @@ This project addresses that need with a centralized platform that connects publi
 ### Customer Reception
 
 - Online consultation request submission
-- Contact message submission
-- Appointment booking
-- Optional file attachments
+- Contact form validation flow
+- Appointment request validation flow
+- Admin document upload after a customer or case exists
 - Confirmation after a successful submission
 - Request status tracking in a future customer portal
 
@@ -163,7 +167,7 @@ The platform is divided into the following functional modules:
 | Task Management | Assigns operational work and tracks progress and deadlines |
 | Document Management | Stores metadata and links files to customers and cases |
 | User Management | Maintains staff accounts, roles, and active status |
-| Content Management | Manages public services, news, and project gallery content |
+| Public Content Catalog | Uses typed local content for services, news, and project gallery pages |
 | Dashboard and Reporting | Summarizes workload, performance, appointments, and deadlines |
 | Activity Logging | Records important user actions for traceability |
 
@@ -171,11 +175,11 @@ For a detailed breakdown, see [System Module Breakdown](docs/module-breakdown.md
 
 ## Case Workflow
 
-A consulting case profile follows this planned workflow:
+A consulting case profile follows this workflow:
 
 ```text
-Received → Verifying → Proposing Solution → Processing → Completed
-    └──────────────────────────────────────────────────→ Cancelled
+Received -> Verifying -> Proposing Solution -> Processing -> Completed
+     \--------------------------------------------------------------> Cancelled
 ```
 
 Each case profile stores:
@@ -225,24 +229,25 @@ Each case profile stores:
 
 ```text
 consulting-crm-system/
-├── client/
-│   ├── src/
-│   └── README.md
-├── server/
-│   ├── prisma/
-│   ├── src/
-│   └── README.md
-├── docs/
-│   ├── requirement-analysis.md
-│   ├── module-breakdown.md
-│   ├── database-design.md
-│   ├── api-documentation.md
-│   ├── development-roadmap.md
-│   ├── production-readiness.md
-│   ├── deployment-guide.md
-│   └── final-qa-checklist.md
-├── .gitignore
-└── README.md
+|-- client/
+|   |-- src/
+|   `-- README.md
+|-- server/
+|   |-- prisma/
+|   |-- src/
+|   `-- README.md
+|-- docs/
+|   |-- requirement-analysis.md
+|   |-- module-breakdown.md
+|   |-- database-design.md
+|   |-- api-documentation.md
+|   |-- development-roadmap.md
+|   |-- production-readiness.md
+|   |-- deployment-guide.md
+|   |-- final-qa-checklist.md
+|   `-- demo-walkthrough.md
+|-- .gitignore
+`-- README.md
 ```
 
 ## Documentation
@@ -257,15 +262,60 @@ consulting-crm-system/
 | [Production Readiness](docs/production-readiness.md) | Production readiness status, environment guidance, security checklist, and known limitations |
 | [Deployment Guide](docs/deployment-guide.md) | Provider-neutral deployment architecture, commands, environment variables, and smoke checks |
 | [Final QA Checklist](docs/final-qa-checklist.md) | Manual QA checklist for public pages, admin CRM modules, security, and production smoke testing |
+| [Demo Walkthrough](docs/demo-walkthrough.md) | Suggested portfolio demo flow, local QA notes, and honest limitations |
 
 ## Production And QA Preparation
 
-Phase 17 adds production-readiness documentation and final QA preparation
-without performing a real production deployment. Before deploying, review:
+Phase 18A adds final local QA and portfolio demo polish without performing a
+real production deployment. Before demoing or deploying, review:
 
 - [Production Readiness](docs/production-readiness.md)
 - [Deployment Guide](docs/deployment-guide.md)
 - [Final QA Checklist](docs/final-qa-checklist.md)
+- [Demo Walkthrough](docs/demo-walkthrough.md)
+
+## Portfolio Demo
+
+Local URLs:
+
+- Public website: `http://localhost:5173`
+- Backend API: `http://localhost:5000/api`
+- Health check: `http://localhost:5000/api/health`
+
+Local demo account:
+
+```text
+Email: admin@advisora.demo
+Password: password123
+Role: ADMIN
+```
+
+Use only fictional demo data. Do not paste real customer data, real database
+URLs, access tokens, or production credentials into the app, docs, commits, or
+screenshots.
+
+Recommended demo order:
+
+1. README overview.
+2. Public homepage and services.
+3. Public consultation form.
+4. Admin login and dashboard.
+5. Customers and consultation requests.
+6. Cases, appointments, tasks, and documents.
+7. Reports.
+8. Production readiness and final QA docs.
+
+See [Demo Walkthrough](docs/demo-walkthrough.md) for the full script.
+
+## Screenshots
+
+Screenshots are not committed yet. Suggested portfolio captures:
+
+- Public homepage.
+- Admin dashboard.
+- Case workflow.
+- Document management.
+- Reports page.
 
 ## Run the Public Website Locally
 
@@ -282,12 +332,14 @@ Create a production build with:
 npm run build
 ```
 
-The public pages use typed local content. The admin dashboard requires the
-backend at `http://localhost:5000` and reads its API base URL from
-`VITE_API_BASE_URL`.
+The public pages use typed local content. The admin dashboard and public
+consultation form require the backend API. The client reads its API base URL
+from `VITE_API_BASE_URL`, which should be `http://localhost:5000/api` for local
+development.
 
 ## Admin Pages
 
+- `/admin/login`
 - `/admin/dashboard`
 - `/admin/customers`
 - `/admin/consultation-requests`
@@ -311,14 +363,14 @@ The health endpoint is available at `GET /api/health`. See the [backend README](
 
 ## Development Roadmap
 
-1. **Project foundation and documentation** — repository structure, requirements, data model, API plan, and roadmap
-2. **Public website** — responsive pages, reusable components, and customer-facing forms
-3. **Backend foundation** — Express, TypeScript, Prisma, PostgreSQL, validation, and error handling
-4. **Authentication and authorization** — JWT authentication and role-based access control
-5. **Core CRM APIs** — customers, services, case profiles, appointments, tasks, and documents
-6. **Admin dashboard** — operational interfaces for staff, managers, and administrators
-7. **Reporting and deployment** — dashboards, production infrastructure, and portfolio presentation
-8. **Advanced features** — customer portal, notifications, OCR, analytics, and multi-branch support
+1. **Project foundation and documentation** - repository structure, requirements, data model, API plan, and roadmap
+2. **Public website** - responsive pages, reusable components, and customer-facing forms
+3. **Backend foundation** - Express, TypeScript, Prisma, PostgreSQL, validation, and error handling
+4. **Authentication and authorization** - JWT authentication and role-based access control
+5. **Core CRM APIs** - customers, services, case profiles, appointments, tasks, and documents
+6. **Admin dashboard** - operational interfaces for staff, managers, and administrators
+7. **Reporting and deployment** - dashboards, production infrastructure, and portfolio presentation
+8. **Advanced features** - customer portal, notifications, OCR, analytics, and multi-branch support
 
 See the [Development Roadmap](docs/development-roadmap.md) for the complete phase-by-phase plan.
 
@@ -334,6 +386,33 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Export to Excel and PDF
 - Automated testing and continuous delivery
 - Accessibility, security, and performance audits
+- Staging deployment
+- Persistent object storage for documents
+- HttpOnly cookie authentication
+- Login and public-form rate limiting
+- Automated end-to-end tests
+
+## Implemented Vs Future
+
+| Area | Current status |
+| --- | --- |
+| Public website | Implemented with typed local content and responsive routes |
+| Public consultation request | Submits to the backend public consultation API |
+| Public contact and appointment forms | Validation/demo flows only; backend intake remains future work |
+| Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, documents, and reports |
+| Backend API | Implemented for auth, CRM workflows, documents, dashboard, and reports |
+| Database | Prisma schema, migration, seed, and Neon verification completed |
+| Production deployment | Not deployed yet |
+| Document storage | Local development storage only; persistent private object storage remains future work |
+| Auth hardening | JWT Bearer flow implemented; HttpOnly cookie session strategy remains future work |
+
+## Known Limitations
+
+- No real production or staging deployment has been performed yet.
+- Local disk uploads are for development only.
+- Access tokens are stored in browser local storage for the portfolio demo.
+- Contact and appointment public forms validate locally but do not create backend records yet.
+- No customer portal, OCR, malware scanning, cloud object storage, report exports, realtime updates, production rate limiting, or centralized observability yet.
 
 ## Learning Goals
 
@@ -372,12 +451,13 @@ This project is designed to practice:
 - [x] Admin reports UI
 - [x] Route-based bundle optimization
 - [x] Production readiness and final QA preparation
+- [x] Final local QA and portfolio polish
+- [ ] Staging deployment
 - [ ] Production deployment
-- [ ] Portfolio polish
 
 ## Repository Status
 
-**Current phase:** Phase 17 complete - Production readiness and final QA preparation
+**Current phase:** Phase 18A complete - Final local QA and portfolio polish
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -410,5 +490,6 @@ performance is available only to administrators and managers. Admin pages are
 route-lazy-loaded for better bundle splitting. Phase 17 adds production
 readiness documentation, a provider-neutral deployment guide, final QA
 checklists, CORS production guidance, environment-variable guidance, and file
-upload/storage warnings. Real production deployment and portfolio polish remain
-future phases.
+upload/storage warnings. Phase 18A adds local smoke-test coverage, README
+portfolio polish, and a guided demo walkthrough. Staging and real production
+deployment remain future phases.

@@ -45,7 +45,9 @@ npm run build
 
 The production build output is `dist`. For deployment, set
 `VITE_API_BASE_URL` to the deployed backend API base URL, including `/api`.
-Do not hard-code the production API URL in source files.
+Do not hard-code the production API URL in source files. The public
+consultation form uses this API base URL; contact and appointment forms are
+validation/demo flows until their public backend intake endpoints are added.
 
 ## Admin Dashboard
 

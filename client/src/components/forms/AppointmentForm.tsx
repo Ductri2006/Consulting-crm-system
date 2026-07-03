@@ -45,8 +45,7 @@ export function AppointmentForm() {
     },
   })
 
-  const onSubmit = (values: AppointmentFormValues) => {
-    console.log('Appointment request submitted:', values)
+  const onSubmit = () => {
     reset()
     setIsSuccessful(true)
   }

@@ -587,7 +587,7 @@ realtime updates, or real production deployment.
 - Extended activity auditing and case-history retention policies
 - Public news and project content APIs
 - Rate limiting, abuse protection, private file storage, and production observability
-- Custom database checks for document ownership and other cross-field rules documented in `docs/database-design.md`
+- Custom database checks for document ownership and other cross-field rules documented in `../docs/database-design.md`
 
 Customer, service, consultation-request, case-profile workflow, appointment,
 task, document-management, dashboard, and reporting APIs are available.

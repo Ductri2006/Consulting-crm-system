@@ -203,7 +203,9 @@ After deployment, verify:
 - Reports overview, status chart, monthly trend, deadlines, staff performance,
   and recent activities load.
 - Public website routes load.
-- Public consultation and appointment forms submit successfully.
+- Public consultation form submits successfully.
+- Public contact and appointment forms validate locally as documented demo
+  flows.
 
 ## Rollback Notes
 

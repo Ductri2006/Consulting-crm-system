@@ -34,10 +34,11 @@ Do not paste real secrets, database URLs, or access tokens into this document.
 - [ ] News page loads.
 - [ ] News detail page loads.
 - [ ] Contact page loads.
+- [ ] Contact form validates required fields.
 - [ ] Consultation form validates required fields.
-- [ ] Consultation form submits successfully.
+- [ ] Consultation form submits successfully to the backend public consultation API.
 - [ ] Appointment form validates required fields.
-- [ ] Appointment form submits successfully.
+- [ ] Appointment form shows the expected validation/demo success flow.
 - [ ] Public routes are responsive on mobile, tablet, and desktop.
 
 ## Admin Authentication
@@ -104,7 +105,8 @@ Reports:
 - [ ] `/admin/reports` loads from a refreshed deep link.
 - [ ] Overview summary loads.
 - [ ] Cases by status loads.
-- [ ] Cases by month loads with the default last-30-days range.
+- [ ] Cases by month loads with the admin UI default last-30-days range.
+- [ ] Clearing the date range falls back to the backend default reporting window.
 - [ ] Date range changes update monthly and staff reports.
 - [ ] Invalid date range blocks report requests.
 - [ ] Upcoming deadlines days selector works for 7, 14, and 30 days.
@@ -135,8 +137,26 @@ Reports:
 - [ ] Dashboard API returns data.
 - [ ] Document upload and download work.
 - [ ] Reports APIs return data for an admin account.
-- [ ] Public forms submit to the backend.
+- [ ] Public consultation form submits to the backend.
+- [ ] Public contact and appointment forms validate locally as documented demo flows.
 - [ ] Refreshing a protected admin deep link keeps or restores session correctly.
+
+## Step 18A Local QA Record
+
+- [x] Backend health check passed locally.
+- [x] Invalid login and valid admin login passed locally.
+- [x] Protected API request without token returned `401`.
+- [x] Public consultation create passed and QA record was cleaned up.
+- [x] Customer create/edit/search/delete smoke passed.
+- [x] Consultation request list/detail/status smoke passed.
+- [x] Case create/edit/status/assign/history/overdue smoke passed.
+- [x] Appointment create/edit/status/today/delete smoke passed.
+- [x] Task create/edit/status/overdue/delete smoke passed.
+- [x] Document upload/detail/download/delete smoke passed.
+- [x] Reports endpoints and invalid date range validation passed.
+- [x] QA customer/case/appointment/task/document data was cleaned up.
+- [ ] Browser screenshot pass remains required before staging because the
+  in-app browser connector was unavailable in the Step 18A environment.
 
 ## Final Sign-Off
 

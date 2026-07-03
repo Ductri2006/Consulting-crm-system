@@ -162,6 +162,7 @@ Recommended later upgrade:
 - File storage is local and development-oriented.
 - No refresh tokens or token revocation workflow yet.
 - Current frontend token storage uses local storage, not HttpOnly cookies.
+- Public contact and appointment forms are validation/demo flows only.
 - No password reset or account-management UI yet.
 - No production rate limiting, captcha, or dedicated abuse-protection layer yet.
 - No centralized production logging, metrics, or alerting yet.

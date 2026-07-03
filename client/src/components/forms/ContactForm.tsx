@@ -33,8 +33,7 @@ export function ContactForm() {
     },
   })
 
-  const onSubmit = (values: ContactFormValues) => {
-    console.log('Contact request submitted:', values)
+  const onSubmit = () => {
     reset()
     setIsSuccessful(true)
   }

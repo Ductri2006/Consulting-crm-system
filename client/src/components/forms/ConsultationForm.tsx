@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Send } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { apiClient } from '../../lib/apiClient'
 
 const consultationSchema = z.object({
   fullName: z.string().trim().min(2, 'Please enter your full name.'),
@@ -31,6 +32,7 @@ const serviceOptions = [
 
 export function ConsultationForm() {
   const [isSuccessful, setIsSuccessful] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -47,10 +49,21 @@ export function ConsultationForm() {
     },
   })
 
-  const onSubmit = (values: ConsultationFormValues) => {
-    console.log('Consultation request submitted:', values)
-    reset()
-    setIsSuccessful(true)
+  const onSubmit = async (values: ConsultationFormValues) => {
+    setSubmitError(null)
+
+    try {
+      await apiClient.post('/public/consultation-requests', {
+        fullName: values.fullName,
+        phone: values.phone,
+        email: values.email || undefined,
+        message: `Service type: ${values.serviceType}\n\n${values.message}`,
+      })
+      reset()
+      setIsSuccessful(true)
+    } catch {
+      setSubmitError('We could not submit your request. Please try again.')
+    }
   }
 
   if (isSuccessful) {
@@ -227,6 +240,12 @@ export function ConsultationForm() {
           </p>
         )}
       </div>
+
+      {submitError ? (
+        <p className="field-error" role="alert">
+          {submitError}
+        </p>
+      ) : null}
 
       <button
         type="submit"
