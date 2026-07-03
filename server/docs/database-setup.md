@@ -36,15 +36,14 @@ From the `server` directory, create the untracked environment file:
 Copy-Item .env.example .env
 ```
 
-Set `DATABASE_URL` in `.env`. This local-only example assumes the development
-user and password are both `postgres`:
+Set `DATABASE_URL` in `.env` to your local PostgreSQL connection string:
 
 ```dotenv
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/consulting_crm_system?schema=public"
+DATABASE_URL="<local-postgres-connection-url>"
 ```
 
-Use your own local password if it differs. Do not use this example credential
-in a shared or production environment.
+Use only local development credentials here. Do not use local example
+credentials in a shared or production environment.
 
 ## Option B: Supabase or Neon
 
@@ -58,7 +57,7 @@ in a shared or production environment.
 A redacted shape is:
 
 ```dotenv
-DATABASE_URL="postgresql://DB_USER:URL_ENCODED_PASSWORD@DB_HOST:5432/DB_NAME?schema=public&sslmode=require"
+DATABASE_URL="<managed-postgres-connection-url-with-sslmode-if-required>"
 ```
 
 Never paste a real connection string into documentation, source code, terminal

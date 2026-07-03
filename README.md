@@ -191,7 +191,7 @@ Each case profile stores:
 - Attached documents
 - Case history
 
-## Planned Tech Stack
+## Tech Stack
 
 ### Frontend
 
@@ -202,8 +202,6 @@ Each case profile stores:
 - React Router
 - React Hook Form
 - Zod
-- Axios or TanStack Query
-- Recharts
 
 ### Backend
 
@@ -218,28 +216,31 @@ Each case profile stores:
 
 ### Deployment
 
-- Frontend: Vercel
-- Backend: Render or Railway
-- Database: Supabase or Neon
-- File storage: Cloudinary or Supabase Storage
-
-> The technologies above are planned for later phases. No frontend or backend application code is included in the current foundation phase.
+- Frontend: static hosting for the Vite build output
+- Backend: Node-compatible runtime for the Express API
+- Database: Neon PostgreSQL or another managed PostgreSQL provider
+- File storage: private persistent object storage in a later production phase
 
 ## Project Structure
 
 ```text
 consulting-crm-system/
 ├── client/
-│   └── .gitkeep
+│   ├── src/
+│   └── README.md
 ├── server/
-│   └── .gitkeep
+│   ├── prisma/
+│   ├── src/
+│   └── README.md
 ├── docs/
 │   ├── requirement-analysis.md
 │   ├── module-breakdown.md
 │   ├── database-design.md
 │   ├── api-documentation.md
-│   └── development-roadmap.md
-├── .editorconfig
+│   ├── development-roadmap.md
+│   ├── production-readiness.md
+│   ├── deployment-guide.md
+│   └── final-qa-checklist.md
 ├── .gitignore
 └── README.md
 ```
@@ -253,6 +254,18 @@ consulting-crm-system/
 | [Database Design](docs/database-design.md) | Planned entities, relationships, enums, indexes, and initial Prisma schema |
 | [API Documentation](docs/api-documentation.md) | Planned REST resources, endpoints, payloads, and response conventions |
 | [Development Roadmap](docs/development-roadmap.md) | Phased delivery plan from project foundation to advanced features |
+| [Production Readiness](docs/production-readiness.md) | Production readiness status, environment guidance, security checklist, and known limitations |
+| [Deployment Guide](docs/deployment-guide.md) | Provider-neutral deployment architecture, commands, environment variables, and smoke checks |
+| [Final QA Checklist](docs/final-qa-checklist.md) | Manual QA checklist for public pages, admin CRM modules, security, and production smoke testing |
+
+## Production And QA Preparation
+
+Phase 17 adds production-readiness documentation and final QA preparation
+without performing a real production deployment. Before deploying, review:
+
+- [Production Readiness](docs/production-readiness.md)
+- [Deployment Guide](docs/deployment-guide.md)
+- [Final QA Checklist](docs/final-qa-checklist.md)
 
 ## Run the Public Website Locally
 
@@ -358,12 +371,13 @@ This project is designed to practice:
 - [x] Admin document management UI
 - [x] Admin reports UI
 - [x] Route-based bundle optimization
-- [ ] Production deployment preparation
-- [ ] Final QA and portfolio polish
+- [x] Production readiness and final QA preparation
+- [ ] Production deployment
+- [ ] Portfolio polish
 
 ## Repository Status
 
-**Current phase:** Phase 16 complete - Admin Reports UI and Route-Based Bundle Optimization
+**Current phase:** Phase 17 complete - Production readiness and final QA preparation
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -393,5 +407,8 @@ detail review, protected download, and role-aware deletion. Reports now use the
 dashboard/reporting APIs for overview metrics, case status distribution, monthly
 case trends, upcoming deadlines, staff performance, and recent activities. Staff
 performance is available only to administrators and managers. Admin pages are
-route-lazy-loaded for better bundle splitting. Production deployment
-preparation and final portfolio QA remain future phases.
+route-lazy-loaded for better bundle splitting. Phase 17 adds production
+readiness documentation, a provider-neutral deployment guide, final QA
+checklists, CORS production guidance, environment-variable guidance, and file
+upload/storage warnings. Real production deployment and portfolio polish remain
+future phases.

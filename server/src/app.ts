@@ -9,11 +9,12 @@ import { notFoundMiddleware } from "./middlewares/notFound.middleware";
 import { apiRouter } from "./routes";
 
 const app = express();
+const allowedOrigins = env.CLIENT_URL.split(",").map((origin) => origin.trim());
 
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: allowedOrigins,
   }),
 );
 app.use(express.json());

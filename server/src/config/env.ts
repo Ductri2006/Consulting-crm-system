@@ -3,6 +3,22 @@ import { z } from "zod";
 
 dotenv.config({ quiet: true });
 
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const isClientUrlList = (value: string): boolean =>
+  value
+    .split(",")
+    .map((origin) => origin.trim())
+    .every((origin) => origin.length > 0 && isHttpUrl(origin));
+
 const envSchema = z.object({
   PORT: z.coerce
     .number()
@@ -24,10 +40,14 @@ const envSchema = z.object({
         value.startsWith("postgresql://") || value.startsWith("postgres://"),
       "DATABASE_URL must be a PostgreSQL connection URL.",
     ),
-  CLIENT_URL: z.url({
-    protocol: /^https?$/,
-    error: "CLIENT_URL must be a valid HTTP or HTTPS URL.",
-  }),
+  CLIENT_URL: z
+    .string({ error: "CLIENT_URL is required." })
+    .trim()
+    .min(1, "CLIENT_URL is required.")
+    .refine(
+      isClientUrlList,
+      "CLIENT_URL must be one or more comma-separated HTTP or HTTPS URLs.",
+    ),
   JWT_SECRET: z
     .string({ error: "JWT_SECRET is required." })
     .trim()

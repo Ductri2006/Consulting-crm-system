@@ -7,6 +7,8 @@ import { z } from "zod";
 
 import { env } from "../config/env";
 
+const ACCESS_TOKEN_ALGORITHM: SignOptions["algorithm"] = "HS256";
+
 const accessTokenPayloadSchema = z.object({
   sub: z.uuid(),
   role: z.enum(UserRole),
@@ -17,6 +19,7 @@ export type AccessTokenPayload = z.infer<typeof accessTokenPayloadSchema>;
 
 export const signAccessToken = (payload: AccessTokenPayload): string => {
   const options: SignOptions = {
+    algorithm: ACCESS_TOKEN_ALGORITHM,
     expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"],
   };
 
@@ -24,7 +27,9 @@ export const signAccessToken = (payload: AccessTokenPayload): string => {
 };
 
 export const verifyAccessToken = (token: string): AccessTokenPayload => {
-  const decoded = jwt.verify(token, env.JWT_SECRET);
+  const decoded = jwt.verify(token, env.JWT_SECRET, {
+    algorithms: [ACCESS_TOKEN_ALGORITHM],
+  });
   const result = accessTokenPayloadSchema.safeParse(decoded);
 
   if (!result.success) {

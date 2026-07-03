@@ -43,6 +43,10 @@ Create a production build with:
 npm run build
 ```
 
+The production build output is `dist`. For deployment, set
+`VITE_API_BASE_URL` to the deployed backend API base URL, including `/api`.
+Do not hard-code the production API URL in source files.
+
 ## Admin Dashboard
 
 - Login: `/admin/login`
@@ -57,8 +61,13 @@ npm run build
 - Demo account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
 
+The demo account is for local portfolio testing only and must not be used as a
+real production credential.
+
 The token is stored in browser local storage for this local portfolio
 environment. Do not commit local environment files, tokens, or other secrets.
+Before handling real customer data in production, review this token storage
+strategy and consider an HttpOnly secure cookie session flow.
 The public website routes remain available alongside the protected admin
 workspace. The customer page supports list, search, pagination, create, edit,
 and delete workflows. The consultation request page supports list, search,

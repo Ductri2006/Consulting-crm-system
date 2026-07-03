@@ -43,7 +43,7 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `PORT` | Yes | HTTP port, defaults to the example value `5000` |
 | `NODE_ENV` | Yes | `development`, `test`, or `production` |
 | `DATABASE_URL` | Yes | PostgreSQL connection URL used by Prisma |
-| `CLIENT_URL` | Yes | Allowed frontend origin for CORS |
+| `CLIENT_URL` | Yes | Allowed frontend origin for CORS, or comma-separated allowed origins |
 | `JWT_SECRET` | Yes | Secret used to sign access tokens; use at least 32 characters |
 | `JWT_EXPIRES_IN` | Yes | Access-token lifetime, for example `7d` |
 | `UPLOAD_DIR` | No | Local-development upload directory, defaults to `uploads` |
@@ -54,13 +54,18 @@ Example:
 ```dotenv
 PORT=5000
 NODE_ENV=development
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/consulting_crm_system?schema=public"
+DATABASE_URL="<postgres-connection-url>"
 CLIENT_URL="http://localhost:5173"
-JWT_SECRET="replace-this-with-a-secure-secret-of-at-least-32-characters"
+JWT_SECRET="<strong-private-secret-at-least-32-characters>"
 JWT_EXPIRES_IN="7d"
 UPLOAD_DIR="uploads"
 MAX_FILE_SIZE_MB=10
 ```
+
+`CLIENT_URL` can be a single origin such as `http://localhost:5173` or a
+comma-separated allowlist such as
+`http://localhost:5173,<frontend-origin>`. Do not use wildcard origins for
+authenticated production traffic, and do not leave trailing commas.
 
 Do not commit `.env` or use the example database credentials in a shared or production environment.
 
@@ -126,6 +131,9 @@ Expected response:
 ```
 
 The timestamp is generated at request time.
+
+This endpoint is a liveness check for the API process. It does not verify
+database connectivity or storage readiness.
 
 ## Authentication and authorization
 
@@ -438,7 +446,9 @@ file is missing.
 
 Development uploads are stored under `server/uploads` by default. The upload
 directory and maximum file size are configured with `UPLOAD_DIR` and
-`MAX_FILE_SIZE_MB`. Uploaded files are ignored by Git and must not be committed.
+`MAX_FILE_SIZE_MB`. Relative `UPLOAD_DIR` values are resolved from the server
+process working directory. Uploaded files are ignored by Git and must not be
+committed.
 
 The upload pipeline checks both the extension and declared MIME type, rejects
 executable and script formats, generates a randomized physical filename, and
@@ -447,9 +457,9 @@ validation or database persistence fails, the already-written local file is
 removed.
 
 Local disk is intended for development only. Production deployments should use
-private object storage such as Amazon S3, Cloudinary, or Supabase Storage,
-together with authenticated or short-lived signed access. OCR and cloud
-storage integration are outside Phase 8.
+private persistent object storage, together with authenticated or short-lived
+signed access. Local upload folders are not safe for ephemeral or multi-instance
+hosting. OCR and cloud storage integration are outside this phase.
 
 ### Dashboard and reporting
 
@@ -552,7 +562,8 @@ JWT secrets must be unique, randomly generated, and supplied through environment
 
 ## Implementation status
 
-Phase 10.5 records a successful live Neon PostgreSQL verification. The
+Phase 17 records production readiness and final QA preparation. Phase 10.5
+records a successful live Neon PostgreSQL verification. The
 committed migration deployed successfully, the idempotent seed completed, and
 `db:verify` confirmed one seeded administrator and all four required active
 services. The health endpoint and administrator login also passed, with a
@@ -563,9 +574,10 @@ result is available in the
 The backend includes customer and service management, consultation-request
 triage, protected case-profile workflows, appointment scheduling, internal
 task management, authenticated document management, and role-aware dashboard
-and reporting APIs. It does not include request-to-customer conversion, OCR,
-cloud object storage, report exports, realtime updates, or the admin dashboard
-UI.
+and reporting APIs. The repository also includes production readiness,
+deployment, and final QA documentation. It does not include
+request-to-customer conversion, OCR, cloud object storage, report exports,
+realtime updates, or real production deployment.
 
 ## Future phases
 
