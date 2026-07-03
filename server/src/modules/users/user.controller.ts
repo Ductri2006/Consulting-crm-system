@@ -3,7 +3,11 @@ import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { AppError } from "../../utils/AppError";
 import { successResponse } from "../../utils/apiResponse";
-import { findUserById, findUsers } from "./user.service";
+import {
+  findAssignableUsers,
+  findUserById,
+  findUsers,
+} from "./user.service";
 
 export const getUsers = async (
   _request: Request,
@@ -14,6 +18,19 @@ export const getUsers = async (
   response
     .status(HTTP_STATUS.OK)
     .json(successResponse("Users retrieved successfully.", { users }));
+};
+
+export const getAssignableUsers = async (
+  _request: Request,
+  response: Response,
+): Promise<void> => {
+  const users = await findAssignableUsers();
+
+  response
+    .status(HTTP_STATUS.OK)
+    .json(
+      successResponse("Assignable users retrieved successfully.", { users }),
+    );
 };
 
 export const getUser = async (

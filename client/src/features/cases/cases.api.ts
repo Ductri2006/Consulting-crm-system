@@ -153,4 +153,4 @@ export const listCaseServices = (): Promise<ServiceOptionListResponse> =>
   apiClient.get<ServiceOptionListResponse>('/services?page=1&limit=100')
 
 export const listAssignableUsers = (): Promise<UserOptionListResponse> =>
-  apiClient.get<UserOptionListResponse>('/users?page=1&limit=100')
+  apiClient.get<UserOptionListResponse>('/users/assignable')

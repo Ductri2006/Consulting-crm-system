@@ -5,16 +5,26 @@ import { authenticate } from "../../middlewares/auth.middleware";
 import { authorizeRoles } from "../../middlewares/authorize.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { getUser, getUsers } from "./user.controller";
+import {
+  getAssignableUsers,
+  getUser,
+  getUsers,
+} from "./user.controller";
 import { userIdParamsSchema } from "./user.validation";
 
 const userRouter = Router();
 
-userRouter.use(authenticate, authorizeRoles(UserRole.ADMIN));
+userRouter.use(authenticate);
 
-userRouter.get("/", asyncHandler(getUsers));
+userRouter.get(
+  "/assignable",
+  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
+  asyncHandler(getAssignableUsers),
+);
+userRouter.get("/", authorizeRoles(UserRole.ADMIN), asyncHandler(getUsers));
 userRouter.get(
   "/:id",
+  authorizeRoles(UserRole.ADMIN),
   validate({ params: userIdParamsSchema }),
   asyncHandler(getUser),
 );

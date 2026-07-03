@@ -167,6 +167,18 @@ Authorization: Bearer <token>
 
 Logout acknowledges the client request. Tokens are stateless in this phase, so the client must remove its stored access token.
 
+### Assignable users
+
+```http
+GET /api/users/assignable
+Authorization: Bearer <token>
+```
+
+This endpoint is available to active `ADMIN` and `MANAGER` users for case
+assignment. It returns only active CRM users with the `ADMIN`, `MANAGER`, or
+`STAFF` role and exposes only safe profile fields; it never includes
+`passwordHash`.
+
 ### Admin-only users
 
 ```http

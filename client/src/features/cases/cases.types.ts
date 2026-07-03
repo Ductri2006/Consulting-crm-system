@@ -211,7 +211,16 @@ export interface ServiceOptionListResponse {
   meta: PaginationMeta
 }
 
-export type UserOption = SafeCaseUser
+export type UserOption = Pick<
+  SafeCaseUser,
+  | 'id'
+  | 'fullName'
+  | 'email'
+  | 'phone'
+  | 'role'
+  | 'avatarUrl'
+  | 'isActive'
+>
 
 export interface UserOptionListResponse {
   users: UserOption[]
