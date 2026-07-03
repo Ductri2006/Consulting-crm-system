@@ -1,3 +1,5 @@
 export { AdminDashboardPage } from './AdminDashboardPage'
+export { AdminConsultationRequestsPage } from './AdminConsultationRequestsPage'
+export { AdminCustomersPage } from './AdminCustomersPage'
 export { AdminLoginPage } from './AdminLoginPage'
 export { AdminNotFoundPage } from './AdminNotFoundPage'

@@ -5,6 +5,7 @@ import {
   Files,
   FolderKanban,
   LayoutDashboard,
+  MessageSquareText,
   Scale,
   UsersRound,
   X,
@@ -14,7 +15,13 @@ import { cn } from '../../utils/cn'
 
 const navigation = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/admin/dashboard', active: true },
-  { label: 'Customers', icon: UsersRound, active: false },
+  { label: 'Customers', icon: UsersRound, to: '/admin/customers', active: true },
+  {
+    label: 'Consultation Requests',
+    icon: MessageSquareText,
+    to: '/admin/consultation-requests',
+    active: true,
+  },
   { label: 'Cases', icon: FolderKanban, active: false },
   { label: 'Appointments', icon: CalendarDays, active: false },
   { label: 'Tasks', icon: ClipboardCheck, active: false },

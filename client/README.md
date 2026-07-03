@@ -1,8 +1,8 @@
 # Advisora Frontend
 
 The `client` directory contains the responsive public website and the admin
-dashboard foundation for the Consulting CRM System portfolio project. Advisora
-is a fictional consulting brand used for the demonstration interface.
+workspace for the Consulting CRM System portfolio project. Advisora is a
+fictional consulting brand used for the demonstration interface.
 
 ## Stack
 
@@ -47,10 +47,14 @@ npm run build
 
 - Login: `/admin/login`
 - Dashboard: `/admin/dashboard`
+- Customers: `/admin/customers`
+- Consultation requests: `/admin/consultation-requests`
 - Demo account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
 
 The token is stored in browser local storage for this local portfolio
 environment. Do not commit local environment files, tokens, or other secrets.
 The public website routes remain available alongside the protected admin
-dashboard.
+workspace. The customer page supports list, search, pagination, create, edit,
+and delete workflows. The consultation request page supports list, search,
+status filtering, request details, and status updates.
