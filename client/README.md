@@ -53,6 +53,7 @@ npm run build
 - Appointments: `/admin/appointments`
 - Tasks: `/admin/tasks`
 - Documents: `/admin/documents`
+- Reports: `/admin/reports`
 - Demo account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
 
@@ -68,3 +69,6 @@ subject to role and backend workflow rules. Appointment and task management add
 schedule filters, today appointments, overdue tasks, creation, editing, status
 updates, and role-aware deletion. Document management adds search, filters,
 multipart upload, protected download, detail review, and role-aware deletion.
+Reports use the dashboard/reporting APIs for operational insight, with staff
+performance available to administrators and managers only. Admin and public page
+routes are lazy-loaded to keep the initial bundle smaller.

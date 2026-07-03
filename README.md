@@ -282,6 +282,7 @@ backend at `http://localhost:5000` and reads its API base URL from
 - `/admin/appointments`
 - `/admin/tasks`
 - `/admin/documents`
+- `/admin/reports`
 
 ## Run the Backend Foundation Locally
 
@@ -355,12 +356,14 @@ This project is designed to practice:
 - [x] Assignable users endpoint fix
 - [x] Admin appointments and tasks UI
 - [x] Admin document management UI
-- [ ] Reports polish
-- [ ] Deployment
+- [x] Admin reports UI
+- [x] Route-based bundle optimization
+- [ ] Production deployment preparation
+- [ ] Final QA and portfolio polish
 
 ## Repository Status
 
-**Current phase:** Phase 15 complete - Admin Document Management UI
+**Current phase:** Phase 16 complete - Admin Reports UI and Route-Based Bundle Optimization
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -386,5 +389,9 @@ transitions, staff assignment, history, and role-aware deletion. Appointment and
 task management now cover list filters, pagination, create/edit/status/delete
 flows, today appointments, overdue tasks, and role-aware destructive actions.
 Document management now covers list/search/filter/pagination, multipart upload,
-detail review, protected download, and role-aware deletion. Reports polish and
-deployment remain future phases.
+detail review, protected download, and role-aware deletion. Reports now use the
+dashboard/reporting APIs for overview metrics, case status distribution, monthly
+case trends, upcoming deadlines, staff performance, and recent activities. Staff
+performance is available only to administrators and managers. Admin pages are
+route-lazy-loaded for better bundle splitting. Production deployment
+preparation and final portfolio QA remain future phases.

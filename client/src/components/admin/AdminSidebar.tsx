@@ -26,7 +26,7 @@ const navigation = [
   { label: 'Appointments', icon: CalendarDays, to: '/admin/appointments', active: true },
   { label: 'Tasks', icon: ClipboardCheck, to: '/admin/tasks', active: true },
   { label: 'Documents', icon: Files, to: '/admin/documents', active: true },
-  { label: 'Reports', icon: BarChart3, active: false },
+  { label: 'Reports', icon: BarChart3, to: '/admin/reports', active: true },
 ]
 
 export interface AdminSidebarProps {

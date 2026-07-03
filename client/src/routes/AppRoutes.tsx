@@ -1,29 +1,115 @@
+import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout, LoadingState } from '../components/admin'
 import { PublicLayout } from '../components/layout/PublicLayout'
 import { ProtectedRoute, useAuth } from '../features/auth'
-import { AboutPage } from '../pages/AboutPage'
-import { AppointmentPage } from '../pages/AppointmentPage'
-import { ConsultationPage } from '../pages/ConsultationPage'
-import { ContactPage } from '../pages/ContactPage'
-import { HomePage } from '../pages/HomePage'
-import { NewsDetailPage } from '../pages/NewsDetailPage'
-import { NewsPage } from '../pages/NewsPage'
-import { NotFoundPage } from '../pages/NotFoundPage'
-import { ProjectsPage } from '../pages/ProjectsPage'
-import { ServiceDetailPage } from '../pages/ServiceDetailPage'
-import { ServicesPage } from '../pages/ServicesPage'
-import {
-  AdminAppointmentsPage,
-  AdminCasesPage,
-  AdminConsultationRequestsPage,
-  AdminCustomersPage,
-  AdminDashboardPage,
-  AdminDocumentsPage,
-  AdminLoginPage,
-  AdminNotFoundPage,
-  AdminTasksPage,
-} from '../pages/admin'
+
+const AboutPage = lazy(() =>
+  import('../pages/AboutPage').then((module) => ({
+    default: module.AboutPage,
+  })),
+)
+const AppointmentPage = lazy(() =>
+  import('../pages/AppointmentPage').then((module) => ({
+    default: module.AppointmentPage,
+  })),
+)
+const ConsultationPage = lazy(() =>
+  import('../pages/ConsultationPage').then((module) => ({
+    default: module.ConsultationPage,
+  })),
+)
+const ContactPage = lazy(() =>
+  import('../pages/ContactPage').then((module) => ({
+    default: module.ContactPage,
+  })),
+)
+const HomePage = lazy(() =>
+  import('../pages/HomePage').then((module) => ({
+    default: module.HomePage,
+  })),
+)
+const NewsDetailPage = lazy(() =>
+  import('../pages/NewsDetailPage').then((module) => ({
+    default: module.NewsDetailPage,
+  })),
+)
+const NewsPage = lazy(() =>
+  import('../pages/NewsPage').then((module) => ({
+    default: module.NewsPage,
+  })),
+)
+const NotFoundPage = lazy(() =>
+  import('../pages/NotFoundPage').then((module) => ({
+    default: module.NotFoundPage,
+  })),
+)
+const ProjectsPage = lazy(() =>
+  import('../pages/ProjectsPage').then((module) => ({
+    default: module.ProjectsPage,
+  })),
+)
+const ServiceDetailPage = lazy(() =>
+  import('../pages/ServiceDetailPage').then((module) => ({
+    default: module.ServiceDetailPage,
+  })),
+)
+const ServicesPage = lazy(() =>
+  import('../pages/ServicesPage').then((module) => ({
+    default: module.ServicesPage,
+  })),
+)
+
+const AdminAppointmentsPage = lazy(() =>
+  import('../pages/admin/AdminAppointmentsPage').then((module) => ({
+    default: module.AdminAppointmentsPage,
+  })),
+)
+const AdminCasesPage = lazy(() =>
+  import('../pages/admin/AdminCasesPage').then((module) => ({
+    default: module.AdminCasesPage,
+  })),
+)
+const AdminConsultationRequestsPage = lazy(() =>
+  import('../pages/admin/AdminConsultationRequestsPage').then((module) => ({
+    default: module.AdminConsultationRequestsPage,
+  })),
+)
+const AdminCustomersPage = lazy(() =>
+  import('../pages/admin/AdminCustomersPage').then((module) => ({
+    default: module.AdminCustomersPage,
+  })),
+)
+const AdminDashboardPage = lazy(() =>
+  import('../pages/admin/AdminDashboardPage').then((module) => ({
+    default: module.AdminDashboardPage,
+  })),
+)
+const AdminDocumentsPage = lazy(() =>
+  import('../pages/admin/AdminDocumentsPage').then((module) => ({
+    default: module.AdminDocumentsPage,
+  })),
+)
+const AdminLoginPage = lazy(() =>
+  import('../pages/admin/AdminLoginPage').then((module) => ({
+    default: module.AdminLoginPage,
+  })),
+)
+const AdminNotFoundPage = lazy(() =>
+  import('../pages/admin/AdminNotFoundPage').then((module) => ({
+    default: module.AdminNotFoundPage,
+  })),
+)
+const AdminReportsPage = lazy(() =>
+  import('../pages/admin/AdminReportsPage').then((module) => ({
+    default: module.AdminReportsPage,
+  })),
+)
+const AdminTasksPage = lazy(() =>
+  import('../pages/admin/AdminTasksPage').then((module) => ({
+    default: module.AdminTasksPage,
+  })),
+)
 
 function AdminIndexRoute() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -40,12 +126,20 @@ function AdminIndexRoute() {
   )
 }
 
+function routeElement(element: ReactNode) {
+  return (
+    <Suspense fallback={<LoadingState label="Loading page..." />}>
+      {element}
+    </Suspense>
+  )
+}
+
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="admin">
         <Route index element={<AdminIndexRoute />} />
-        <Route path="login" element={<AdminLoginPage />} />
+        <Route path="login" element={routeElement(<AdminLoginPage />)} />
         <Route
           element={
             <ProtectedRoute>
@@ -53,32 +147,60 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="customers" element={<AdminCustomersPage />} />
-          <Route path="cases" element={<AdminCasesPage />} />
-          <Route path="appointments" element={<AdminAppointmentsPage />} />
-          <Route path="tasks" element={<AdminTasksPage />} />
-          <Route path="documents" element={<AdminDocumentsPage />} />
+          <Route
+            path="dashboard"
+            element={routeElement(<AdminDashboardPage />)}
+          />
+          <Route
+            path="customers"
+            element={routeElement(<AdminCustomersPage />)}
+          />
+          <Route path="cases" element={routeElement(<AdminCasesPage />)} />
+          <Route
+            path="appointments"
+            element={routeElement(<AdminAppointmentsPage />)}
+          />
+          <Route path="tasks" element={routeElement(<AdminTasksPage />)} />
+          <Route
+            path="documents"
+            element={routeElement(<AdminDocumentsPage />)}
+          />
+          <Route
+            path="reports"
+            element={routeElement(<AdminReportsPage />)}
+          />
           <Route
             path="consultation-requests"
-            element={<AdminConsultationRequestsPage />}
+            element={routeElement(<AdminConsultationRequestsPage />)}
           />
-          <Route path="*" element={<AdminNotFoundPage />} />
+          <Route path="*" element={routeElement(<AdminNotFoundPage />)} />
         </Route>
       </Route>
 
       <Route element={<PublicLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="about" element={<AboutPage />} />
-        <Route path="services" element={<ServicesPage />} />
-        <Route path="services/:slug" element={<ServiceDetailPage />} />
-        <Route path="projects" element={<ProjectsPage />} />
-        <Route path="news" element={<NewsPage />} />
-        <Route path="news/:slug" element={<NewsDetailPage />} />
-        <Route path="contact" element={<ContactPage />} />
-        <Route path="consultation" element={<ConsultationPage />} />
-        <Route path="appointment" element={<AppointmentPage />} />
-        <Route path="*" element={<NotFoundPage />} />
+        <Route index element={routeElement(<HomePage />)} />
+        <Route path="about" element={routeElement(<AboutPage />)} />
+        <Route path="services" element={routeElement(<ServicesPage />)} />
+        <Route
+          path="services/:slug"
+          element={routeElement(<ServiceDetailPage />)}
+        />
+        <Route path="projects" element={routeElement(<ProjectsPage />)} />
+        <Route path="news" element={routeElement(<NewsPage />)} />
+        <Route
+          path="news/:slug"
+          element={routeElement(<NewsDetailPage />)}
+        />
+        <Route path="contact" element={routeElement(<ContactPage />)} />
+        <Route
+          path="consultation"
+          element={routeElement(<ConsultationPage />)}
+        />
+        <Route
+          path="appointment"
+          element={routeElement(<AppointmentPage />)}
+        />
+        <Route path="*" element={routeElement(<NotFoundPage />)} />
       </Route>
     </Routes>
   )
