@@ -211,7 +211,11 @@ Neon guidance:
 - Do not run `npm run prisma:migrate` on staging.
 - Do not run `npm run prisma:reset` on staging unless the database is
   explicitly disposable.
-- Run `npm run seed` only when intentional.
+- Run `npm run seed:demo` only when intentional and only against the dedicated
+  staging database.
+- Do not run `npm run seed` on staging unless intentionally creating the legacy
+  local admin and documenting that short-lived risk.
+- If `NODE_ENV=production`, `seed:demo` requires `DEMO_SEED_ENABLED=true`.
 - If using the known local demo admin, keep staging private and short-lived or
   replace it with staging-safe credentials.
 
@@ -222,6 +226,37 @@ Migration options:
 | Render start command `npm run prisma:deploy && npm run start` | Simple staging path; migrations run before each service start and are idempotent. |
 | Render Shell `npm run prisma:deploy` | Use when you want to run migrations manually before restart. |
 | Separate one-off job | Use later if staging needs stricter deploy control. |
+
+## Demo Seed
+
+After Render has the staging `DATABASE_URL` and migrations have been applied,
+run the non-destructive portfolio demo seed from Render Shell or a one-off job:
+
+```bash
+cd server
+DEMO_SEED_ENABLED=true npm run seed:demo
+```
+
+The seed upserts fictional demo users, customers, consultation requests, cases,
+appointments, tasks, case history, and activity logs. It does not reset the
+database and does not seed document files. Upload a tiny fictional PDF or image
+manually during smoke testing if document evidence is needed.
+
+Demo accounts:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin.demo@advisora.test` | `Advisora-Demo-Admin-2026!` |
+| Manager | `manager.demo@advisora.test` | `Advisora-Demo-Manager-2026!` |
+| Staff | `staff.demo@advisora.test` | `Advisora-Demo-Staff-2026!` |
+
+These are intentional portfolio credentials. Prefer manager or staff access
+for public review and share admin access privately only. Do not use these
+accounts with real customer data.
+
+If screenshots, recordings, logs, or browser history expose a token or demo
+credential, rotate Render `JWT_SECRET`, redeploy the backend, and ask reviewers
+to log in again. Old tokens should receive `401` after rotation.
 
 ## Staging Smoke Test
 
@@ -280,6 +315,7 @@ Security:
 | Browser shows CORS error | Render `CLIENT_URL` does not exactly match the Vercel origin | Update Render `CLIENT_URL` to the exact Vercel origin, no path or trailing slash, then restart Render |
 | Login returns `500` | `DATABASE_URL`, `JWT_SECRET`, migration, or seed/account provisioning issue | Check Render logs, confirm env vars, run `npm run prisma:deploy`, and verify the staging admin account |
 | Login returns `401` | Wrong credentials or staging admin not provisioned | Use the staging-safe admin account; do not rely on the public demo password for long-lived staging |
+| Demo seed refuses to run | `NODE_ENV=production` is set without explicit confirmation | Run the one-off command as `DEMO_SEED_ENABLED=true npm run seed:demo` after confirming the target is the staging database |
 | Prisma client missing | Prisma generate did not run during build | Ensure Render build command includes `npm run prisma:generate` before `npm run build` |
 | Prisma migration fails | Neon URL or migration permissions are wrong, or pooled/direct URL choice is incompatible | Check Neon connection string, use staging DB only, run `npm run prisma:deploy`, and use a direct connection for migration if needed |
 | Frontend still calls localhost | Vercel env var is missing or frontend was not redeployed after changing it | Set `VITE_API_BASE_URL=https://<render-service-name>.onrender.com/api` and redeploy |

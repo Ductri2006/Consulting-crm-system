@@ -198,11 +198,8 @@ export function AdminLoginPage() {
             </form>
 
             <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-xs leading-5 text-blue-900">
-              <p className="font-bold">Demo credentials</p>
-              <p>
-                admin@advisora.demo <span className="text-blue-300">/</span>{' '}
-                password123
-              </p>
+              <p className="font-bold">Portfolio demo</p>
+              <p>Use the internal demo account shared for this review.</p>
             </div>
           </div>
           <p className="mt-6 text-center text-xs text-slate-400">

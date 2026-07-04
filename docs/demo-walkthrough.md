@@ -1,8 +1,8 @@
 # Demo Walkthrough
 
-This walkthrough is the recommended local portfolio demo script for the
-Consulting CRM System. It is designed for local review before staging
-deployment, not for real production use.
+This walkthrough is the recommended local and staging portfolio demo script for
+the Consulting CRM System. It is designed for fictional portfolio review, not
+for real production use or real customer data.
 
 ## Project Overview
 
@@ -16,9 +16,9 @@ consulting brand, Advisora. It combines:
 - Admin workflows for customers, consultation requests, cases, appointments,
   tasks, documents, dashboards, and reports.
 
-Demo rule: use local/demo data only. Do not use real customer information, real
-deployment URLs, database connection strings, access tokens, or production
-credentials.
+Demo rule: use local/demo data only. Do not use real customer information,
+database connection strings, access tokens, production credentials, or
+screenshots that reveal private provider settings.
 
 ## Before You Start
 
@@ -46,13 +46,35 @@ npm install
 npm run dev
 ```
 
+Staging URL placeholders:
+
+- Public staging website: `https://<project-name>.vercel.app`
+- Backend API: `https://<render-service-name>.onrender.com/api`
+- Health check: `https://<render-service-name>.onrender.com/api/health`
+
 Local URLs:
 
 - Public website: `http://localhost:5173`
 - Backend API: `http://localhost:5000/api`
 - Health check: `http://localhost:5000/api/health`
 
-Local demo account:
+Public visitors do not need an account. Admin, manager, and staff users are
+internal CRM users. A customer portal is planned for a future phase.
+
+Intentional portfolio staging demo accounts:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin.demo@advisora.test` | `Advisora-Demo-Admin-2026!` |
+| Manager | `manager.demo@advisora.test` | `Advisora-Demo-Manager-2026!` |
+| Staff | `staff.demo@advisora.test` | `Advisora-Demo-Staff-2026!` |
+
+These credentials are intentionally fictional portfolio demo credentials. Do
+not use them for real users, real customer data, or long-lived public staging.
+Prefer manager or staff access for public review, and share admin access
+privately only.
+
+Legacy local account from `npm run seed`:
 
 ```text
 Email: admin@advisora.demo
@@ -60,8 +82,28 @@ Password: password123
 Role: ADMIN
 ```
 
-This account is for local portfolio review only. Rotate or replace it before
-staging or production.
+This account is for local legacy portfolio review only. `npm run seed:demo`
+disables it when present to reduce dependence on the known `password123`
+credential.
+
+Populate demo data after migrations:
+
+```bash
+cd server
+npm run prisma:deploy
+DEMO_SEED_ENABLED=true npm run seed:demo
+```
+
+For local PowerShell:
+
+```powershell
+cd server
+$env:DEMO_SEED_ENABLED = "true"
+npm run seed:demo
+```
+
+Do not run destructive reset commands against staging. The demo seed upserts
+fixed fictional records and does not seed physical document files.
 
 ## Recommended Demo Order
 
@@ -104,6 +146,12 @@ Talk track:
 - The layout should be checked at mobile, tablet, and desktop widths before a
   staging demo.
 
+Public demo flow:
+
+1. Open the homepage.
+2. View services.
+3. Submit a fictional consultation request.
+
 ## Admin Login Demo
 
 Open:
@@ -113,10 +161,18 @@ Open:
 Show:
 
 - Invalid login error.
-- Valid local demo login.
+- Valid demo login with admin, manager, or staff credentials.
 - Refreshing a protected route keeps or restores the session.
 - Logging out clears the local session.
 - Opening a protected admin URL without a token redirects to login.
+
+Admin demo flow:
+
+1. Login with the demo admin only when admin access is appropriate.
+2. View dashboard metrics and recent activity.
+3. Check consultation requests.
+4. Open cases and inspect status coverage.
+5. Check tasks, appointments, documents, and reports.
 
 ## Dashboard Demo
 
@@ -251,6 +307,7 @@ Review:
 
 Talk track:
 
+- Staging deployment uses real provider settings kept outside the repository.
 - Production deployment has not happened yet.
 - Environment variables are documented with placeholders only.
 - `DATABASE_URL`, JWT secrets, tokens, `.env`, and uploaded files must never be
@@ -258,10 +315,13 @@ Talk track:
 - `CLIENT_URL` supports a comma-separated CORS allowlist.
 - `VITE_API_BASE_URL` must point to the deployed backend API base URL.
 - `GET /api/health` is a liveness check, not database readiness.
+- If Render `JWT_SECRET` is rotated after a screenshot or accidental exposure,
+  all existing tokens become invalid and users must log in again.
 
 ## Known Limitations To Mention Honestly
 
-- No real staging or production deployment yet.
+- Staging URLs and provider credentials are not committed.
+- No real production deployment yet.
 - Local disk uploads are development-only.
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create
@@ -303,6 +363,13 @@ For a disposable local database:
 cd server
 npm run prisma:reset
 npm run seed
+```
+
+For staging demo refreshes, prefer the non-destructive demo seed:
+
+```bash
+cd server
+DEMO_SEED_ENABLED=true npm run seed:demo
 ```
 
 Before committing:

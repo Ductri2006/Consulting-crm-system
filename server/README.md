@@ -521,6 +521,7 @@ npm run prisma:deploy
 npm run prisma:reset
 npm run prisma:studio
 npm run seed
+npm run seed:demo
 npm run db:verify
 ```
 
@@ -532,7 +533,11 @@ npm run db:verify
   committed migrations. Use it only for disposable development databases and
   run `npm run seed` afterward.
 - `prisma:studio` opens the local data browser.
-- `seed` upserts the local demo administrator and four initial consulting services.
+- `seed` upserts the legacy local demo administrator and four initial
+  consulting services.
+- `seed:demo` upserts fictional portfolio staging data and safer demo
+  admin/manager/staff accounts. In `NODE_ENV=production`, run it with
+  `DEMO_SEED_ENABLED=true`.
 - `db:verify` checks connectivity, the seeded administrator, and the four
   expected service slugs.
 
@@ -560,6 +565,39 @@ Use the demo email and password with `POST /api/auth/login`, then copy the retur
 > Security warning: never enable this known credential in staging or production. Replace bootstrap credentials with secrets supplied through a secure account-provisioning process, rotate exposed credentials, and keep password hashes and customer identity data out of API responses and logs.
 
 JWT secrets must be unique, randomly generated, and supplied through environment configuration. Never commit secrets, passwords, or access tokens; never log login bodies or Bearer tokens. Inactive users are denied access, login failures use a generic response, and authorization is enforced on the backend.
+
+## Portfolio staging demo seed
+
+After migrations are applied to a dedicated staging database:
+
+```bash
+DEMO_SEED_ENABLED=true npm run seed:demo
+```
+
+For local PowerShell:
+
+```powershell
+$env:DEMO_SEED_ENABLED = "true"
+npm run seed:demo
+```
+
+The demo seed is idempotent. It upserts fictional demo users, customers,
+consultation requests, cases, appointments, tasks, case history, and activity
+logs. It does not reset the database, does not delete non-demo data, and does
+not seed physical document files.
+
+Intentional portfolio demo accounts:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin.demo@advisora.test` | `Advisora-Demo-Admin-2026!` |
+| Manager | `manager.demo@advisora.test` | `Advisora-Demo-Manager-2026!` |
+| Staff | `staff.demo@advisora.test` | `Advisora-Demo-Staff-2026!` |
+
+The demo seed disables `admin@advisora.demo` when it exists so staging does not
+depend on the known `password123` credential. Because `npm run db:verify`
+checks the legacy local account, use it for local verification only and do not
+treat it as staging sign-off after running `seed:demo`.
 
 ## Implementation status
 

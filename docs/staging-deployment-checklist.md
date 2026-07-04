@@ -105,6 +105,12 @@ Backend rules:
 - `JWT_SECRET` must be unique for staging and at least 32 characters.
 - Do not reuse local demo secrets.
 
+One-time demo seed flag:
+
+| Variable | Required value | Rule |
+| --- | --- | --- |
+| `DEMO_SEED_ENABLED` | `true` | Use only for the one command that runs `npm run seed:demo` in `NODE_ENV=production`; do not keep it as a permanent runtime dependency. |
+
 ### Frontend
 
 | Variable | Required staging value | Rule |
@@ -167,14 +173,54 @@ Frontend rules:
 - [ ] Do not run `npm run prisma:reset` against staging unless the database is
   disposable and the reset is intentional.
 - [ ] Run seed data only when intentional.
-- [ ] Do not keep the known local demo admin credential enabled as a long-lived
-  staging credential.
-- [ ] Provision a staging-safe admin account through a secure one-time or
-  provider-secret process.
+- [ ] Use `npm run seed:demo` for fictional portfolio data, not destructive
+  reset commands.
+- [ ] If running `seed:demo` while `NODE_ENV=production`, set
+  `DEMO_SEED_ENABLED=true` for that command only.
+- [ ] Do not run `npm run seed` on staging unless intentionally creating the
+  legacy local admin and documenting that risk.
+- [ ] Confirm the known local demo admin credential is disabled, replaced, or
+  limited to a private short-lived demo window.
+- [ ] Prefer manager or staff credentials for public review; share admin
+  credentials privately only.
 - [ ] Treat `npm run db:verify` as a local/demo verification helper because it
   checks the known demo admin account. Do not use it as staging sign-off if the
   demo admin has been disabled or replaced.
 - [ ] Record a sanitized migration result without database URLs or credentials.
+
+## Staging Demo Seed
+
+Run after migrations, only against the dedicated staging database:
+
+```bash
+cd server
+npm run prisma:deploy
+DEMO_SEED_ENABLED=true npm run seed:demo
+```
+
+Expected behavior:
+
+- Creates or updates fictional admin, manager, and staff demo users.
+- Creates or updates fictional customers, consultation requests, case profiles,
+  appointments, tasks, case history, and activity logs.
+- Uses fixed IDs and upserts so repeated runs do not duplicate the demo set.
+- Does not reset the database.
+- Does not delete non-demo data.
+- Does not seed physical document files; upload a tiny fictional file manually
+  during smoke testing if document evidence is needed.
+- Disables `admin@advisora.demo` if it exists so staging does not depend on the
+  known `password123` account.
+
+Demo credentials are intentional portfolio credentials, not real secrets:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin.demo@advisora.test` | `Advisora-Demo-Admin-2026!` |
+| Manager | `manager.demo@advisora.test` | `Advisora-Demo-Manager-2026!` |
+| Staff | `staff.demo@advisora.test` | `Advisora-Demo-Staff-2026!` |
+
+Do not use these accounts with real customer data. Do not publish high-privilege
+admin access for long-lived public staging.
 
 ## CORS Checklist
 
@@ -187,6 +233,20 @@ Frontend rules:
 - [ ] Browser requests from the staging frontend do not fail CORS preflight.
 - [ ] Protected API calls from `/admin/*` work from the staging frontend.
 - [ ] Direct API calls from an unlisted origin are rejected by CORS.
+
+## JWT Secret Rotation Checklist
+
+Rotate the Render `JWT_SECRET` after screenshots, accidental exposure, or any
+demo credential incident.
+
+- [ ] Generate a new unique staging `JWT_SECRET`.
+- [ ] Update the secret in Render environment variables only.
+- [ ] Restart or redeploy the Render service.
+- [ ] Confirm an old Bearer token now receives `401`.
+- [ ] Confirm a fresh login succeeds.
+- [ ] Confirm users understand they need to log in again after rotation.
+- [ ] Review logs and screenshots for leaked tokens, passwords, database URLs,
+  or provider credentials.
 
 ## File Upload Warning
 
@@ -263,6 +323,10 @@ Before real customer documents:
   uploaded file contents.
 - [ ] The known local demo admin credential is disabled, replaced, or explicitly
   limited to a private demo window.
+- [ ] The known legacy login `admin@advisora.demo` / `password123` fails on
+  staging unless a short-lived private exception was intentionally recorded.
+- [ ] Admin demo credentials are not published for long-lived public staging;
+  manager or staff access is used for public review when possible.
 - [ ] Browser-readable Bearer token storage risk is explicitly accepted for
   portfolio staging, or authentication has been migrated to an HttpOnly cookie
   strategy before real customer data.
@@ -317,6 +381,7 @@ Choose `Go with accepted limitations`, not full `Go`, when:
 Known staging limitations to acknowledge:
 
 - No real production deployment has been performed yet.
+- Render Free may cold start, so the first staging API call can be slow.
 - Local disk upload storage is not suitable for real multi-instance document
   handling.
 - Access tokens are stored in browser local storage in this portfolio phase.

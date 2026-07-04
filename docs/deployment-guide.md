@@ -144,9 +144,20 @@ databases. That command is for local development migration creation.
 
 Seed guidance:
 
-- Run `npm run seed` only when intentional.
+- Run `npm run seed` only for local legacy demo setup unless you intentionally
+  accept its known credential risk.
+- Run `npm run seed:demo` only for fictional portfolio staging data after
+  migrations. In `NODE_ENV=production`, set `DEMO_SEED_ENABLED=true` for that
+  one command so the action is explicit.
 - Do not rely on known public demo passwords in production.
 - Prefer a secure production account-provisioning process.
+
+Example staging demo seed command:
+
+```bash
+cd server
+DEMO_SEED_ENABLED=true npm run seed:demo
+```
 
 ## CORS
 
@@ -180,6 +191,10 @@ storage. This is acceptable for local portfolio testing, but a real
 customer-data production deployment should explicitly accept that risk or move
 to a reviewed session strategy such as `HttpOnly`, `Secure`, `SameSite`
 cookies.
+
+Rotate the deployed `JWT_SECRET` after screenshots, accidental exposure, or a
+credential incident. Current tokens are stateless, so rotation forces existing
+sessions to log in again.
 
 ## File Uploads
 

@@ -1,18 +1,22 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System through Phase 18B. It prepares the project for a future staging and
-production deployment, but it does not perform a real provider deployment.
+System through Phase 20. It documents staging demo hardening and production
+gaps while keeping real provider URLs, credentials, and secrets out of the
+repository.
 
 ## Current Production Readiness Status
 
-Status: ready for deployment preparation and final QA, not yet deployed. Do not
-treat this repository as approved for real sensitive production data until the
-known limitations below are resolved or explicitly accepted.
+Status: staging portfolio path prepared with fictional demo data; production is
+not approved. Do not treat this repository as approved for real sensitive
+production data until the known limitations below are resolved or explicitly
+accepted.
 
 - Live Neon PostgreSQL verification: PASS.
 - Staging deployment checklist: prepared in
   [Staging Deployment Checklist](staging-deployment-checklist.md).
+- Vercel/Render/Neon staging guidance and demo-seed runbook are documented
+  with placeholders only.
 - Frontend build and lint have passed in recent verification.
 - Backend build, lint, Prisma generate, and Prisma validation must pass before
   every deployment candidate.
@@ -84,6 +88,11 @@ Production rules:
 - Use `npx prisma validate` before deployment to catch schema issues.
 - Run seed data carefully. The current demo administrator is for local portfolio
   development and must not be used as a real production credential.
+- Use `npm run seed:demo` only for fictional portfolio staging data. When
+  `NODE_ENV=production`, the command requires `DEMO_SEED_ENABLED=true` so the
+  operator must intentionally create demo accounts and data.
+- Do not run `npm run seed` on staging or production unless the legacy local
+  credential risk is explicitly accepted.
 
 ## Authentication Readiness
 
@@ -94,10 +103,30 @@ Production rules:
   assignable-user endpoints.
 - The demo admin password must be changed or replaced before any real
   production use.
+- Do not publish high-privilege admin demo credentials for long-lived public
+  staging. Prefer manager or staff access for public review, or share admin
+  access privately only.
 - Bearer tokens must not be logged, printed in docs, or committed.
 - The current frontend stores the access token in browser local storage. For
   higher-risk production use, migrate authentication to `HttpOnly`, `Secure`,
   `SameSite` cookies or another reviewed token storage strategy.
+
+### JWT Secret Rotation
+
+Rotate the Render `JWT_SECRET` after screenshots, accidental exposure, or any
+credential incident. With the current stateless HS256 token design, rotating
+`JWT_SECRET` invalidates all existing access tokens and users must log in
+again.
+
+Rotation steps:
+
+1. Generate a new unique staging secret.
+2. Update `JWT_SECRET` in the provider secret store only.
+3. Restart or redeploy the backend.
+4. Confirm old tokens receive `401`.
+5. Confirm fresh login and `/api/auth/me` succeed.
+6. Review logs and screenshots for leaked tokens, passwords, database URLs, or
+   provider credentials.
 
 ## CORS Readiness
 
@@ -133,6 +162,9 @@ Recommended later upgrade:
 - [ ] No upload files committed.
 - [ ] Production `JWT_SECRET` is strong and private.
 - [ ] Demo admin credential is disabled, changed, or replaced.
+- [ ] Known local credential `admin@advisora.demo` / `password123` is disabled
+  outside local development.
+- [ ] Demo admin access is not published for long-lived public staging.
 - [ ] Token storage risk is accepted or migrated away from browser local
   storage.
 - [ ] CORS allowlist matches the deployed frontend origin.
@@ -162,10 +194,11 @@ Recommended later upgrade:
 ## Known Limitations
 
 - No real production deployment has been performed yet.
-- No real staging deployment has been performed yet; Phase 18B only prepares
-  staging deployment documentation and checks.
+- Staging URLs, provider settings, and credentials are intentionally not
+  committed.
 - `/api/health` is a liveness endpoint, not a database readiness check.
 - File storage is local and development-oriented.
+- Render Free may cold start during portfolio staging.
 - No refresh tokens or token revocation workflow yet.
 - Current frontend token storage uses local storage, not HttpOnly cookies.
 - Public contact and appointment forms are validation/demo flows only.

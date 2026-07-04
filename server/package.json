@@ -15,6 +15,7 @@
     "prisma:reset": "prisma migrate reset",
     "prisma:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
+    "seed:demo": "tsx prisma/seedDemo.ts",
     "db:verify": "tsx src/scripts/verifyDatabase.ts"
   },
   "engines": {

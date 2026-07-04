@@ -271,9 +271,10 @@ consulting-crm-system/
 
 ## Production And QA Preparation
 
-Phase 19 adds a provider-specific Vercel + Render + Neon staging runbook
-without performing a real provider deployment. Before demoing, staging, or
-deploying, review:
+Phase 20 adds staging demo data, safer portfolio demo accounts, and staging
+hardening notes for the Vercel + Render + Neon path. Real provider URLs and
+credentials stay outside the repository. Before demoing, staging, or deploying,
+review:
 
 - [Production Readiness](docs/production-readiness.md)
 - [Deployment Guide](docs/deployment-guide.md)
@@ -288,13 +289,35 @@ reachable.
 
 ## Portfolio Demo
 
+Staging URL placeholders:
+
+- Public staging website: `https://<project-name>.vercel.app`
+- Staging backend API: `https://<render-service-name>.onrender.com/api`
+- Health check: `https://<render-service-name>.onrender.com/api/health`
+
 Local URLs:
 
 - Public website: `http://localhost:5173`
 - Backend API: `http://localhost:5000/api`
 - Health check: `http://localhost:5000/api/health`
 
-Local demo account:
+Public visitors do not need an account. Admin, manager, and staff accounts are
+internal CRM users for the protected workspace. A customer portal is future
+roadmap scope.
+
+Intentional portfolio demo accounts created by `npm run seed:demo`:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin.demo@advisora.test` | `Advisora-Demo-Admin-2026!` |
+| Manager | `manager.demo@advisora.test` | `Advisora-Demo-Manager-2026!` |
+| Staff | `staff.demo@advisora.test` | `Advisora-Demo-Staff-2026!` |
+
+These are fictional portfolio credentials, not real secrets. Do not use them
+with real customer information. For long-lived public staging, prefer sharing
+manager or staff access with reviewers and share admin access privately only.
+
+Legacy local seed account:
 
 ```text
 Email: admin@advisora.demo
@@ -302,20 +325,47 @@ Password: password123
 Role: ADMIN
 ```
 
+The legacy local account is created by `npm run seed` for local development.
+The staging demo seed disables it when present to reduce dependence on the
+known `password123` credential.
+
+Populate staging demo data only after migrations are applied:
+
+```bash
+cd server
+npm run prisma:deploy
+DEMO_SEED_ENABLED=true npm run seed:demo
+```
+
+For local PowerShell runs, use:
+
+```powershell
+cd server
+$env:DEMO_SEED_ENABLED = "true"
+npm run seed:demo
+```
+
+The demo seed is idempotent and upserts fictional customers, consultation
+requests, cases, appointments, tasks, case history, and activity records. It
+does not reset the database and does not seed physical document files.
+
 Use only fictional demo data. Do not paste real customer data, real database
 URLs, access tokens, or production credentials into the app, docs, commits, or
 screenshots.
 
-Recommended demo order:
+Recommended public demo flow:
 
-1. README overview.
-2. Public homepage and services.
-3. Public consultation form.
-4. Admin login and dashboard.
-5. Customers and consultation requests.
-6. Cases, appointments, tasks, and documents.
-7. Reports.
-8. Production readiness and final QA docs.
+1. Open the homepage.
+2. View services.
+3. Submit a fictional consultation request.
+
+Recommended admin demo flow:
+
+1. Login with a demo internal account.
+2. View the dashboard.
+3. Check consultation requests.
+4. Open cases.
+5. Check tasks, appointments, documents, and reports.
 
 See [Demo Walkthrough](docs/demo-walkthrough.md) for the full script.
 
@@ -398,7 +448,6 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Export to Excel and PDF
 - Automated testing and continuous delivery
 - Accessibility, security, and performance audits
-- Staging deployment
 - Persistent object storage for documents
 - HttpOnly cookie authentication
 - Login and public-form rate limiting
@@ -416,17 +465,17 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Database | Prisma schema, migration, seed, and Neon verification completed |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
+| Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
 | Production deployment | Not deployed yet |
 | Document storage | Local development storage only; persistent private object storage remains future work |
 | Auth hardening | JWT Bearer flow implemented; HttpOnly cookie session strategy remains future work |
 
 ## Known Limitations
 
-- No real production or staging deployment has been performed yet.
-- Staging deployment guidance is documented, but provider credentials and real
-  staging URLs are intentionally not committed.
-- Vercel/Render/Neon staging instructions are prepared, but provider dashboard
-  actions still require the operator's credentials.
+- No real production deployment has been performed yet.
+- Staging deployment uses provider URLs, credentials, and environment variables
+  kept outside the repository.
+- Staging URLs in this repository remain placeholders by design.
 - Local disk uploads are for development only.
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create backend records yet.
@@ -472,12 +521,13 @@ This project is designed to practice:
 - [x] Final local QA and portfolio polish
 - [x] Staging deployment preparation
 - [x] Vercel/Render/Neon staging deployment guide
-- [ ] Staging deployment
+- [x] Staging demo data and safer demo accounts
+- [x] Staging deployment
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Phase 19 complete - Vercel/Render/Neon staging guide
+**Current phase:** Phase 20 complete - staging demo data and safer demo accounts
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -515,5 +565,7 @@ portfolio polish, and a guided demo walkthrough. Phase 18B adds a
 provider-neutral staging deployment checklist with environment-variable matrix,
 CORS checks, migration steps, smoke tests, rollback planning, and go/no-go
 criteria. Phase 19 adds a Vercel frontend, Render backend, and Neon database
-staging runbook plus Vercel SPA rewrite support for route refreshes. Real
-staging and production deployments remain future phases.
+staging runbook plus Vercel SPA rewrite support for route refreshes. Phase 20
+adds an idempotent staging demo seed with fictional CRM data, safer demo
+accounts for admin/manager/staff review, Render JWT rotation notes, and
+portfolio demo guidance. Production deployment remains a future phase.

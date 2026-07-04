@@ -60,11 +60,12 @@ validation/demo flows until their public backend intake endpoints are added.
 - Tasks: `/admin/tasks`
 - Documents: `/admin/documents`
 - Reports: `/admin/reports`
-- Demo account: `admin@advisora.demo` / `password123`
+- Demo accounts: see `../docs/demo-walkthrough.md`
+- Legacy local account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
 
-The demo account is for local portfolio testing only and must not be used as a
-real production credential.
+The legacy local account is for local portfolio testing only and must not be
+used as a staging or production credential.
 
 The token is stored in browser local storage for this local portfolio
 environment. Do not commit local environment files, tokens, or other secrets.
