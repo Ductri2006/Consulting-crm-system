@@ -64,8 +64,9 @@ MAX_FILE_SIZE_MB=10
 
 `CLIENT_URL` can be a single origin such as `http://localhost:5173` or a
 comma-separated allowlist such as
-`http://localhost:5173,<frontend-origin>`. Do not use wildcard origins for
-authenticated production traffic, and do not leave trailing commas.
+`http://localhost:5173,<frontend-origin>`. Each value must be an origin only:
+no paths, queries, hashes, trailing slashes, or wildcard origins. Do not leave
+trailing commas.
 
 Do not commit `.env` or use the example database credentials in a shared or production environment.
 

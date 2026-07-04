@@ -3,8 +3,10 @@ import type { Server } from "node:http";
 import { app } from "./app";
 import { env } from "./config/env";
 
-const server: Server = app.listen(env.PORT, () => {
-  console.log(`Backend server is running on http://localhost:${env.PORT}`);
+const HOST = "0.0.0.0";
+
+const server: Server = app.listen(env.PORT, HOST, () => {
+  console.log(`Backend server is running on http://${HOST}:${env.PORT}`);
 });
 
 const shutdown = (signal: NodeJS.Signals): void => {

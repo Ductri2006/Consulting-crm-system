@@ -231,6 +231,7 @@ Each case profile stores:
 consulting-crm-system/
 |-- client/
 |   |-- src/
+|   |-- vercel.json
 |   `-- README.md
 |-- server/
 |   |-- prisma/
@@ -245,6 +246,7 @@ consulting-crm-system/
 |   |-- production-readiness.md
 |   |-- deployment-guide.md
 |   |-- staging-deployment-checklist.md
+|   |-- vercel-render-staging-guide.md
 |   |-- final-qa-checklist.md
 |   `-- demo-walkthrough.md
 |-- .gitignore
@@ -263,17 +265,20 @@ consulting-crm-system/
 | [Production Readiness](docs/production-readiness.md) | Production readiness status, environment guidance, security checklist, and known limitations |
 | [Deployment Guide](docs/deployment-guide.md) | Provider-neutral deployment architecture, commands, environment variables, and smoke checks |
 | [Staging Deployment Checklist](docs/staging-deployment-checklist.md) | Provider-neutral staging environment matrix, deployment checklist, smoke tests, rollback, and go/no-go criteria |
+| [Vercel + Render Staging Guide](docs/vercel-render-staging-guide.md) | Provider-specific staging runbook for Vercel frontend, Render backend, and Neon database |
 | [Final QA Checklist](docs/final-qa-checklist.md) | Manual QA checklist for public pages, admin CRM modules, security, and production smoke testing |
 | [Demo Walkthrough](docs/demo-walkthrough.md) | Suggested portfolio demo flow, local QA notes, and honest limitations |
 
 ## Production And QA Preparation
 
-Phase 18B adds staging deployment preparation without performing a real
-provider deployment. Before demoing, staging, or deploying, review:
+Phase 19 adds a provider-specific Vercel + Render + Neon staging runbook
+without performing a real provider deployment. Before demoing, staging, or
+deploying, review:
 
 - [Production Readiness](docs/production-readiness.md)
 - [Deployment Guide](docs/deployment-guide.md)
 - [Staging Deployment Checklist](docs/staging-deployment-checklist.md)
+- [Vercel + Render Staging Guide](docs/vercel-render-staging-guide.md)
 - [Final QA Checklist](docs/final-qa-checklist.md)
 - [Demo Walkthrough](docs/demo-walkthrough.md)
 
@@ -410,6 +415,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Backend API | Implemented for auth, CRM workflows, documents, dashboard, and reports |
 | Database | Prisma schema, migration, seed, and Neon verification completed |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
+| Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Production deployment | Not deployed yet |
 | Document storage | Local development storage only; persistent private object storage remains future work |
 | Auth hardening | JWT Bearer flow implemented; HttpOnly cookie session strategy remains future work |
@@ -419,6 +425,8 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - No real production or staging deployment has been performed yet.
 - Staging deployment guidance is documented, but provider credentials and real
   staging URLs are intentionally not committed.
+- Vercel/Render/Neon staging instructions are prepared, but provider dashboard
+  actions still require the operator's credentials.
 - Local disk uploads are for development only.
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create backend records yet.
@@ -463,12 +471,13 @@ This project is designed to practice:
 - [x] Production readiness and final QA preparation
 - [x] Final local QA and portfolio polish
 - [x] Staging deployment preparation
+- [x] Vercel/Render/Neon staging deployment guide
 - [ ] Staging deployment
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Phase 18B complete - Staging deployment preparation
+**Current phase:** Phase 19 complete - Vercel/Render/Neon staging guide
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -505,4 +514,6 @@ upload/storage warnings. Phase 18A adds local smoke-test coverage, README
 portfolio polish, and a guided demo walkthrough. Phase 18B adds a
 provider-neutral staging deployment checklist with environment-variable matrix,
 CORS checks, migration steps, smoke tests, rollback planning, and go/no-go
-criteria. Real staging and production deployments remain future phases.
+criteria. Phase 19 adds a Vercel frontend, Render backend, and Neon database
+staging runbook plus Vercel SPA rewrite support for route refreshes. Real
+staging and production deployments remain future phases.

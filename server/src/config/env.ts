@@ -3,11 +3,14 @@ import { z } from "zod";
 
 dotenv.config({ quiet: true });
 
-const isHttpUrl = (value: string): boolean => {
+const isHttpOrigin = (value: string): boolean => {
   try {
     const url = new URL(value);
 
-    return url.protocol === "http:" || url.protocol === "https:";
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      url.origin === value
+    );
   } catch {
     return false;
   }
@@ -17,7 +20,7 @@ const isClientUrlList = (value: string): boolean =>
   value
     .split(",")
     .map((origin) => origin.trim())
-    .every((origin) => origin.length > 0 && isHttpUrl(origin));
+    .every((origin) => origin.length > 0 && isHttpOrigin(origin));
 
 const envSchema = z.object({
   PORT: z.coerce
@@ -46,7 +49,7 @@ const envSchema = z.object({
     .min(1, "CLIENT_URL is required.")
     .refine(
       isClientUrlList,
-      "CLIENT_URL must be one or more comma-separated HTTP or HTTPS URLs.",
+      "CLIENT_URL must be one or more comma-separated HTTP or HTTPS origins without paths, queries, hashes, or trailing slashes.",
     ),
   JWT_SECRET: z
     .string({ error: "JWT_SECRET is required." })

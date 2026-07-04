@@ -6,6 +6,10 @@ placeholders only. Do not paste real URLs, database connection strings, JWT
 secrets, access tokens, provider credentials, or uploaded files into this
 document.
 
+For the concrete Vercel frontend, Render backend, and Neon database staging
+path, use [Vercel + Render + Neon Staging Guide](vercel-render-staging-guide.md)
+alongside this checklist.
+
 ## Staging Goal
 
 The staging environment should prove that the frontend, backend, database,

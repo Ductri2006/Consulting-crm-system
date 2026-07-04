@@ -8,6 +8,9 @@ For a staging-specific environment matrix, checklist, smoke test, rollback
 plan, and go/no-go decision record, use the
 [Staging Deployment Checklist](staging-deployment-checklist.md).
 
+For the concrete Vercel frontend, Render backend, and Neon database staging
+path, use the [Vercel + Render + Neon Staging Guide](vercel-render-staging-guide.md).
+
 ## Deployment Architecture
 
 - Frontend: static React/Vite app served from a frontend hosting platform.
@@ -96,7 +99,7 @@ npm run start
 Required environment variables:
 
 ```dotenv
-PORT=5000
+PORT=<provider-port-or-local-5000>
 NODE_ENV=production
 DATABASE_URL=<postgres-connection-url>
 CLIENT_URL=<frontend-origin>
@@ -114,6 +117,10 @@ CLIENT_URL=<frontend-origin>,<preview-origin>
 ```
 
 Do not use wildcard CORS origins for authenticated production traffic.
+
+Provider note: local development commonly uses `PORT=5000`, but hosted Node
+providers may inject their own port. For Render-specific settings, use the
+[Vercel + Render + Neon Staging Guide](vercel-render-staging-guide.md).
 
 ## Database Deployment
 
@@ -201,7 +208,9 @@ database is reachable.
 ## Smoke Test
 
 After deployment, verify the items below. For a staging go/no-go pass, use the
-full [Staging Deployment Checklist](staging-deployment-checklist.md).
+full [Staging Deployment Checklist](staging-deployment-checklist.md). For
+Vercel/Render/Neon staging, also follow
+[Vercel + Render + Neon Staging Guide](vercel-render-staging-guide.md).
 
 - `GET /api/health`.
 - Admin login.
