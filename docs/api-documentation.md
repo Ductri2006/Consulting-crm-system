@@ -2,8 +2,8 @@
 
 This document defines the REST API contract for the Consulting CRM System. It
 started as a design reference and now tracks the implemented portfolio API for
-auth, workspace signup, workspace invitations, CRM workflows, internal users,
-documents, dashboard, reports, and the Organization / Workspace tenant
+auth, workspace signup, workspace settings, workspace invitations, CRM workflows,
+internal users, documents, dashboard, reports, and the Organization / Workspace tenant
 foundation.
 
 ## Base URL and Conventions
@@ -164,6 +164,80 @@ Notes:
 - Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`.
 - Billing, workspace switching, workspace-specific public portals, and
   customer portal accounts remain future roadmap scope.
+
+## Workspace Settings API
+
+Workspace Settings is the administrator-facing profile for the current
+Organization tenant. The frontend labels it Workspace.
+
+### Get Current Workspace
+
+```http
+GET /api/workspace/me
+```
+
+Requires an active `ADMIN`, `MANAGER`, or `STAFF` access token.
+
+Response data:
+
+```json
+{
+  "workspace": {
+    "id": "organization_id",
+    "name": "Advisora Demo Workspace",
+    "slug": "advisora-demo",
+    "industry": "Consulting",
+    "website": "https://example.com",
+    "phone": "+1 202 555 0100",
+    "email": "workspace@example.com",
+    "address": "Demo office address",
+    "logoUrl": "https://example.com/logo.png",
+    "isActive": true,
+    "createdAt": "2026-07-04T00:00:00.000Z",
+    "updatedAt": "2026-07-04T00:00:00.000Z"
+  }
+}
+```
+
+### Update Current Workspace
+
+```http
+PATCH /api/workspace/me
+```
+
+Requires an active `ADMIN` access token. `MANAGER` and `STAFF` receive `403`.
+
+Request body fields are optional, but at least one field is required:
+
+```json
+{
+  "name": "Advisora Demo Workspace",
+  "slug": "advisora-demo",
+  "industry": "Consulting",
+  "website": "https://example.com",
+  "phone": "+1 202 555 0100",
+  "email": "workspace@example.com",
+  "address": "Demo office address",
+  "logoUrl": "https://example.com/logo.png"
+}
+```
+
+Rules:
+
+- The server updates only `request.user.organizationId`; clients cannot send
+  `organizationId`, `id`, `isActive`, `createdAt`, or `updatedAt`.
+- `name` must be 2-120 characters when sent.
+- `slug` is normalized to lowercase, trims leading/trailing hyphens, allows
+  lowercase letters, numbers, and hyphens only, and must be 3-50 characters.
+- Reusing the current workspace slug is allowed; using another workspace slug
+  returns `409 Conflict`.
+- `website` and `logoUrl` must be valid URLs or empty/null. Logo upload is not
+  part of this step.
+- Optional `industry`, `email`, `phone`, `address`, `website`, and `logoUrl`
+  can be cleared with `""` or `null`.
+- Successful updates write `WORKSPACE_UPDATED` to `ActivityLog`.
+- Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`; this
+  endpoint does not change backend environment configuration.
 
 ## 2. User API
 

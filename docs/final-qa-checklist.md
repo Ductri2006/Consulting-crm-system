@@ -110,6 +110,22 @@ Team Members:
 - [ ] Case, appointment, and task assignment dropdowns still load assignable
   users.
 
+Workspace Settings:
+
+- [ ] `/admin/settings` loads for `ADMIN`.
+- [ ] `/admin/settings` is hidden or forbidden for `MANAGER` and `STAFF`.
+- [ ] `GET /api/workspace/me` returns only the current workspace safe fields.
+- [ ] `PATCH /api/workspace/me` updates name, industry, website, email, phone,
+  address, and logo URL for an admin.
+- [ ] Empty optional fields can be cleared without validation errors.
+- [ ] Slug update allows the current slug, rejects invalid slugs, and rejects a
+  slug used by another workspace.
+- [ ] Workspace update creates a `WORKSPACE_UPDATED` activity log.
+- [ ] Settings save refreshes `/api/auth/me` so the admin topbar shows the
+  updated workspace name.
+- [ ] Manager and staff can read workspace info if needed but cannot update it.
+- [ ] Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`.
+
 Invitations:
 
 - [ ] `/admin/invitations` loads for `ADMIN`.

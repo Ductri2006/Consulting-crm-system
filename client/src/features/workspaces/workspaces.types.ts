@@ -26,3 +26,33 @@ export interface WorkspaceSignupData {
   user: User
   organization: WorkspaceSignupOrganization
 }
+
+export interface WorkspaceProfile {
+  id: string
+  name: string
+  slug: string
+  industry?: string | null
+  website?: string | null
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  logoUrl?: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WorkspaceProfileData {
+  workspace: WorkspaceProfile
+}
+
+export interface UpdateWorkspaceInput {
+  name?: string
+  slug?: string
+  industry?: string | null
+  website?: string | null
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  logoUrl?: string | null
+}

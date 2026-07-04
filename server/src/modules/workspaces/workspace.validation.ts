@@ -68,6 +68,80 @@ const optionalUrlToNull = z
     return trimmed.length > 0 ? trimmed : null;
   });
 
+const patchTextToNull = (field: string, maxLength: number) =>
+  z
+    .union([
+      z.literal(""),
+      z.null(),
+      z
+        .string()
+        .trim()
+        .min(1, `${field} cannot be empty.`)
+        .max(maxLength, `${field} must not exceed ${maxLength} characters.`),
+    ])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) {
+        return undefined;
+      }
+
+      if (value === null) {
+        return null;
+      }
+
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    });
+
+const patchEmailToNull = z
+  .union([
+    z.literal(""),
+    z.null(),
+    z
+      .string()
+      .trim()
+      .email("Workspace email must be a valid email address.")
+      .max(254, "Workspace email must not exceed 254 characters."),
+  ])
+  .optional()
+  .transform((value) => {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    if (value === null) {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed.toLowerCase() : null;
+  });
+
+const patchUrlToNull = (field: string) =>
+  z
+    .union([
+      z.literal(""),
+      z.null(),
+      z
+        .string()
+        .trim()
+        .url(`${field} must be a valid URL.`)
+        .max(1_000, `${field} must not exceed 1000 characters.`),
+    ])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) {
+        return undefined;
+      }
+
+      if (value === null) {
+        return null;
+      }
+
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    });
+
 const ownerEmailSchema = z
   .string()
   .trim()
@@ -149,5 +223,59 @@ export const workspaceSignupSchema = z
         message: "Passwords must match.",
         path: ["confirmPassword"],
       });
+    }
+  });
+
+export const updateWorkspaceSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Workspace name must be at least 2 characters long.")
+      .max(120, "Workspace name must not exceed 120 characters.")
+      .optional(),
+    slug: z
+      .string()
+      .trim()
+      .min(1, "Workspace slug cannot be empty.")
+      .max(80, "Workspace slug must not exceed 80 characters before normalization.")
+      .optional()
+      .transform((value) =>
+        value === undefined ? undefined : normalizeExplicitWorkspaceSlug(value),
+      ),
+    industry: patchTextToNull("Industry", 120),
+    website: patchUrlToNull("Website"),
+    phone: patchTextToNull("Workspace phone", 30),
+    email: patchEmailToNull,
+    address: patchTextToNull("Address", 255),
+    logoUrl: patchUrlToNull("Logo URL"),
+  })
+  .strict()
+  .superRefine((input, context) => {
+    if (!Object.values(input).some((value) => value !== undefined)) {
+      context.addIssue({
+        code: "custom",
+        message: "At least one workspace field must be provided.",
+        path: [],
+      });
+    }
+
+    if (input.slug !== undefined) {
+      if (input.slug.length < 3 || input.slug.length > 50) {
+        context.addIssue({
+          code: "custom",
+          message: "Workspace slug must be between 3 and 50 characters.",
+          path: ["slug"],
+        });
+      }
+
+      if (!slugPattern.test(input.slug)) {
+        context.addIssue({
+          code: "custom",
+          message:
+            "Workspace slug may contain only lowercase letters, numbers, and hyphens.",
+          path: ["slug"],
+        });
+      }
     }
   });

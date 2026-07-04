@@ -411,6 +411,9 @@ Before real customer documents:
 - [ ] Tasks page loads.
 - [ ] Team Members page loads for admin users.
 - [ ] Manager and staff users cannot access Team Members directly.
+- [ ] Workspace Settings page loads for admin users.
+- [ ] Manager and staff users cannot access Workspace Settings directly.
+- [ ] Updating a safe workspace field refreshes the topbar/auth workspace name.
 - [ ] Invitations page loads for admin users.
 - [ ] Manager and staff users cannot access Invitations directly.
 - [ ] Create invitation with email delivery enabled returns `emailDelivery`.
@@ -440,6 +443,10 @@ Before real customer documents:
   not include `passwordHash`.
 - [ ] User create assigns the current workspace automatically; no frontend
   organization picker or submitted `organizationId` is used.
+- [ ] `PATCH /api/workspace/me` rejects `organizationId`, `id`, `isActive`,
+  and timestamp fields.
+- [ ] Workspace slug changes reject duplicate slugs and do not change
+  `DEFAULT_ORGANIZATION_SLUG` configuration.
 - [ ] Invitation list/create/revoke responses do not include `tokenHash`.
 - [ ] Invitation email preview/resend logs redact raw tokens and mask recipient
   emails.
@@ -525,6 +532,8 @@ Known staging limitations to acknowledge:
 - Access tokens are stored in browser local storage in this portfolio phase.
 - Workspace signup is guarded by `WORKSPACE_SIGNUP_ENABLED` and should be
   enabled only for controlled QA windows.
+- Workspace settings are available to admins; logo upload, custom domains,
+  billing, workspace switching, and multi-membership remain future work.
 - Public contact and appointment forms are validation/demo flows only.
 - No production-grade rate limiting, captcha, centralized monitoring, alerting,
   refresh-token revocation, malware scanning, report export, or automated E2E

@@ -51,6 +51,7 @@ export interface AuthContextValue {
   isLoading: boolean
   acceptSession: (accessToken: string, user: User) => void
   login: (email: string, password: string) => Promise<User>
+  refreshCurrentUser: () => Promise<User>
   logout: () => Promise<void>
 }
 

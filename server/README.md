@@ -272,6 +272,43 @@ This is a portfolio/staging Bearer-token flow. Do not treat it as production
 auth hardening until token storage, refresh/revocation, captcha or stronger
 abuse protection, and production observability are reviewed.
 
+## Workspace settings
+
+Step 26 adds current-workspace profile endpoints:
+
+```http
+GET /api/workspace/me
+Authorization: Bearer <token>
+```
+
+```http
+PATCH /api/workspace/me
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+```
+
+`GET /api/workspace/me` is available to active `ADMIN`, `MANAGER`, and `STAFF`
+users. It returns only safe organization fields: `id`, `name`, `slug`,
+`industry`, `website`, `phone`, `email`, `address`, `logoUrl`, `isActive`,
+`createdAt`, and `updatedAt`.
+
+`PATCH /api/workspace/me` requires an active `ADMIN`. It updates only the
+authenticated user's current workspace from `request.user.organizationId`;
+clients cannot send `organizationId`, `id`, `isActive`, or timestamp fields.
+Allowed fields are `name`, `slug`, `industry`, `website`, `email`, `phone`,
+`address`, and `logoUrl`. Empty optional fields are stored as `null`.
+
+Slug updates are normalized and validated with lowercase letters, numbers, and
+hyphens only, length 3-50. A slug already used by another organization returns
+`409`; sending the current slug is allowed. Successful updates write a
+`WORKSPACE_UPDATED` activity log for the current organization. Logo management
+is URL-only in this step; file upload for logos, custom domains, billing,
+workspace switching, and multi-membership remain future roadmap scope.
+
+Public consultation requests still resolve the default workspace through
+`DEFAULT_ORGANIZATION_SLUG`; changing a workspace slug does not update that
+environment variable.
+
 ### Assignable users
 
 ```http
@@ -865,7 +902,9 @@ creating a new internal CRM workspace and first owner admin. Step 24 adds
 admin-only workspace invitations with hashed one-time tokens and public accept
 auto-login. Step 25 adds invitation email delivery with console and Resend
 providers, `sendEmail` control, delivery result reporting, and resend token
-rotation. The repository also includes production readiness,
+rotation. Step 26 adds current-workspace profile reads and administrator-only
+workspace settings updates with slug uniqueness checks and `WORKSPACE_UPDATED`
+activity logs. The repository also includes production readiness,
 deployment, and final QA documentation. It does not include
 request-to-customer conversion, OCR, cloud object storage, report exports,
 realtime updates, or real production deployment.

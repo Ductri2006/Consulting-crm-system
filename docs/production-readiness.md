@@ -247,6 +247,11 @@ Recommended later upgrade:
   but real delivery depends on provider DNS/sender setup and secrets configured
   outside the repository. Invite URLs are still returned once at create/resend
   as a manual fallback.
+- Workspace settings allow administrator-only profile edits and slug changes.
+  Public consultation requests still resolve `DEFAULT_ORGANIZATION_SLUG`; keep
+  that environment value aligned with the intended default workspace.
+- Workspace logo management is URL-only in this step; there is no logo upload
+  pipeline yet.
 - No billing, customer portal, workspace switcher, or workspace-specific public
   intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production

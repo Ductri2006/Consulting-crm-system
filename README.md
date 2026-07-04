@@ -328,6 +328,8 @@ creates a new internal CRM workspace only when `WORKSPACE_SIGNUP_ENABLED=true`.
 Workspace invitations can add later internal users by email. Billing,
 workspace switching, workspace-specific public portals, and customer portal
 access remain future roadmap scope.
+Administrators can edit the current workspace profile from `/admin/settings`;
+logo management is URL-based in this step.
 
 Intentional portfolio demo accounts created by `npm run seed:demo`:
 
@@ -434,8 +436,9 @@ Recommended admin demo flow:
 3. Check consultation requests.
 4. Open cases.
 5. Manage internal team members from Team Members.
-6. Create and revoke a fictional workspace invitation.
-7. Check tasks, appointments, documents, and reports.
+6. Review Workspace Settings as an administrator.
+7. Create and revoke a fictional workspace invitation.
+8. Check tasks, appointments, documents, and reports.
 
 See [Demo Walkthrough](docs/demo-walkthrough.md) for the full script.
 
@@ -480,6 +483,7 @@ development.
 - `/admin/tasks`
 - `/admin/users`
 - `/admin/invitations`
+- `/admin/settings`
 - `/admin/documents`
 - `/admin/reports`
 - `/invite/:token`
@@ -533,10 +537,10 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Public website | Implemented with typed local content and responsive routes |
 | Public consultation request | Submits to the backend public consultation API |
 | Public contact and appointment forms | Validation/demo flows only; backend intake remains future work |
-| Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, internal users, workspace invitations, documents, and reports |
-| Backend API | Implemented for auth, workspace signup, workspace invitations, CRM workflows, internal user management, documents, dashboard, and reports |
+| Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, internal users, workspace invitations, workspace settings, documents, and reports |
+| Backend API | Implemented for auth, workspace signup, workspace settings, workspace invitations, CRM workflows, internal user management, documents, dashboard, and reports |
 | Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
-| Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED` |
+| Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED`; admins can edit the current workspace profile |
 | Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens, console email preview, optional Resend delivery, and resend token rotation |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
@@ -558,6 +562,9 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
   only; customer portal accounts remain future work.
 - Workspace signup is gated by `WORKSPACE_SIGNUP_ENABLED` and intended for
   local or controlled staging onboarding tests in this portfolio phase.
+- Workspace settings use a logo URL only; logo upload, custom domains,
+  billing, workspace switching, and multi-membership remain future roadmap
+  scope.
 - Invitation email delivery defaults to `EMAIL_PROVIDER=console`; real Resend
   sending requires provider secrets configured outside the repository.
 - No customer portal, billing, OCR, malware scanning, cloud object storage,
@@ -608,11 +615,12 @@ This project is designed to practice:
 - [x] Internal user management
 - [x] Staging deployment
 - [x] Organization / Workspace tenant foundation
+- [x] Workspace settings / organization profile
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Phase 22 complete - Organization / Workspace tenant foundation
+**Current phase:** Step 26 complete - Workspace Settings / Organization Profile
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -676,3 +684,7 @@ Step 25 adds invitation email delivery: `EMAIL_PROVIDER` supports
 `disabled`, `console`, and `resend`; create invitation can send email or skip
 delivery; resend rotates the invite token so older links stop working; email
 failure keeps the invitation and returns a copyable one-time link.
+Step 26 adds Workspace Settings / Organization Profile: authenticated internal
+users can read `/api/workspace/me`, administrators can update safe workspace
+profile fields from `/admin/settings`, slug uniqueness is enforced, and
+workspace updates write `WORKSPACE_UPDATED` activity logs.

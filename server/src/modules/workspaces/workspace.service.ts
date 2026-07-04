@@ -12,12 +12,28 @@ import {
   sanitizeUser,
 } from "../../utils/sanitizeUser";
 import type {
+  CurrentWorkspace,
+  UpdateWorkspaceInput,
   WorkspaceSignupInput,
   WorkspaceSignupResult,
 } from "./workspace.types";
 
 const MAX_SLUG_LENGTH = 50;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const workspaceProfileSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  industry: true,
+  website: true,
+  phone: true,
+  email: true,
+  address: true,
+  logoUrl: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.OrganizationSelect;
 
 const normalizeGeneratedSlug = (value: string): string =>
   value
@@ -135,6 +151,123 @@ const throwSignupWriteError = (error: unknown): never => {
   }
 
   throw error;
+};
+
+const throwWorkspaceUpdateError = (error: unknown): never => {
+  if (isPrismaError(error, "P2002")) {
+    throw new AppError(
+      "Workspace slug is already in use.",
+      HTTP_STATUS.CONFLICT,
+    );
+  }
+
+  if (isPrismaError(error, "P2025")) {
+    throw new AppError("Workspace not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  throw error;
+};
+
+const getUpdateData = (
+  input: UpdateWorkspaceInput,
+): Prisma.OrganizationUpdateInput => {
+  const data: Prisma.OrganizationUpdateInput = {};
+
+  if (input.name !== undefined) {
+    data.name = input.name;
+  }
+
+  if (input.slug !== undefined) {
+    data.slug = input.slug;
+  }
+
+  if (input.industry !== undefined) {
+    data.industry = input.industry;
+  }
+
+  if (input.website !== undefined) {
+    data.website = input.website;
+  }
+
+  if (input.phone !== undefined) {
+    data.phone = input.phone;
+  }
+
+  if (input.email !== undefined) {
+    data.email = input.email;
+  }
+
+  if (input.address !== undefined) {
+    data.address = input.address;
+  }
+
+  if (input.logoUrl !== undefined) {
+    data.logoUrl = input.logoUrl;
+  }
+
+  return data;
+};
+
+export const getCurrentWorkspace = async (
+  organizationId: string,
+): Promise<CurrentWorkspace> => {
+  const workspace = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: workspaceProfileSelect,
+  });
+
+  if (!workspace) {
+    throw new AppError("Workspace not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  return workspace;
+};
+
+export const updateCurrentWorkspace = async (
+  input: UpdateWorkspaceInput,
+  actorId: string,
+  organizationId: string,
+): Promise<CurrentWorkspace> => {
+  if (input.slug !== undefined) {
+    const existing = await prisma.organization.findUnique({
+      where: { slug: input.slug },
+      select: { id: true },
+    });
+
+    if (existing && existing.id !== organizationId) {
+      throw new AppError(
+        "Workspace slug is already in use.",
+        HTTP_STATUS.CONFLICT,
+      );
+    }
+  }
+
+  const data = getUpdateData(input);
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const workspace = await tx.organization.update({
+        where: { id: organizationId },
+        data,
+        select: workspaceProfileSelect,
+      });
+
+      await tx.activityLog.create({
+        data: {
+          organizationId,
+          userId: actorId,
+          action: "WORKSPACE_UPDATED",
+          entityType: "Organization",
+          entityId: workspace.id,
+          description: "Workspace profile updated.",
+        },
+      });
+
+      return workspace;
+    });
+  } catch (error) {
+    return throwWorkspaceUpdateError(error);
+  }
 };
 
 export const signupWorkspace = async (

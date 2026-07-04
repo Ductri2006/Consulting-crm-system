@@ -30,7 +30,10 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
           <Menu className="h-5 w-5" />
         </button>
         <div className="hidden sm:block">
-          <p className="max-w-56 truncate text-sm font-semibold text-slate-900">
+          <p
+            className="max-w-56 truncate text-sm font-semibold text-slate-900"
+            title={workspaceName}
+          >
             {workspaceName}
           </p>
           <p className="text-xs text-slate-400">Your operations at a glance</p>

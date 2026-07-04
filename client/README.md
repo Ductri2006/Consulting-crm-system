@@ -65,6 +65,7 @@ configured with `DEFAULT_ORGANIZATION_SLUG`; the frontend never sends an
 - Tasks: `/admin/tasks`
 - Team members: `/admin/users`
 - Invitations: `/admin/invitations`
+- Settings: `/admin/settings`
 - Documents: `/admin/documents`
 - Reports: `/admin/reports`
 - Public invite accept: `/invite/:token`
@@ -97,10 +98,15 @@ send an invitation email immediately, and the UI shows `emailDelivery` status.
 The invite link is shown only immediately after create or resend for manual
 fallback. Resending rotates the invite link, so older links stop working.
 `/invite/:token` lets the invited user accept and auto-login. There is no
-workspace picker in this step.
+workspace picker in this step. Workspace Settings lets administrators edit the
+current workspace profile, including slug and contact fields. Manager and Staff
+users do not see the Settings navigation item and cannot open `/admin/settings`
+through the protected route. After a successful settings save, the auth context
+refreshes `/api/auth/me` so the topbar reflects the updated workspace name.
 Workspace signup creates only the first owner administrator for a new internal
 CRM workspace. It does not add billing, workspace switching,
-workspace-specific public intake forms, or customer portal accounts.
+workspace-specific public intake forms, custom domains, logo upload, or
+customer portal accounts.
 Document management adds search, filters,
 multipart upload, protected download, detail review, and role-aware deletion.
 Reports use the dashboard/reporting APIs for operational insight, with staff

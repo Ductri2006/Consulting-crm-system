@@ -8,6 +8,7 @@ import {
   MailPlus,
   MessageSquareText,
   Scale,
+  Settings,
   UserCog,
   UsersRound,
   X,
@@ -52,6 +53,13 @@ const navigation: readonly NavigationItem[] = [
   },
   { label: 'Documents', icon: Files, to: '/admin/documents', active: true },
   { label: 'Reports', icon: BarChart3, to: '/admin/reports', active: true },
+  {
+    label: 'Settings',
+    icon: Settings,
+    to: '/admin/settings',
+    active: true,
+    allowedRoles: ['ADMIN'],
+  },
 ]
 
 export interface AdminSidebarProps {

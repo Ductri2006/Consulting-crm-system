@@ -120,6 +120,11 @@ const AdminReportsPage = lazy(() =>
     default: module.AdminReportsPage,
   })),
 )
+const AdminWorkspaceSettingsPage = lazy(() =>
+  import('../pages/admin/AdminWorkspaceSettingsPage').then((module) => ({
+    default: module.AdminWorkspaceSettingsPage,
+  })),
+)
 const AdminTasksPage = lazy(() =>
   import('../pages/admin/AdminTasksPage').then((module) => ({
     default: module.AdminTasksPage,
@@ -204,6 +209,14 @@ export function AppRoutes() {
           <Route
             path="reports"
             element={routeElement(<AdminReportsPage />)}
+          />
+          <Route
+            path="settings"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                {routeElement(<AdminWorkspaceSettingsPage />)}
+              </ProtectedRoute>
+            }
           />
           <Route
             path="consultation-requests"

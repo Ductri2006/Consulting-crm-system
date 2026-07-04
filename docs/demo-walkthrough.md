@@ -408,6 +408,31 @@ Talk track:
 - Deactivation is used instead of hard delete so historical assignments remain
   intact.
 
+## Workspace Settings Demo
+
+Open:
+
+- `/admin/settings`
+
+Show:
+
+- Admin-only workspace profile form.
+- Edit a fictional contact field such as industry, phone, website, or logo URL.
+- Save and confirm the topbar workspace name updates after changing the name.
+- Check read-only metadata: workspace ID, current slug, created at, updated at.
+- Confirm Manager and Staff accounts do not see the Settings sidebar item and
+  cannot access `/admin/settings` directly.
+
+Talk track:
+
+- The UI calls `GET /api/workspace/me` and `PATCH /api/workspace/me`.
+- The backend updates only the authenticated user's current workspace.
+- Slugs must be unique; changing the slug does not move existing CRM data.
+- Public consultation requests still use `DEFAULT_ORGANIZATION_SLUG`.
+- Logo management is URL-only in this step. Logo upload, custom domains,
+  billing, workspace switching, and customer portal accounts remain roadmap
+  scope.
+
 ## Workspace Invitations Demo
 
 Open:

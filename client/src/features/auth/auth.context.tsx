@@ -103,6 +103,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(false)
   }, [])
 
+  const refreshCurrentUser = useCallback(async (): Promise<User> => {
+    const currentUser = await getMe()
+    setUser(currentUser)
+    setToken(getAccessToken())
+    return currentUser
+  }, [])
+
   const logout = useCallback(async (): Promise<void> => {
     try {
       await logoutRequest()
@@ -121,9 +128,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isLoading,
       acceptSession,
       login,
+      refreshCurrentUser,
       logout,
     }),
-    [acceptSession, isLoading, login, logout, token, user],
+    [acceptSession, isLoading, login, logout, refreshCurrentUser, token, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

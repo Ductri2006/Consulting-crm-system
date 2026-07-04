@@ -66,3 +66,30 @@ export const workspaceSignupFormSchema = z
   })
 
 export type WorkspaceSignupFormValues = z.infer<typeof workspaceSignupFormSchema>
+
+export const workspaceSettingsFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Workspace name must contain at least 2 characters.')
+    .max(120, 'Workspace name must not exceed 120 characters.'),
+  slug: z
+    .string()
+    .trim()
+    .min(3, 'Workspace slug must contain at least 3 characters.')
+    .max(50, 'Workspace slug must not exceed 50 characters.')
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      'Use lowercase letters, numbers, and hyphens only.',
+    ),
+  industry: optionalText(120, 'Industry'),
+  website: optionalUrl,
+  email: optionalEmail,
+  phone: optionalText(30, 'Workspace phone'),
+  address: optionalText(255, 'Address'),
+  logoUrl: optionalUrl,
+})
+
+export type WorkspaceSettingsFormValues = z.infer<
+  typeof workspaceSettingsFormSchema
+>
