@@ -1,0 +1,46 @@
+import { LogOut, ShieldCheck } from 'lucide-react'
+import { Outlet, useNavigate } from 'react-router-dom'
+import { usePortalAuth } from '../../features/customerPortal'
+
+export function PortalLayout() {
+  const { logout, session } = usePortalAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/portal/login', { replace: true })
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-slate-950">
+                {session?.organization.name ?? 'Customer Portal'}
+              </p>
+              <p className="truncate text-xs font-medium text-slate-500">
+                {session?.customer.fullName ?? 'Secure customer workspace'}
+              </p>
+            </div>
+          </div>
+          <button
+            className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 lg:self-auto"
+            onClick={() => void handleLogout()}
+            type="button"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            Logout
+          </button>
+        </div>
+      </header>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <Outlet />
+      </main>
+    </div>
+  )
+}

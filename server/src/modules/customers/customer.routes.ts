@@ -12,6 +12,17 @@ import {
   updateCustomerController,
 } from "./customer.controller";
 import {
+  activateCustomerPortalAccountController,
+  createCustomerPortalAccountController,
+  deactivateCustomerPortalAccountController,
+  getCustomerPortalAccountController,
+  resetCustomerPortalPasswordController,
+} from "../customerPortal/customerPortal.controller";
+import {
+  createPortalAccountSchema,
+  resetPortalPasswordSchema,
+} from "../customerPortal/customerPortal.validation";
+import {
   createCustomerSchema,
   customerIdParamsSchema,
   customerListQuerySchema,
@@ -41,6 +52,42 @@ customerRouter.get(
   "/:id",
   validate({ params: customerIdParamsSchema }),
   getCustomerController,
+);
+customerRouter.get(
+  "/:id/portal-account",
+  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
+  validate({ params: customerIdParamsSchema }),
+  getCustomerPortalAccountController,
+);
+customerRouter.post(
+  "/:id/portal-account",
+  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
+  validate({
+    params: customerIdParamsSchema,
+    body: createPortalAccountSchema,
+  }),
+  createCustomerPortalAccountController,
+);
+customerRouter.patch(
+  "/:id/portal-account/password",
+  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
+  validate({
+    params: customerIdParamsSchema,
+    body: resetPortalPasswordSchema,
+  }),
+  resetCustomerPortalPasswordController,
+);
+customerRouter.patch(
+  "/:id/portal-account/deactivate",
+  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
+  validate({ params: customerIdParamsSchema }),
+  deactivateCustomerPortalAccountController,
+);
+customerRouter.patch(
+  "/:id/portal-account/activate",
+  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
+  validate({ params: customerIdParamsSchema }),
+  activateCustomerPortalAccountController,
 );
 customerRouter.patch(
   "/:id",

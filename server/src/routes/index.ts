@@ -8,6 +8,7 @@ import {
   publicConsultationRequestRouter,
 } from "../modules/consultationRequests/consultationRequest.routes";
 import { customerRouter } from "../modules/customers/customer.routes";
+import { customerPortalRouter } from "../modules/customerPortal/customerPortal.routes";
 import { dashboardRouter } from "../modules/dashboard/dashboard.routes";
 import { documentRouter } from "../modules/documents/document.routes";
 import { invitationRouter } from "../modules/invitations/invitation.routes";
@@ -35,6 +36,7 @@ apiRouter.use(
   publicConsultationRequestRouter,
 );
 apiRouter.use("/invitations", invitationRouter);
+apiRouter.use("/portal", customerPortalRouter);
 apiRouter.use("/users", userRouter);
 apiRouter.use("/customers", customerRouter);
 apiRouter.use("/services", serviceRouter);

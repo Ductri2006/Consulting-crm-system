@@ -93,16 +93,17 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users                User[]
-  customers            Customer[]
-  consultationRequests ConsultationRequest[]
-  cases                CaseProfile[]
-  appointments         Appointment[]
-  tasks                Task[]
-  documents            Document[]
-  caseHistories        CaseHistory[]
-  activityLogs         ActivityLog[]
-  invitations          WorkspaceInvitation[]
+  users                  User[]
+  customers              Customer[]
+  consultationRequests   ConsultationRequest[]
+  cases                  CaseProfile[]
+  appointments           Appointment[]
+  tasks                  Task[]
+  documents              Document[]
+  caseHistories          CaseHistory[]
+  activityLogs           ActivityLog[]
+  invitations            WorkspaceInvitation[]
+  customerPortalAccounts CustomerPortalAccount[]
 
   @@index([isActive])
 }
@@ -120,12 +121,12 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization        Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  assignedCases       CaseProfile[] @relation("AssignedCases")
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  assignedCases       CaseProfile[]         @relation("AssignedCases")
   caseHistories       CaseHistory[]
-  managedAppointments Appointment[] @relation("AppointmentStaff")
-  createdTasks        Task[]        @relation("CreatedTasks")
-  assignedTasks       Task[]        @relation("AssignedTasks")
+  managedAppointments Appointment[]         @relation("AppointmentStaff")
+  createdTasks        Task[]                @relation("CreatedTasks")
+  assignedTasks       Task[]                @relation("AssignedTasks")
   uploadedDocuments   Document[]
   news                News[]
   activityLogs        ActivityLog[]
@@ -176,11 +177,12 @@ model Customer {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   cases          CaseProfile[]
   appointments   Appointment[]
   documents      Document[]
-  sourceRequests ConsultationRequest[] @relation("ConvertedCustomer")
+  sourceRequests ConsultationRequest[]  @relation("ConvertedCustomer")
+  portalAccount  CustomerPortalAccount?
 
   @@index([phone])
   @@index([email])
@@ -188,6 +190,26 @@ model Customer {
   @@index([organizationId, phone])
   @@index([organizationId, email])
   @@index([organizationId, createdAt])
+}
+
+model CustomerPortalAccount {
+  id             String    @id @default(uuid())
+  organizationId String
+  customerId     String    @unique
+  email          String
+  passwordHash   String
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, email])
+  @@index([organizationId, isActive])
+  @@index([customerId])
+  @@index([email])
 }
 
 model Service {
@@ -289,8 +311,8 @@ model CaseHistory {
   createdAt      DateTime    @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  caseProfile CaseProfile @relation(fields: [caseProfileId], references: [id], onDelete: Restrict)
-  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  caseProfile  CaseProfile  @relation(fields: [caseProfileId], references: [id], onDelete: Restrict)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([caseProfileId, createdAt])
   @@index([userId, createdAt])
@@ -314,9 +336,9 @@ model Appointment {
   updatedAt       DateTime          @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
-  staff       User?        @relation("AppointmentStaff", fields: [staffId], references: [id], onDelete: SetNull)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  caseProfile  CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  staff        User?        @relation("AppointmentStaff", fields: [staffId], references: [id], onDelete: SetNull)
 
   @@index([appointmentDate, status])
   @@index([staffId, appointmentDate])
@@ -343,9 +365,9 @@ model Task {
   updatedAt      DateTime   @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
-  assignedTo  User?        @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
-  createdBy   User?        @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: SetNull)
+  caseProfile  CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  assignedTo   User?        @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy    User?        @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([assignedToId, status])
   @@index([caseProfileId, status])
@@ -371,9 +393,9 @@ model Document {
   createdAt      DateTime     @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
-  customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  uploadedBy  User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  caseProfile  CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  uploadedBy   User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([caseProfileId, createdAt])
   @@index([customerId, createdAt])
@@ -429,7 +451,7 @@ model ActivityLog {
   createdAt      DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([action, createdAt])

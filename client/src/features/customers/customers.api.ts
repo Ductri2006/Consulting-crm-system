@@ -5,6 +5,11 @@ import type {
   CustomerListParams,
   CustomerListResponse,
   CustomerMutationInput,
+  CustomerPortalAccount,
+  CustomerPortalAccountData,
+  CustomerPortalAccountInput,
+  CustomerPortalAccountMutationData,
+  CustomerPortalPasswordInput,
 } from './customers.types'
 
 interface CustomerResponse<TCustomer extends Customer = Customer> {
@@ -57,4 +62,54 @@ export async function updateCustomer(
 export async function deleteCustomer(id: string): Promise<Customer> {
   const result = await apiClient.delete<CustomerResponse>(`/customers/${id}`)
   return result.customer
+}
+
+export async function getCustomerPortalAccount(
+  id: string,
+): Promise<CustomerPortalAccount | null> {
+  const result = await apiClient.get<CustomerPortalAccountData>(
+    `/customers/${id}/portal-account`,
+  )
+
+  return result.account
+}
+
+export function createCustomerPortalAccount(
+  id: string,
+  input: CustomerPortalAccountInput,
+): Promise<CustomerPortalAccountMutationData> {
+  return apiClient.post<
+    CustomerPortalAccountMutationData,
+    CustomerPortalAccountInput
+  >(`/customers/${id}/portal-account`, input)
+}
+
+export function resetCustomerPortalPassword(
+  id: string,
+  input: CustomerPortalPasswordInput,
+): Promise<CustomerPortalAccountMutationData> {
+  return apiClient.patch<
+    CustomerPortalAccountMutationData,
+    CustomerPortalPasswordInput
+  >(`/customers/${id}/portal-account/password`, input)
+}
+
+export async function deactivateCustomerPortalAccount(
+  id: string,
+): Promise<CustomerPortalAccount> {
+  const result = await apiClient.patch<{ account: CustomerPortalAccount }>(
+    `/customers/${id}/portal-account/deactivate`,
+  )
+
+  return result.account
+}
+
+export async function activateCustomerPortalAccount(
+  id: string,
+): Promise<CustomerPortalAccount> {
+  const result = await apiClient.patch<{ account: CustomerPortalAccount }>(
+    `/customers/${id}/portal-account/activate`,
+  )
+
+  return result.account
 }

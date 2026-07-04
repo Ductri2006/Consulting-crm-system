@@ -290,8 +290,9 @@ Expected behavior:
 - Does not reset the database.
 - Does not delete or mutate Advisora demo data.
 - Does not seed physical document files.
-- Does not create workspace invitations, customer portal access, or a workspace
-  switcher.
+- Does not create workspace invitations or a workspace switcher.
+- Does not create customer portal access automatically; create portal accounts
+  manually during Step 27 smoke testing if needed.
 
 Northstar demo credentials are fictional portfolio credentials:
 
@@ -385,6 +386,18 @@ Before real customer documents:
   seed is run.
 - [ ] At least one database-backed API call succeeds, such as
   `GET /api/customers` or `GET /api/public/services`.
+- [ ] Internal Admin or Manager can create
+  `POST /api/customers/:id/portal-account` for an existing customer.
+- [ ] Portal account create/reset responses do not include `passwordHash`.
+- [ ] `POST /api/portal/auth/login` succeeds with
+  `workspaceSlug`, `email`, and `password`.
+- [ ] Portal JWT payload includes `purpose: "customer_portal"`.
+- [ ] `GET /api/portal/auth/me` succeeds with a portal token.
+- [ ] `GET /api/portal/me` returns only the authenticated customer's safe data.
+- [ ] Portal account deactivate blocks login with the generic failure message.
+- [ ] Portal account activate allows login again.
+- [ ] Portal password reset invalidates the old password and allows the new
+  password.
 
 ### Frontend
 
@@ -405,6 +418,17 @@ Before real customer documents:
 - [ ] Refreshing a protected deep link preserves or restores the session.
 - [ ] Dashboard loads.
 - [ ] Customers page loads.
+- [ ] Admin or Manager can open customer Portal access controls.
+- [ ] Create portal access shows a generated temporary password once when
+  password is omitted.
+- [ ] Reset portal password shows a generated temporary password once when
+  password is omitted.
+- [ ] Deactivate and activate portal access from the customer table modal.
+- [ ] Staff users cannot manage portal access controls.
+- [ ] `/portal/login` loads outside `AdminLayout`.
+- [ ] `/portal/dashboard` loads after portal login and shows workspace,
+  customer profile, portal account info, and future-step placeholders.
+- [ ] Refreshing `/portal/dashboard` restores the portal session.
 - [ ] Consultation requests page loads.
 - [ ] Cases page loads.
 - [ ] Appointments page loads.
@@ -453,6 +477,13 @@ Before real customer documents:
 - [ ] Invitation accept creates the user in the invitation workspace with the
   invitation role only.
 - [ ] Revoked, expired, accepted, and invalid invite tokens cannot be reused.
+- [ ] Customer portal accounts are separate from internal `User` records.
+- [ ] Portal token cannot access internal APIs such as `/api/customers` or
+  `/api/users`.
+- [ ] Internal admin token cannot access `/api/portal/me`.
+- [ ] Portal responses never include `passwordHash` or internal `User` data.
+- [ ] Portal localStorage key is `advisora_portal_access_token`, separate from
+  the admin token key.
 - [ ] `/api/users` and `/api/users/assignable` return current-workspace users
   only.
 - [ ] Customers, consultation requests, cases, appointments, tasks, documents,
@@ -534,6 +565,10 @@ Known staging limitations to acknowledge:
   enabled only for controlled QA windows.
 - Workspace settings are available to admins; logo upload, custom domains,
   billing, workspace switching, and multi-membership remain future work.
+- Customer portal is foundation-only: login, dashboard, profile/account
+  summary, and internal access controls are available, but portal case
+  tracking, customer document upload, messages, billing, and self-registration
+  remain future work.
 - Public contact and appointment forms are validation/demo flows only.
 - No production-grade rate limiting, captcha, centralized monitoring, alerting,
   refresh-token revocation, malware scanning, report export, or automated E2E

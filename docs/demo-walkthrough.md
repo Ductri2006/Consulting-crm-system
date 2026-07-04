@@ -61,7 +61,8 @@ Local URLs:
 - Health check: `http://localhost:5000/api/health`
 
 Public visitors do not need an account. Admin, manager, and staff users are
-internal CRM users. A customer portal is planned for a future phase.
+internal CRM users. Customer portal accounts are separate and are created for
+existing customers by an internal Admin or Manager.
 
 Default demo workspace:
 
@@ -75,7 +76,7 @@ The public consultation form creates requests under the workspace configured by
 workspace signup is available only when the backend has
 `WORKSPACE_SIGNUP_ENABLED=true`. Invitations are managed separately by admins;
 billing, workspace switching, workspace-specific public intake pages, and
-customer portal accounts are not part of this step.
+customer self-registration are not part of this step.
 
 Intentional portfolio staging demo accounts:
 
@@ -132,7 +133,7 @@ Slug: northstar-legal
 ```
 
 This is not public workspace signup and does not create workspace invitations,
-billing, customer portal access, or a workspace switcher. It is a QA seed only.
+billing, or a workspace switcher. It is a QA seed only.
 
 Run after the main demo seed:
 
@@ -402,11 +403,49 @@ Talk track:
 - User management is for internal `ADMIN`, `MANAGER`, and `STAFF` accounts
   only, and team members belong to the current workspace.
 - Public visitors do not need accounts.
-- Customer accounts and a customer portal remain future roadmap scope.
+- Customer portal accounts are separate from internal `User` records.
 - Workspace signup creates the first owner administrator only. Workspace
   invitations add later internal `ADMIN`, `MANAGER`, and `STAFF` accounts.
 - Deactivation is used instead of hard delete so historical assignments remain
   intact.
+
+## Customer Portal Demo
+
+Open:
+
+- `/admin/customers`
+- `/portal/login`
+- `/portal/dashboard`
+
+Show:
+
+- Sign in as Admin or Manager.
+- Open a fictional customer row and click Portal.
+- Create portal access with the customer email or a `.test` demo email.
+- Leave password blank once to show a generated temporary password.
+- Copy the temporary password immediately and close the modal.
+- Sign out of admin or open a separate browser session.
+- Log in at `/portal/login` with workspace slug `advisora-demo`, portal email,
+  and temporary password.
+- Confirm `/portal/dashboard` shows workspace, customer profile, portal account
+  info, and placeholders for case tracking, documents, and messages.
+- Return to Admin Customers and reset the portal password.
+- Confirm the old password no longer logs in and the new/generated password
+  works.
+- Deactivate portal access and confirm login fails with the generic message.
+- Activate portal access and confirm login works again.
+- Confirm Staff users do not see or cannot use portal access controls.
+
+Talk track:
+
+- Portal auth uses `CustomerPortalAccount`, not internal `User`.
+- Portal JWTs carry `purpose: "customer_portal"` and are blocked from admin
+  APIs.
+- Internal admin tokens are blocked from portal APIs.
+- Portal accounts are created only for existing customers in the same
+  workspace.
+- Case tracking and customer document upload are intentionally future portal
+  steps.
 
 ## Workspace Settings Demo
 
@@ -430,7 +469,7 @@ Talk track:
 - Slugs must be unique; changing the slug does not move existing CRM data.
 - Public consultation requests still use `DEFAULT_ORGANIZATION_SLUG`.
 - Logo management is URL-only in this step. Logo upload, custom domains,
-  billing, workspace switching, and customer portal accounts remain roadmap
+  billing, workspace switching, and richer portal workflows remain roadmap
   scope.
 
 ## Workspace Invitations Demo
@@ -533,7 +572,9 @@ Talk track:
 - Public consultation requests map to one configured default workspace until
   workspace-specific public portals or custom-domain routing exists.
 - No request-to-customer conversion workflow yet.
-- No customer portal yet.
+- Customer portal supports login/dashboard/profile foundation only; no portal
+  case tracking, customer document upload, messages, billing, or
+  self-registration yet.
 - No OCR, malware scanning, or private object storage yet.
 - No public CMS APIs for news/projects yet.
 - No report exports yet.

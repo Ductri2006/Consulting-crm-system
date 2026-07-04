@@ -200,6 +200,62 @@ created before the workspace foundation do not crash the app; if they still
 verify, the middleware derives the user's current organization from the
 database.
 
+## Customer portal foundation
+
+Step 27 adds a separate customer portal auth boundary. Customer portal users
+are stored in `CustomerPortalAccount`, not `User`, and portal JWTs carry
+`purpose: "customer_portal"`. Internal auth rejects portal-purpose tokens, and
+portal middleware rejects internal tokens.
+
+Portal login:
+
+```http
+POST /api/portal/auth/login
+Content-Type: application/json
+```
+
+```json
+{
+  "workspaceSlug": "advisora-demo",
+  "email": "customer@example.com",
+  "password": "Portal-Password-2026!"
+}
+```
+
+Successful login returns `accessToken`, safe `portalAccount`, safe `customer`,
+and safe `organization`. Failed portal login uses the generic message
+`Invalid workspace, email, or password.`. Portal responses never include
+`passwordHash` or internal `User` data.
+
+Portal session/profile:
+
+```http
+GET /api/portal/auth/me
+Authorization: Bearer <portal-token>
+```
+
+```http
+GET /api/portal/me
+Authorization: Bearer <portal-token>
+```
+
+Internal admins and managers can manage portal access for existing customers:
+
+```http
+GET /api/customers/<customer-uuid>/portal-account
+POST /api/customers/<customer-uuid>/portal-account
+PATCH /api/customers/<customer-uuid>/portal-account/password
+PATCH /api/customers/<customer-uuid>/portal-account/deactivate
+PATCH /api/customers/<customer-uuid>/portal-account/activate
+Authorization: Bearer <internal-admin-or-manager-token>
+```
+
+Create and password reset accept an optional `password`; when omitted, the API
+generates a temporary password and returns it once as `temporaryPassword`.
+STAFF users are blocked from portal-account management. Activity logs record
+create, password reset, deactivate, and activate actions without storing raw
+passwords.
+
 ## Workspace signup
 
 Step 23 adds guarded public workspace onboarding:
@@ -350,7 +406,7 @@ Authorization: Bearer <token>
 
 These endpoints require an active authenticated user with the `ADMIN` role.
 They manage internal CRM users only: `ADMIN`, `MANAGER`, and `STAFF`. Public
-visitors and future customer-portal users are outside this module.
+visitors and customer portal accounts are outside this module.
 Administrators can manage only users in their own workspace. User creation
 assigns the current workspace on the server; clients cannot submit
 `organizationId`.
@@ -895,7 +951,7 @@ triage, protected case-profile workflows, appointment scheduling, internal
 task management, authenticated document management, workspace invitations, and
 role-aware dashboard and reporting APIs. Step 22 adds the Organization /
 Workspace tenant foundation using a single default `Advisora Demo Workspace`;
-billing and customer portal access remain future work. Step 22.5
+billing remains future work. Step 22.5
 adds a `Northstar Legal Workspace` seed plus `verify:tenant-isolation` for
 staging tenant QA. Step 23 adds guarded public workspace signup/onboarding for
 creating a new internal CRM workspace and first owner admin. Step 24 adds
@@ -904,14 +960,18 @@ auto-login. Step 25 adds invitation email delivery with console and Resend
 providers, `sendEmail` control, delivery result reporting, and resend token
 rotation. Step 26 adds current-workspace profile reads and administrator-only
 workspace settings updates with slug uniqueness checks and `WORKSPACE_UPDATED`
-activity logs. The repository also includes production readiness,
+activity logs. Step 27 adds separate customer portal accounts, portal-purpose
+JWTs, portal login/session/profile endpoints, and admin/manager portal access
+controls for existing customers. The repository also includes production readiness,
 deployment, and final QA documentation. It does not include
-request-to-customer conversion, OCR, cloud object storage, report exports,
-realtime updates, or real production deployment.
+request-to-customer conversion, portal case tracking, customer document upload,
+OCR, cloud object storage, report exports, realtime updates, or real
+production deployment.
 
 ## Future phases
 
 - Refresh tokens, token revocation, password recovery, and account management
+- Portal case tracking, customer document upload, and customer self-service profile updates
 - Consultation-request conversion
 - Cloud object storage, signed file delivery, malware scanning, and OCR
 - Extended activity auditing and case-history retention policies

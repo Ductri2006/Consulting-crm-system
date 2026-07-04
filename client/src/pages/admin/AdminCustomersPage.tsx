@@ -2,9 +2,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   AlertTriangle,
   CheckCircle2,
+  Copy,
+  KeyRound,
   Pencil,
   Plus,
+  Power,
   RefreshCw,
+  ShieldCheck,
   Trash2,
   UsersRound,
 } from 'lucide-react'
@@ -22,16 +26,22 @@ import {
 } from '../../components/admin'
 import { useAuth } from '../../features/auth'
 import {
+  activateCustomerPortalAccount,
   createCustomer,
+  createCustomerPortalAccount,
   deleteCustomer,
+  deactivateCustomerPortalAccount,
   getCustomer,
+  getCustomerPortalAccount,
   listCustomers,
+  resetCustomerPortalPassword,
   updateCustomer,
 } from '../../features/customers/customers.api'
 import type {
   Customer,
   CustomerDetail,
   CustomerMutationInput,
+  CustomerPortalAccount,
   PaginationMeta,
 } from '../../features/customers/customers.types'
 import {
@@ -84,6 +94,52 @@ const formatDate = (value: string): string => {
     month: 'short',
     year: 'numeric',
   }).format(date)
+}
+
+const formatDateTime = (value: string | null): string => {
+  if (!value) {
+    return 'Not yet'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+}
+
+const getErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback
+
+const copyText = async (value: string): Promise<void> => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value)
+    return
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = value
+  textarea.setAttribute('readonly', 'true')
+  textarea.style.position = 'fixed'
+  textarea.style.left = '-9999px'
+  document.body.append(textarea)
+  textarea.select()
+
+  try {
+    if (!document.execCommand('copy')) {
+      throw new Error('Copy failed.')
+    }
+  } finally {
+    textarea.remove()
+  }
 }
 
 const getFormValues = (
@@ -382,6 +438,379 @@ function CustomerForm({
   )
 }
 
+function PortalAccessDialog({
+  customer,
+  onClose,
+  onFeedback,
+}: {
+  customer: Customer | null
+  onClose: () => void
+  onFeedback: (feedback: Feedback) => void
+}) {
+  const [account, setAccount] = useState<CustomerPortalAccount | null>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null)
+  const [copyMessage, setCopyMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [action, setAction] = useState<
+    'create' | 'reset' | 'activate' | 'deactivate' | null
+  >(null)
+
+  const loadPortalAccount = useCallback(async () => {
+    if (!customer) {
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    setTemporaryPassword(null)
+    setCopyMessage(null)
+
+    try {
+      const loadedAccount = await getCustomerPortalAccount(customer.id)
+      setAccount(loadedAccount)
+      setEmail(loadedAccount?.email ?? customer.email ?? '')
+      setPassword('')
+    } catch (loadError) {
+      setError(
+        getErrorMessage(
+          loadError,
+          'Customer portal account could not be loaded.',
+        ),
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }, [customer])
+
+  useEffect(() => {
+    if (customer) {
+      void loadPortalAccount()
+      return
+    }
+
+    setAccount(null)
+    setEmail('')
+    setPassword('')
+    setTemporaryPassword(null)
+    setCopyMessage(null)
+    setError(null)
+  }, [customer, loadPortalAccount])
+
+  const handleClose = () => {
+    if (!action) {
+      onClose()
+    }
+  }
+
+  const handleCreate = async () => {
+    if (!customer) {
+      return
+    }
+
+    setAction('create')
+    setError(null)
+    setTemporaryPassword(null)
+    setCopyMessage(null)
+
+    try {
+      const result = await createCustomerPortalAccount(customer.id, {
+        email: optionalValue(email),
+        password: optionalValue(password),
+      })
+      setAccount(result.account)
+      setEmail(result.account.email)
+      setPassword('')
+      setTemporaryPassword(result.temporaryPassword ?? null)
+      onFeedback({
+        type: 'success',
+        message: `Portal access created for ${customer.fullName}.`,
+      })
+    } catch (createError) {
+      setError(
+        getErrorMessage(
+          createError,
+          'Customer portal account could not be created.',
+        ),
+      )
+    } finally {
+      setAction(null)
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!customer) {
+      return
+    }
+
+    setAction('reset')
+    setError(null)
+    setTemporaryPassword(null)
+    setCopyMessage(null)
+
+    try {
+      const result = await resetCustomerPortalPassword(customer.id, {
+        password: optionalValue(password),
+      })
+      setAccount(result.account)
+      setEmail(result.account.email)
+      setPassword('')
+      setTemporaryPassword(result.temporaryPassword ?? null)
+      onFeedback({
+        type: 'success',
+        message: `Portal password reset for ${customer.fullName}.`,
+      })
+    } catch (resetError) {
+      setError(
+        getErrorMessage(
+          resetError,
+          'Customer portal password could not be reset.',
+        ),
+      )
+    } finally {
+      setAction(null)
+    }
+  }
+
+  const handleSetActive = async (nextIsActive: boolean) => {
+    if (!customer) {
+      return
+    }
+
+    setAction(nextIsActive ? 'activate' : 'deactivate')
+    setError(null)
+    setTemporaryPassword(null)
+    setCopyMessage(null)
+
+    try {
+      const updatedAccount = nextIsActive
+        ? await activateCustomerPortalAccount(customer.id)
+        : await deactivateCustomerPortalAccount(customer.id)
+
+      setAccount(updatedAccount)
+      setEmail(updatedAccount.email)
+      onFeedback({
+        type: 'success',
+        message: `Portal access ${nextIsActive ? 'activated' : 'deactivated'} for ${customer.fullName}.`,
+      })
+    } catch (activeError) {
+      setError(
+        getErrorMessage(
+          activeError,
+          'Customer portal account status could not be updated.',
+        ),
+      )
+    } finally {
+      setAction(null)
+    }
+  }
+
+  const handleCopyTemporaryPassword = async () => {
+    if (!temporaryPassword) {
+      return
+    }
+
+    try {
+      await copyText(temporaryPassword)
+      setCopyMessage('Temporary password copied.')
+    } catch (copyError) {
+      setCopyMessage(getErrorMessage(copyError, 'Password could not be copied.'))
+    }
+  }
+
+  const isBusy = Boolean(action) || isLoading
+
+  return (
+    <Modal
+      description={
+        customer
+          ? `Manage customer portal access for ${customer.fullName}.`
+          : undefined
+      }
+      isDismissible={!action}
+      isOpen={Boolean(customer)}
+      onClose={handleClose}
+      size="md"
+      title="Portal access"
+    >
+      <div className="max-h-[calc(100vh-13rem)] overflow-y-auto p-5 sm:p-6">
+        {isLoading ? (
+          <LoadingState label="Loading portal access" />
+        ) : (
+          <div className="space-y-5">
+            {error ? (
+              <div
+                className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+                role="alert"
+              >
+                {error}
+              </div>
+            ) : null}
+
+            {temporaryPassword ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <p className="font-bold">
+                  This password is shown once. Share it securely and ask the
+                  customer to change it later.
+                </p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <code className="min-w-0 flex-1 break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-slate-900 ring-1 ring-amber-200">
+                    {temporaryPassword}
+                  </code>
+                  <button
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-amber-800"
+                    onClick={() => void handleCopyTemporaryPassword()}
+                    type="button"
+                  >
+                    <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                    Copy
+                  </button>
+                </div>
+                {copyMessage ? (
+                  <p className="mt-2 text-xs font-semibold">{copyMessage}</p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {account ? (
+              <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                      Portal login email
+                    </p>
+                    <p className="mt-1 break-all text-sm font-bold text-slate-900">
+                      {account.email}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex self-start rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${
+                      account.isActive
+                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+                        : 'bg-slate-100 text-slate-600 ring-slate-500/20'
+                    }`}
+                  >
+                    {account.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="font-bold text-slate-400">Last login</dt>
+                    <dd className="mt-1 font-semibold text-slate-700">
+                      {formatDateTime(account.lastLoginAt)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold text-slate-400">Created</dt>
+                    <dd className="mt-1 font-semibold text-slate-700">
+                      {formatDateTime(account.createdAt)}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            ) : (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                No portal account exists for this customer yet.
+              </div>
+            )}
+
+            <div className="grid gap-4">
+              {!account ? (
+                <div>
+                  <label className="field-label" htmlFor="portal-account-email">
+                    Login email
+                  </label>
+                  <input
+                    className="field-input"
+                    disabled={isBusy}
+                    id="portal-account-email"
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder={customer?.email ?? 'customer@example.com'}
+                    type="email"
+                    value={email}
+                  />
+                </div>
+              ) : null}
+
+              <div>
+                <label className="field-label" htmlFor="portal-account-password">
+                  {account ? 'New password' : 'Password'}
+                </label>
+                <input
+                  className="field-input"
+                  disabled={isBusy}
+                  id="portal-account-password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Leave blank to generate"
+                  type="password"
+                  value={password}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+        <button
+          className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+          disabled={Boolean(action)}
+          onClick={handleClose}
+          type="button"
+        >
+          Close
+        </button>
+        {account ? (
+          <>
+            {account.isActive ? (
+              <button
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-rose-200 px-4 py-2.5 text-sm font-bold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isBusy}
+                onClick={() => void handleSetActive(false)}
+                type="button"
+              >
+                <Power className="h-4 w-4" aria-hidden="true" />
+                {action === 'deactivate' ? 'Deactivating...' : 'Deactivate'}
+              </button>
+            ) : (
+              <button
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isBusy}
+                onClick={() => void handleSetActive(true)}
+                type="button"
+              >
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                {action === 'activate' ? 'Activating...' : 'Activate'}
+              </button>
+            )}
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isBusy}
+              onClick={() => void handleResetPassword()}
+              type="button"
+            >
+              <KeyRound className="h-4 w-4" aria-hidden="true" />
+              {action === 'reset' ? 'Resetting...' : 'Reset password'}
+            </button>
+          </>
+        ) : (
+          <button
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isBusy}
+            onClick={() => void handleCreate()}
+            type="button"
+          >
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            {action === 'create' ? 'Creating...' : 'Create portal access'}
+          </button>
+        )}
+      </div>
+    </Modal>
+  )
+}
+
 export function AdminCustomersPage() {
   const { user } = useAuth()
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -401,10 +830,12 @@ export function AdminCustomersPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [portalTarget, setPortalTarget] = useState<Customer | null>(null)
   const listRequestSequence = useRef(0)
   const detailRequestSequence = useRef(0)
 
   const canDelete = user?.role === 'ADMIN' || user?.role === 'MANAGER'
+  const canManagePortal = user?.role === 'ADMIN' || user?.role === 'MANAGER'
 
   const loadCustomers = useCallback(async () => {
     const requestSequence = ++listRequestSequence.current
@@ -650,6 +1081,17 @@ export function AdminCustomersPage() {
             <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
             View / Edit
           </button>
+          {canManagePortal ? (
+            <button
+              aria-label={`Manage portal access for ${customer.fullName}`}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50"
+              onClick={() => setPortalTarget(customer)}
+              type="button"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Portal
+            </button>
+          ) : null}
           {canDelete ? (
             <button
               aria-label={`Delete ${customer.fullName}`}
@@ -870,6 +1312,12 @@ export function AdminCustomersPage() {
         }}
         onConfirm={() => void handleDelete()}
         title="Delete customer"
+      />
+
+      <PortalAccessDialog
+        customer={portalTarget}
+        onClose={() => setPortalTarget(null)}
+        onFeedback={setFeedback}
       />
     </div>
   )

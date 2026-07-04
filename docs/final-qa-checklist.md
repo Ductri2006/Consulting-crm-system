@@ -66,6 +66,29 @@ Customers:
 
 - [ ] List, search, pagination, create, edit, and detail flows work.
 - [ ] Delete is restricted to allowed roles.
+- [ ] Admin/Manager can open Portal access controls for an existing customer.
+- [ ] Staff cannot manage customer portal access.
+
+Customer Portal:
+
+- [ ] Create portal access for an existing customer works.
+- [ ] Create response shows a generated temporary password once when password
+  is omitted.
+- [ ] Create, reset, activate, and deactivate write safe activity logs.
+- [ ] `passwordHash` is not returned by portal-account management responses.
+- [ ] Duplicate portal account for the same customer returns `409`.
+- [ ] Duplicate portal email in the same workspace returns `409`.
+- [ ] `/portal/login` accepts workspace slug, email, and password.
+- [ ] `/portal/dashboard` loads outside `AdminLayout`.
+- [ ] Dashboard shows workspace, customer profile, portal account info, and
+  future-step placeholders.
+- [ ] Refreshing `/portal/dashboard` restores the portal session.
+- [ ] Portal password reset invalidates the old password and allows the new
+  password.
+- [ ] Deactivate blocks portal login with a generic failure message.
+- [ ] Activate allows portal login again.
+- [ ] Portal token cannot access admin APIs.
+- [ ] Internal token cannot access portal APIs.
 
 Consultation Requests:
 
@@ -186,6 +209,11 @@ Reports:
 - [ ] No upload file is committed.
 - [ ] Login, `/auth/me`, `/users`, and `/users/assignable` do not return
   `passwordHash`.
+- [ ] Portal login, `/portal/auth/me`, and `/portal/me` do not return
+  `passwordHash` or internal `User` data.
+- [ ] Portal JWT payload includes `purpose: "customer_portal"`.
+- [ ] Admin token key and portal token key are separate
+  (`consulting_crm_access_token` vs `advisora_portal_access_token`).
 - [ ] API errors do not reveal secrets.
 - [ ] Browser console does not print tokens or sensitive payloads.
 - [ ] Server logs do not print passwords, Bearer tokens, database URLs, or file
@@ -205,6 +233,8 @@ testing.
 - [ ] Reports APIs return data for an admin account.
 - [ ] Admin user management create/edit/reset/deactivate/reactivate smoke works
   with fictional users.
+- [ ] Customer portal create/login/me/dashboard/reset/deactivate/reactivate
+  smoke works with fictional customers.
 - [ ] Public consultation form submits to the backend.
 - [ ] Public contact and appointment forms validate locally as documented demo flows.
 - [ ] Refreshing a protected admin deep link keeps or restores session correctly.
@@ -233,6 +263,7 @@ testing.
 | Build and lint |  |  |
 | Public website |  |  |
 | Admin auth |  |  |
+| Customer portal |  |  |
 | Admin CRM modules |  |  |
 | Documents |  |  |
 | Reports |  |  |

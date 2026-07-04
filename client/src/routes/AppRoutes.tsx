@@ -2,7 +2,12 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout, LoadingState } from '../components/admin'
 import { PublicLayout } from '../components/layout/PublicLayout'
+import { PortalLayout } from '../components/portal'
 import { ProtectedRoute, useAuth } from '../features/auth'
+import {
+  PortalProtectedRoute,
+  usePortalAuth,
+} from '../features/customerPortal'
 
 const AboutPage = lazy(() =>
   import('../pages/AboutPage').then((module) => ({
@@ -67,6 +72,16 @@ const WorkspaceSignupPage = lazy(() =>
 const InviteAcceptPage = lazy(() =>
   import('../pages/InviteAcceptPage').then((module) => ({
     default: module.InviteAcceptPage,
+  })),
+)
+const CustomerPortalDashboardPage = lazy(() =>
+  import('../pages/portal/CustomerPortalDashboardPage').then((module) => ({
+    default: module.CustomerPortalDashboardPage,
+  })),
+)
+const CustomerPortalLoginPage = lazy(() =>
+  import('../pages/portal/CustomerPortalLoginPage').then((module) => ({
+    default: module.CustomerPortalLoginPage,
   })),
 )
 
@@ -151,6 +166,21 @@ function AdminIndexRoute() {
   )
 }
 
+function PortalIndexRoute() {
+  const { isAuthenticated, isLoading } = usePortalAuth()
+
+  if (isLoading) {
+    return <LoadingState label="Restoring your portal session" />
+  }
+
+  return (
+    <Navigate
+      replace
+      to={isAuthenticated ? '/portal/dashboard' : '/portal/login'}
+    />
+  )
+}
+
 function routeElement(element: ReactNode) {
   return (
     <Suspense fallback={<LoadingState label="Loading page..." />}>
@@ -223,6 +253,26 @@ export function AppRoutes() {
             element={routeElement(<AdminConsultationRequestsPage />)}
           />
           <Route path="*" element={routeElement(<AdminNotFoundPage />)} />
+        </Route>
+      </Route>
+
+      <Route path="portal">
+        <Route index element={<PortalIndexRoute />} />
+        <Route
+          path="login"
+          element={routeElement(<CustomerPortalLoginPage />)}
+        />
+        <Route
+          element={
+            <PortalProtectedRoute>
+              <PortalLayout />
+            </PortalProtectedRoute>
+          }
+        >
+          <Route
+            path="dashboard"
+            element={routeElement(<CustomerPortalDashboardPage />)}
+          />
         </Route>
       </Route>
 

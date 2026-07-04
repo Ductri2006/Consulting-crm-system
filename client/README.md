@@ -69,9 +69,12 @@ configured with `DEFAULT_ORGANIZATION_SLUG`; the frontend never sends an
 - Documents: `/admin/documents`
 - Reports: `/admin/reports`
 - Public invite accept: `/invite/:token`
+- Customer portal login: `/portal/login`
+- Customer portal dashboard: `/portal/dashboard`
 - Demo accounts: see `../docs/demo-walkthrough.md`
 - Legacy local account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
+- Customer portal token key: `advisora_portal_access_token`
 
 The legacy local account is for local portfolio testing only and must not be
 used as a staging or production credential.
@@ -105,10 +108,27 @@ through the protected route. After a successful settings save, the auth context
 refreshes `/api/auth/me` so the topbar reflects the updated workspace name.
 Workspace signup creates only the first owner administrator for a new internal
 CRM workspace. It does not add billing, workspace switching,
-workspace-specific public intake forms, custom domains, logo upload, or
-customer portal accounts.
+workspace-specific public intake forms, custom domains, or logo upload.
+Admin and Manager users can manage basic portal access from `/admin/customers`
+for an existing customer: create, reset password, deactivate, and activate.
 Document management adds search, filters,
 multipart upload, protected download, detail review, and role-aware deletion.
 Reports use the dashboard/reporting APIs for operational insight, with staff
 performance available to administrators and managers only. Admin and public page
 routes are lazy-loaded to keep the initial bundle smaller.
+
+## Customer Portal
+
+The customer portal uses its own auth context and API client. It does not reuse
+the admin token key or `AdminLayout`.
+
+- Login route: `/portal/login`
+- Dashboard route: `/portal/dashboard`
+- Backend auth: `/api/portal/auth/login`, `/api/portal/auth/me`
+- Backend profile: `/api/portal/me`
+- Token key: `advisora_portal_access_token`
+
+The dashboard currently shows workspace, customer profile, portal account
+status, and placeholders for future case tracking, document upload, and secure
+messages. Customer self-registration, billing, and portal document upload are
+not part of this step.

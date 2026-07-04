@@ -43,6 +43,13 @@ export const authenticate: RequestHandler = asyncHandler(
       );
     }
 
+    if (tokenPayload.purpose === "customer_portal") {
+      throw new AppError(
+        "Invalid or expired access token.",
+        HTTP_STATUS.UNAUTHORIZED,
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: tokenPayload.sub },
       include: {

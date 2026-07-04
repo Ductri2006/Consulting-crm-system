@@ -42,9 +42,10 @@ The schema covers:
 
 | Entity | Responsibility |
 | --- | --- |
-| `User` | Internal users, roles, authentication state, and future customer accounts |
+| `User` | Internal users, roles, and authentication state |
 | `WorkspaceInvitation` | One-time internal user invitations scoped to an organization |
 | `Customer` | Customer identity, contact details, source, and CRM notes |
+| `CustomerPortalAccount` | Separate customer portal login account for an existing customer |
 | `Service` | Consulting services offered by the business |
 | `ConsultationRequest` | Requests submitted from the public website and their conversion state |
 | `CaseProfile` | The main consulting case record and its current workflow state |
@@ -73,6 +74,7 @@ erDiagram
   CUSTOMER ||--o{ APPOINTMENT : "books"
   CUSTOMER ||--o{ DOCUMENT : "has"
   CUSTOMER o|--o{ CONSULTATION_REQUEST : "receives converted requests"
+  CUSTOMER ||--o| CUSTOMER_PORTAL_ACCOUNT : "can sign in through"
 
   SERVICE ||--o{ CONSULTATION_REQUEST : "is requested in"
   SERVICE ||--o{ CASE_PROFILE : "categorizes"
@@ -126,7 +128,10 @@ Stores system users such as administrators, managers, staff members, and future 
 - `STAFF`
 - `CUSTOMER`
 
-The `CUSTOMER` role is reserved for a future customer portal. The initial CRM can operate without creating a `User` record for every `Customer`.
+The `CUSTOMER` role remains reserved for possible future internal-user
+integration. Step 27 customer portal users do not use `UserRole.CUSTOMER`;
+they use separate `CustomerPortalAccount` records so portal auth cannot enter
+internal admin auth.
 
 ### 5.1.1 WorkspaceInvitation
 
@@ -186,6 +191,40 @@ Relationships:
 - One customer has many appointments.
 - One customer has many documents.
 - One customer may be the result of many consultation-request conversions.
+- One customer can have at most one customer portal account.
+
+### 5.2.1 CustomerPortalAccount
+
+Stores customer-facing portal credentials separately from internal `User`
+records.
+
+| Field | Type | Required | Rules / Default |
+| --- | --- | --- | --- |
+| `id` | UUID | Yes | Primary key |
+| `organizationId` | UUID | Yes | References `Organization` |
+| `customerId` | UUID | Yes | Unique; references `Customer` |
+| `email` | String | Yes | Login email, normalized to lowercase |
+| `passwordHash` | String | Yes | One-way bcrypt hash; never returned by API |
+| `isActive` | Boolean | Yes | Defaults to `true` |
+| `lastLoginAt` | DateTime | No | Updated after successful portal login |
+| `createdAt` | DateTime | Yes | Defaults to the current time |
+| `updatedAt` | DateTime | Yes | Updated automatically |
+
+Relationships:
+
+- One portal account belongs to one organization.
+- One portal account belongs to one customer in the same organization.
+
+Indexes and constraints:
+
+- `customerId` is unique so each customer has at most one portal account.
+- `(organizationId, email)` is unique so a portal email cannot be reused within
+  the same workspace.
+- Indexes cover `(organizationId, isActive)`, `customerId`, and `email`.
+
+Portal JWT payloads include `purpose: "customer_portal"`, `portalAccountId`,
+`organizationId`, and `customerId`. Internal `User` tokens and customer portal
+tokens are intentionally not interchangeable.
 
 ### 5.3 Service
 
@@ -508,6 +547,7 @@ The Prisma draft includes indexes for common access patterns:
 
 - User filtering by role and active state
 - Customer search by phone and email
+- Customer portal account lookup by customer, workspace email, and active state
 - Request queues by status, service, and creation time
 - Case filters by status, priority, assignee, service, customer, and deadline
 - Case-history timelines
@@ -522,6 +562,8 @@ PostgreSQL full-text search or trigram indexes can be added later for customer n
 ## 8. Security and Privacy Considerations
 
 - `passwordHash` and identity information must never appear in normal API responses.
+- `CustomerPortalAccount.passwordHash` must never appear in portal or internal
+  customer-management responses.
 - Customer identity numbers and private documents should be encrypted or protected with provider-level encryption at rest.
 - File URLs should be private or signed when they contain customer information.
 - Role-based authorization must be enforced in backend services, not only in the frontend.
@@ -649,10 +691,30 @@ model Customer {
   appointments   Appointment[]
   documents      Document[]
   sourceRequests ConsultationRequest[] @relation("ConvertedCustomer")
+  portalAccount  CustomerPortalAccount?
 
   @@index([phone])
   @@index([email])
   @@index([createdAt])
+}
+
+model CustomerPortalAccount {
+  id             String    @id @default(uuid())
+  organizationId String
+  customerId     String    @unique
+  email          String
+  passwordHash   String
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, email])
+  @@index([organizationId, isActive])
+  @@index([customerId])
+  @@index([email])
 }
 
 model Service {

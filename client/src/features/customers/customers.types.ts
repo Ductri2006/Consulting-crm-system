@@ -29,6 +29,35 @@ export interface CustomerDetail extends Customer {
   relatedCounts: CustomerRelatedCounts
 }
 
+export interface CustomerPortalAccount {
+  id: string
+  organizationId: string
+  customerId: string
+  email: string
+  isActive: boolean
+  lastLoginAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CustomerPortalAccountData {
+  account: CustomerPortalAccount | null
+}
+
+export interface CustomerPortalAccountMutationData {
+  account: CustomerPortalAccount
+  temporaryPassword?: string
+}
+
+export interface CustomerPortalAccountInput {
+  email?: string
+  password?: string
+}
+
+export interface CustomerPortalPasswordInput {
+  password?: string
+}
+
 export interface CustomerListResponse {
   items: Customer[]
   meta: PaginationMeta

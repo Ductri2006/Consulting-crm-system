@@ -129,15 +129,22 @@ Production rules:
 - JWT signing and verification are pinned to `HS256`.
 - `passwordHash` must not be returned by login, `/auth/me`, user list/detail, or
   assignable-user endpoints.
+- Customer portal auth uses separate `CustomerPortalAccount` records and portal
+  JWTs with `purpose: "customer_portal"`.
+- Internal middleware must reject portal-purpose tokens, and portal middleware
+  must reject internal tokens.
+- Portal login, `/api/portal/auth/me`, and `/api/portal/me` must never return
+  `passwordHash` or internal `User` data.
 - The demo admin password must be changed or replaced before any real
   production use.
 - Do not publish high-privilege admin demo credentials for long-lived public
   staging. Prefer manager or staff access for public review, or share admin
   access privately only.
 - Bearer tokens must not be logged, printed in docs, or committed.
-- The current frontend stores the access token in browser local storage. For
-  higher-risk production use, migrate authentication to `HttpOnly`, `Secure`,
-  `SameSite` cookies or another reviewed token storage strategy.
+- The current frontend stores internal and portal access tokens in browser
+  local storage using separate keys. For higher-risk production use, migrate
+  authentication to `HttpOnly`, `Secure`, `SameSite` cookies or another
+  reviewed token storage strategy.
 
 ### JWT Secret Rotation
 
@@ -237,7 +244,8 @@ Recommended later upgrade:
 - File storage is local and development-oriented.
 - Render Free may cold start during portfolio staging.
 - No refresh tokens or token revocation workflow yet.
-- Current frontend token storage uses local storage, not HttpOnly cookies.
+- Current frontend token storage uses local storage for both internal and
+  customer portal sessions, not HttpOnly cookies.
 - Workspace signup exists for controlled staging/local onboarding tests and is
   gated by `WORKSPACE_SIGNUP_ENABLED`; keep it disabled for production until
   abuse protection and session hardening are reviewed.
@@ -252,8 +260,10 @@ Recommended later upgrade:
   that environment value aligned with the intended default workspace.
 - Workspace logo management is URL-only in this step; there is no logo upload
   pipeline yet.
-- No billing, customer portal, workspace switcher, or workspace-specific public
-  intake URL yet.
+- Customer portal supports login/dashboard/profile foundation only; no portal
+  case tracking, customer document upload, messages, billing, or
+  self-registration yet.
+- No billing, workspace switcher, or workspace-specific public intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production
   tenant onboarding flow.
 - No production rate limiting, captcha, or dedicated abuse-protection layer yet.

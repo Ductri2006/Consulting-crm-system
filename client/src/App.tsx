@@ -1,10 +1,13 @@
 import { AuthProvider } from './features/auth'
+import { PortalAuthProvider } from './features/customerPortal'
 import { AppRoutes } from './routes/AppRoutes'
 
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <PortalAuthProvider>
+        <AppRoutes />
+      </PortalAuthProvider>
     </AuthProvider>
   )
 }

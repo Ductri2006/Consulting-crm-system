@@ -63,7 +63,8 @@ This project addresses that need with a centralized platform that connects publi
 - Appointment request validation flow
 - Admin document upload after a customer or case exists
 - Confirmation after a successful submission
-- Request status tracking in a future customer portal
+- Customer portal login and dashboard foundation
+- Request status tracking in a future portal case-tracking step
 
 ### CRM Management
 
@@ -92,6 +93,7 @@ This project addresses that need with a centralized platform that connects publi
 - Daily, weekly, and monthly reports
 - Staff performance tracking
 - User activity logs
+- Customer portal account access controls for existing customers
 
 ### Document Management
 
@@ -305,8 +307,8 @@ Local URLs:
 - Health check: `http://localhost:5000/api/health`
 
 Public visitors do not need an account. Admin, manager, and staff accounts are
-internal CRM users for the protected workspace. A customer portal is future
-roadmap scope.
+internal CRM users for the protected workspace. Customer portal accounts are
+separate from internal staff users and sign in through `/portal/login`.
 
 Current staging/demo workspace:
 
@@ -326,8 +328,8 @@ The public consultation form maps new requests to the workspace configured by
 `DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. Workspace signup
 creates a new internal CRM workspace only when `WORKSPACE_SIGNUP_ENABLED=true`.
 Workspace invitations can add later internal users by email. Billing,
-workspace switching, workspace-specific public portals, and customer portal
-access remain future roadmap scope.
+workspace switching, workspace-specific public portals, customer self-registration,
+and detailed portal case/document workflows remain future roadmap scope.
 Administrators can edit the current workspace profile from `/admin/settings`;
 logo management is URL-based in this step.
 
@@ -509,13 +511,13 @@ The health endpoint is available at `GET /api/health`. See the [backend README](
 5. **Core CRM APIs** - customers, services, case profiles, appointments, tasks, and documents
 6. **Admin dashboard** - operational interfaces for staff, managers, and administrators
 7. **Reporting and deployment** - dashboards, production infrastructure, and portfolio presentation
-8. **Advanced features** - customer portal, notifications, OCR, analytics, and multi-branch support
+8. **Advanced features** - richer customer portal workflows, notifications, OCR, analytics, and multi-branch support
 
 See the [Development Roadmap](docs/development-roadmap.md) for the complete phase-by-phase plan.
 
 ## Future Improvements
 
-- Customer self-service portal
+- Customer portal case tracking, document upload, and self-service profile flows
 - Email and SMS notifications
 - Cloud file storage
 - OCR-assisted document processing
@@ -542,6 +544,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
 | Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED`; admins can edit the current workspace profile |
 | Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens, console email preview, optional Resend delivery, and resend token rotation |
+| Customer portal foundation | Implemented with separate `CustomerPortalAccount` records, portal-purpose JWTs, `/portal/login`, `/portal/dashboard`, and internal admin/manager portal access controls for existing customers |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
@@ -559,7 +562,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create backend records yet.
 - Internal user management and workspace invitations are for CRM team members
-  only; customer portal accounts remain future work.
+  only; customer portal accounts are created separately for existing customers.
 - Workspace signup is gated by `WORKSPACE_SIGNUP_ENABLED` and intended for
   local or controlled staging onboarding tests in this portfolio phase.
 - Workspace settings use a logo URL only; logo upload, custom domains,
@@ -567,9 +570,12 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
   scope.
 - Invitation email delivery defaults to `EMAIL_PROVIDER=console`; real Resend
   sending requires provider secrets configured outside the repository.
-- No customer portal, billing, OCR, malware scanning, cloud object storage,
-  report exports, realtime updates, production-grade rate limiting, or
-  centralized observability yet.
+- The customer portal currently supports login, session restore, dashboard,
+  profile/account summary, and internal access controls only.
+- No portal case tracking, customer document upload, customer self-registration,
+  billing, OCR, malware scanning, cloud object storage, report exports,
+  realtime updates, production-grade rate limiting, or centralized
+  observability yet.
 
 ## Learning Goals
 
@@ -688,3 +694,9 @@ Step 26 adds Workspace Settings / Organization Profile: authenticated internal
 users can read `/api/workspace/me`, administrators can update safe workspace
 profile fields from `/admin/settings`, slug uniqueness is enforced, and
 workspace updates write `WORKSPACE_UPDATED` activity logs.
+Step 27 adds Customer Portal Foundation: customer portal accounts live in a
+separate `CustomerPortalAccount` model, portal JWTs carry
+`purpose: "customer_portal"`, internal auth rejects portal tokens, portal auth
+rejects internal tokens, internal admins/managers can create/reset/activate
+portal access for existing customers, and `/portal/login` plus
+`/portal/dashboard` provide the first separate customer-facing portal UI.

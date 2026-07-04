@@ -163,7 +163,7 @@ Notes:
 - `passwordHash` is never returned.
 - Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`.
 - Billing, workspace switching, workspace-specific public portals, and
-  customer portal accounts remain future roadmap scope.
+  customer self-registration remain future roadmap scope.
 
 ## Workspace Settings API
 
@@ -243,8 +243,7 @@ Rules:
 
 All user-management endpoints are protected. Internal user management is
 restricted to administrators and covers only CRM users: `ADMIN`, `MANAGER`, and
-`STAFF`. Public visitors do not have accounts yet; the customer portal remains
-future roadmap scope.
+`STAFF`. Public visitors and customer portal accounts are outside this module.
 Administrators manage only users in their current workspace. New users are
 assigned to the current workspace by the server.
 
@@ -489,6 +488,83 @@ invitation's role. Clients cannot submit or override `role`, `organizationId`,
 `ACCEPTED`, links `acceptedById`, writes an activity log without token data,
 and returns `accessToken`, safe `user`, and safe `organization` for auto-login.
 
+## 2.6 Customer Portal API
+
+Customer portal auth is separate from internal CRM auth. Portal accounts use
+`CustomerPortalAccount`, and portal JWTs include
+`purpose: "customer_portal"`. Internal tokens cannot call portal endpoints, and
+portal tokens cannot call internal admin endpoints.
+
+### Portal Login
+
+```http
+POST /api/portal/auth/login
+```
+
+Request body:
+
+```json
+{
+  "workspaceSlug": "advisora-demo",
+  "email": "customer@example.com",
+  "password": "Portal-Password-2026!"
+}
+```
+
+Successful response data:
+
+```json
+{
+  "accessToken": "portal_jwt",
+  "portalAccount": {
+    "id": "portal_account_id",
+    "organizationId": "organization_id",
+    "customerId": "customer_id",
+    "email": "customer@example.com",
+    "isActive": true,
+    "lastLoginAt": "2026-07-04T00:00:00.000Z",
+    "createdAt": "2026-07-04T00:00:00.000Z",
+    "updatedAt": "2026-07-04T00:00:00.000Z"
+  },
+  "customer": {
+    "id": "customer_id",
+    "fullName": "Nguyen Van A",
+    "phone": "0909000000",
+    "email": "customer@example.com",
+    "address": "Ho Chi Minh City"
+  },
+  "organization": {
+    "id": "organization_id",
+    "name": "Advisora Demo Workspace",
+    "slug": "advisora-demo"
+  }
+}
+```
+
+Failed portal login returns `401` with the generic message
+`Invalid workspace, email, or password.`.
+
+### Current Portal Session
+
+```http
+GET /api/portal/auth/me
+Authorization: Bearer <portal-token>
+```
+
+Returns the same safe `portalAccount`, `customer`, and `organization` data
+without a new token.
+
+### Portal Profile
+
+```http
+GET /api/portal/me
+Authorization: Bearer <portal-token>
+```
+
+Returns the safe portal session plus an `overview` placeholder. Case tracking,
+customer document upload, messages, billing, and customer self-registration are
+not included in Step 27.
+
 ## 3. Customer API
 
 Customer endpoints are protected and available according to role and assignment rules.
@@ -547,6 +623,54 @@ DELETE /api/customers/:id
 ```
 
 Deletion should be restricted when the customer has related cases, appointments, or documents. Archival or a future soft-delete policy is preferred for production use.
+
+### Customer Portal Account Management
+
+These endpoints require an internal `ADMIN` or `MANAGER` token. `STAFF` users
+receive `403`. All operations are scoped to the internal actor's
+`organizationId`.
+
+```http
+GET /api/customers/:id/portal-account
+POST /api/customers/:id/portal-account
+PATCH /api/customers/:id/portal-account/password
+PATCH /api/customers/:id/portal-account/deactivate
+PATCH /api/customers/:id/portal-account/activate
+```
+
+Create request body:
+
+```json
+{
+  "email": "customer@example.com",
+  "password": "Portal-Password-2026!"
+}
+```
+
+`email` and `password` are optional. If `email` is omitted, the backend uses
+the customer email. If `password` is omitted, the backend generates a
+temporary password and returns it once as `temporaryPassword`.
+
+Safe response data:
+
+```json
+{
+  "account": {
+    "id": "portal_account_id",
+    "organizationId": "organization_id",
+    "customerId": "customer_id",
+    "email": "customer@example.com",
+    "isActive": true,
+    "lastLoginAt": null,
+    "createdAt": "2026-07-04T00:00:00.000Z",
+    "updatedAt": "2026-07-04T00:00:00.000Z"
+  },
+  "temporaryPassword": "shown-only-when-generated"
+}
+```
+
+Responses never include `passwordHash`. Create, reset, deactivate, and activate
+write activity logs.
 
 ## 4. Service API
 
@@ -1224,9 +1348,11 @@ Recommended HTTP status codes:
   `Advisora Demo Workspace` (`advisora-demo`). Workspace signup can create
   additional internal CRM workspaces when `WORKSPACE_SIGNUP_ENABLED=true`.
   Workspace invitations can add later internal users; billing, workspace
-  switching, workspace-specific public portals, and customer portal accounts
+  switching, workspace-specific public portals, and customer self-registration
   remain future roadmap scope.
-- A customer portal and customer-authenticated endpoints are deferred to a future version.
+- Customer portal endpoints are separate from internal user endpoints. Portal
+  JWTs require `purpose: "customer_portal"`, and portal responses expose only
+  safe account, customer, and organization fields.
 - Authorization must be enforced by the backend; hiding UI actions is not a security control.
 - Sensitive fields, including `passwordHash`, must never be returned by the API.
 
