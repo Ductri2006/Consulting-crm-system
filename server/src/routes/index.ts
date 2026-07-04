@@ -10,6 +10,7 @@ import {
 import { customerRouter } from "../modules/customers/customer.routes";
 import { dashboardRouter } from "../modules/dashboard/dashboard.routes";
 import { documentRouter } from "../modules/documents/document.routes";
+import { invitationRouter } from "../modules/invitations/invitation.routes";
 import {
   publicServiceRouter,
   serviceRouter,
@@ -29,6 +30,7 @@ apiRouter.use(
   "/public/consultation-requests",
   publicConsultationRequestRouter,
 );
+apiRouter.use("/invitations", invitationRouter);
 apiRouter.use("/users", userRouter);
 apiRouter.use("/customers", customerRouter);
 apiRouter.use("/services", serviceRouter);

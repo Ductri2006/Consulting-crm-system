@@ -110,6 +110,24 @@ Team Members:
 - [ ] Case, appointment, and task assignment dropdowns still load assignable
   users.
 
+Invitations:
+
+- [ ] `/admin/invitations` loads for `ADMIN`.
+- [ ] `/admin/invitations` is hidden or forbidden for `MANAGER` and `STAFF`.
+- [ ] List, search, role filter, status filter, and pagination work.
+- [ ] Create invitation returns an invite link only immediately after create.
+- [ ] List/create/revoke responses do not include `tokenHash`.
+- [ ] Duplicate existing-user email and duplicate pending invitation return
+  safe errors.
+- [ ] Public `/invite/:token` preview shows invited email, role, workspace, and
+  expiry.
+- [ ] Accept creates the user with role and workspace from the invitation only.
+- [ ] Successful accept auto-logins and redirects to dashboard.
+- [ ] Accepted, revoked, expired, or invalid tokens cannot be reused.
+- [ ] Revoke blocks the invite link and keeps the record in history.
+- [ ] No raw invite token, `tokenHash`, password, or JWT appears in browser
+  console logs or committed files.
+
 Documents:
 
 - [ ] Upload accepts allowed file types.

@@ -131,8 +131,8 @@ Name: Northstar Legal Workspace
 Slug: northstar-legal
 ```
 
-This is not public workspace signup and does not add invitations, billing,
-customer portal access, or a workspace switcher. It is a QA seed only.
+This is not public workspace signup and does not create workspace invitations,
+billing, customer portal access, or a workspace switcher. It is a QA seed only.
 
 Run after the main demo seed:
 
@@ -403,10 +403,39 @@ Talk track:
   only, and team members belong to the current workspace.
 - Public visitors do not need accounts.
 - Customer accounts and a customer portal remain future roadmap scope.
-- Workspace signup creates the first owner administrator only; invitations and
-  customer portal accounts remain future roadmap scope.
+- Workspace signup creates the first owner administrator only. Workspace
+  invitations add later internal `ADMIN`, `MANAGER`, and `STAFF` accounts.
 - Deactivation is used instead of hard delete so historical assignments remain
   intact.
+
+## Workspace Invitations Demo
+
+Open:
+
+- `/admin/invitations`
+- `/invite/<invite-token>` in a signed-out browser session
+
+Show:
+
+- Admin-only list, search, role filter, status filter, and pagination.
+- Create a fictional invitation for a unique `.test` email.
+- Copy the invite link from the create-success banner only.
+- Preview the public invite page while signed out.
+- Accept the invitation and confirm auto-login to `/admin/dashboard`.
+- Confirm the new user belongs to the invited workspace and role.
+- Revoke a separate pending invitation and confirm the public link no longer
+  works.
+- Confirm Manager and Staff accounts do not see the Invitations sidebar item
+  and cannot access `/admin/invitations` directly.
+
+Talk track:
+
+- Raw invite tokens are never stored. The server stores only `tokenHash`.
+- The invitation decides the workspace and role; the accept form cannot change
+  them.
+- Invite URLs are returned once because this portfolio build has no email
+  delivery provider.
+- Do not use real personal emails or real invite links in portfolio captures.
 
 ## Documents Demo
 

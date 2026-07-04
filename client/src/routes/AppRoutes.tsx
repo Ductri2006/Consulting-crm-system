@@ -64,6 +64,11 @@ const WorkspaceSignupPage = lazy(() =>
     default: module.WorkspaceSignupPage,
   })),
 )
+const InviteAcceptPage = lazy(() =>
+  import('../pages/InviteAcceptPage').then((module) => ({
+    default: module.InviteAcceptPage,
+  })),
+)
 
 const AdminAppointmentsPage = lazy(() =>
   import('../pages/admin/AdminAppointmentsPage').then((module) => ({
@@ -93,6 +98,11 @@ const AdminDashboardPage = lazy(() =>
 const AdminDocumentsPage = lazy(() =>
   import('../pages/admin/AdminDocumentsPage').then((module) => ({
     default: module.AdminDocumentsPage,
+  })),
+)
+const AdminInvitationsPage = lazy(() =>
+  import('../pages/admin/AdminInvitationsPage').then((module) => ({
+    default: module.AdminInvitationsPage,
   })),
 )
 const AdminLoginPage = lazy(() =>
@@ -180,6 +190,14 @@ export function AppRoutes() {
             }
           />
           <Route
+            path="invitations"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                {routeElement(<AdminInvitationsPage />)}
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="documents"
             element={routeElement(<AdminDocumentsPage />)}
           />
@@ -214,6 +232,7 @@ export function AppRoutes() {
           path="workspace-signup"
           element={routeElement(<WorkspaceSignupPage />)}
         />
+        <Route path="invite/:token" element={routeElement(<InviteAcceptPage />)} />
         <Route
           path="consultation"
           element={routeElement(<ConsultationPage />)}

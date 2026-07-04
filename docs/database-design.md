@@ -43,6 +43,7 @@ The schema covers:
 | Entity | Responsibility |
 | --- | --- |
 | `User` | Internal users, roles, authentication state, and future customer accounts |
+| `WorkspaceInvitation` | One-time internal user invitations scoped to an organization |
 | `Customer` | Customer identity, contact details, source, and CRM notes |
 | `Service` | Consulting services offered by the business |
 | `ConsultationRequest` | Requests submitted from the public website and their conversion state |
@@ -126,6 +127,40 @@ Stores system users such as administrators, managers, staff members, and future 
 - `CUSTOMER`
 
 The `CUSTOMER` role is reserved for a future customer portal. The initial CRM can operate without creating a `User` record for every `Customer`.
+
+### 5.1.1 WorkspaceInvitation
+
+Stores one-time invitations for internal `ADMIN`, `MANAGER`, and `STAFF`
+accounts in a workspace. The raw invitation token is never stored; only a
+SHA-256 `tokenHash` is persisted.
+
+| Field | Type | Required | Rules / Default |
+| --- | --- | --- | --- |
+| `id` | UUID | Yes | Primary key |
+| `organizationId` | UUID | Yes | Invitation workspace |
+| `email` | String | Yes | Invited email, normalized to lowercase |
+| `role` | `UserRole` | Yes | `ADMIN`, `MANAGER`, or `STAFF` |
+| `tokenHash` | String | Yes | Unique SHA-256 hash of the raw token |
+| `status` | `InvitationStatus` | Yes | Defaults to `PENDING` |
+| `invitedById` | UUID | No | Admin who created the invitation |
+| `acceptedById` | UUID | No | User created by successful accept |
+| `expiresAt` | DateTime | Yes | Public accept deadline |
+| `acceptedAt` | DateTime | No | Set when accepted |
+| `revokedAt` | DateTime | No | Set when revoked |
+| `createdAt` | DateTime | Yes | Defaults to the current time |
+| `updatedAt` | DateTime | Yes | Updated automatically |
+
+`InvitationStatus` values:
+
+- `PENDING`
+- `ACCEPTED`
+- `REVOKED`
+- `EXPIRED`
+
+Indexes cover `(organizationId, email)`, `(organizationId, status)`,
+`expiresAt`, `invitedById`, and `acceptedById`. The migration also adds a
+partial unique index for pending invitations by `(organizationId, email)` so an
+email cannot have multiple active pending invites in one workspace.
 
 ### 5.2 Customer
 

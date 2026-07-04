@@ -285,8 +285,8 @@ Expected behavior:
 - Does not reset the database.
 - Does not delete or mutate Advisora demo data.
 - Does not seed physical document files.
-- Does not add public workspace signup, invitations, customer portal access, or
-  a workspace switcher.
+- Does not create workspace invitations, customer portal access, or a workspace
+  switcher.
 
 Northstar demo credentials are fictional portfolio credentials:
 
@@ -406,6 +406,8 @@ Before real customer documents:
 - [ ] Tasks page loads.
 - [ ] Team Members page loads for admin users.
 - [ ] Manager and staff users cannot access Team Members directly.
+- [ ] Invitations page loads for admin users.
+- [ ] Manager and staff users cannot access Invitations directly.
 - [ ] Documents page loads.
 - [ ] Reports page loads.
 - [ ] Logout clears the client session.
@@ -429,6 +431,10 @@ Before real customer documents:
   not include `passwordHash`.
 - [ ] User create assigns the current workspace automatically; no frontend
   organization picker or submitted `organizationId` is used.
+- [ ] Invitation list/create/revoke responses do not include `tokenHash`.
+- [ ] Invitation accept creates the user in the invitation workspace with the
+  invitation role only.
+- [ ] Revoked, expired, accepted, and invalid invite tokens cannot be reused.
 - [ ] `/api/users` and `/api/users/assignable` return current-workspace users
   only.
 - [ ] Customers, consultation requests, cases, appointments, tasks, documents,

@@ -238,8 +238,11 @@ Recommended later upgrade:
   abuse protection and session hardening are reviewed.
 - Public contact and appointment forms are validation/demo flows only.
 - No password reset or account-management UI yet.
-- No invitation system, billing, customer portal, workspace switcher, or
-  workspace-specific public intake URL yet.
+- Workspace invitations exist for controlled internal onboarding, but there is
+  no email delivery provider; invite URLs are returned once to administrators
+  for manual private delivery.
+- No billing, customer portal, workspace switcher, or workspace-specific public
+  intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production
   tenant onboarding flow.
 - No production rate limiting, captcha, or dedicated abuse-protection layer yet.

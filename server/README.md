@@ -321,6 +321,49 @@ Missing or invalid authentication returns `401`, insufficient permissions
 returns `403`, validation errors return `400`, duplicate email returns `409`,
 and a missing user record returns `404`.
 
+### Admin-only workspace invitations
+
+```http
+GET /api/invitations
+Authorization: Bearer <token>
+```
+
+```http
+POST /api/invitations
+Authorization: Bearer <token>
+```
+
+```http
+PATCH /api/invitations/<invitation-uuid>/revoke
+Authorization: Bearer <token>
+```
+
+These endpoints require an active authenticated `ADMIN` in the current
+workspace. Invitation create accepts a unique email, `ADMIN`, `MANAGER`, or
+`STAFF` role, and optional `expiresInDays` from 1 to 30. Existing account
+emails and duplicate unexpired pending invitations return `409`.
+
+The API stores only a SHA-256 `tokenHash`. Admin list, create, and revoke
+responses never include `tokenHash` or the raw token. Because there is no email
+delivery provider in this portfolio phase, create returns a one-time `inviteUrl`
+for manual private delivery. Old invitation list rows cannot recover the link.
+
+```http
+GET /api/invitations/public/<invite-token>
+```
+
+```http
+POST /api/invitations/public/<invite-token>/accept
+```
+
+Public preview returns only the invited email, role, expiry, and safe workspace
+identity. Public accept validates full name, optional phone, password, and
+password confirmation. The accepted user is created in the invitation's
+workspace with the invitation's role; clients cannot submit `organizationId` or
+`role`. Successful accept returns an access token and safe user payload for
+auto-login. Invalid, expired, revoked, or accepted invitation tokens do not use
+`401`; they return a generic public error without leaking `tokenHash`.
+
 ## Core CRM APIs
 
 Public routes do not require an access token. Protected routes require:
@@ -781,13 +824,15 @@ result is available in the
 
 The backend includes customer and service management, consultation-request
 triage, protected case-profile workflows, appointment scheduling, internal
-task management, authenticated document management, and role-aware dashboard
-and reporting APIs. Step 22 adds the Organization / Workspace tenant foundation
-using a single default `Advisora Demo Workspace`; multi-company signup,
-invitations, billing, and customer portal access remain future work. Step 22.5
+task management, authenticated document management, workspace invitations, and
+role-aware dashboard and reporting APIs. Step 22 adds the Organization /
+Workspace tenant foundation using a single default `Advisora Demo Workspace`;
+billing and customer portal access remain future work. Step 22.5
 adds a `Northstar Legal Workspace` seed plus `verify:tenant-isolation` for
 staging tenant QA. Step 23 adds guarded public workspace signup/onboarding for
-creating a new internal CRM workspace and first owner admin. The repository also includes production readiness,
+creating a new internal CRM workspace and first owner admin. Step 24 adds
+admin-only workspace invitations with hashed one-time tokens and public accept
+auto-login. The repository also includes production readiness,
 deployment, and final QA documentation. It does not include
 request-to-customer conversion, OCR, cloud object storage, report exports,
 realtime updates, or real production deployment.

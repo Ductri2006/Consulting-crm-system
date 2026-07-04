@@ -14,6 +14,13 @@ enum UserRole {
   CUSTOMER
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
 enum CaseStatus {
   RECEIVED
   VERIFYING
@@ -95,6 +102,7 @@ model Organization {
   documents            Document[]
   caseHistories        CaseHistory[]
   activityLogs         ActivityLog[]
+  invitations          WorkspaceInvitation[]
 
   @@index([isActive])
 }
@@ -121,9 +129,37 @@ model User {
   uploadedDocuments   Document[]
   news                News[]
   activityLogs        ActivityLog[]
+  sentInvitations     WorkspaceInvitation[] @relation("WorkspaceInvitationInvitedBy")
+  acceptedInvitations WorkspaceInvitation[] @relation("WorkspaceInvitationAcceptedBy")
 
   @@index([role, isActive])
   @@index([organizationId, role, isActive])
+}
+
+model WorkspaceInvitation {
+  id             String           @id @default(uuid())
+  organizationId String
+  email          String
+  role           UserRole
+  tokenHash      String           @unique
+  status         InvitationStatus @default(PENDING)
+  invitedById    String?
+  acceptedById   String?
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  invitedBy    User?        @relation("WorkspaceInvitationInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  acceptedBy   User?        @relation("WorkspaceInvitationAcceptedBy", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, email])
+  @@index([organizationId, status])
+  @@index([expiresAt])
+  @@index([invitedById])
+  @@index([acceptedById])
 }
 
 model Customer {

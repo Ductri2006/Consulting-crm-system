@@ -433,7 +433,8 @@ Recommended admin demo flow:
 3. Check consultation requests.
 4. Open cases.
 5. Manage internal team members from Team Members.
-6. Check tasks, appointments, documents, and reports.
+6. Create and revoke a fictional workspace invitation.
+7. Check tasks, appointments, documents, and reports.
 
 See [Demo Walkthrough](docs/demo-walkthrough.md) for the full script.
 
@@ -477,8 +478,10 @@ development.
 - `/admin/appointments`
 - `/admin/tasks`
 - `/admin/users`
+- `/admin/invitations`
 - `/admin/documents`
 - `/admin/reports`
+- `/invite/:token`
 
 ## Run the Backend Foundation Locally
 
@@ -529,10 +532,11 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Public website | Implemented with typed local content and responsive routes |
 | Public consultation request | Submits to the backend public consultation API |
 | Public contact and appointment forms | Validation/demo flows only; backend intake remains future work |
-| Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, internal users, documents, and reports |
-| Backend API | Implemented for auth, CRM workflows, internal user management, documents, dashboard, and reports |
+| Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, internal users, workspace invitations, documents, and reports |
+| Backend API | Implemented for auth, workspace signup, workspace invitations, CRM workflows, internal user management, documents, dashboard, and reports |
 | Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
 | Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED` |
+| Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
@@ -549,13 +553,13 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Local disk uploads are for development only.
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create backend records yet.
-- Internal user management is for CRM team members only; customer portal
-  accounts remain future work.
+- Internal user management and workspace invitations are for CRM team members
+  only; customer portal accounts remain future work.
 - Workspace signup is gated by `WORKSPACE_SIGNUP_ENABLED` and intended for
   local or controlled staging onboarding tests in this portfolio phase.
-- No invitation system, customer portal, billing, OCR, malware scanning, cloud
-  object storage, report exports, realtime updates, production-grade rate
-  limiting, or centralized observability yet.
+- No customer portal, billing, OCR, malware scanning, cloud object storage,
+  report exports, realtime updates, production-grade rate limiting, or
+  centralized observability yet.
 
 ## Learning Goals
 
@@ -662,3 +666,6 @@ Step 23 adds public Workspace Signup / Organization Onboarding: a guarded
 `POST /api/workspaces/signup` endpoint, a `/workspace-signup` frontend page,
 automatic owner admin login, and docs for the signup flag and default public
 consultation behavior.
+Step 24 adds workspace invitations: admin-only invitation list/create/revoke,
+public invite preview and accept, hashed one-time tokens, auto-login after
+accept, and `/admin/invitations` plus `/invite/:token` frontend routes.

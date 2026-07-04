@@ -2,8 +2,9 @@
 
 This document defines the REST API contract for the Consulting CRM System. It
 started as a design reference and now tracks the implemented portfolio API for
-auth, workspace signup, CRM workflows, internal users, documents, dashboard,
-reports, and the Organization / Workspace tenant foundation.
+auth, workspace signup, workspace invitations, CRM workflows, internal users,
+documents, dashboard, reports, and the Organization / Workspace tenant
+foundation.
 
 ## Base URL and Conventions
 
@@ -16,7 +17,8 @@ reports, and the Organization / Workspace tenant foundation.
 - Date-only values use ISO 8601 format (`YYYY-MM-DD`).
 - Timestamps returned by the API use ISO 8601 UTC format.
 - Collection endpoints use `page` and `limit` for pagination.
-- Public endpoints are grouped under `/api/public`.
+- Public catalog/intake endpoints are grouped under `/api/public`; public
+  invitation preview and accept routes live under `/api/invitations/public`.
 - Path parameters such as `:id` represent UUID values unless noted otherwise.
 - Protected CRM endpoints are scoped to `request.user.organizationId`.
 - The UI may call this concept Workspace; the backend data model calls it
@@ -160,8 +162,8 @@ Notes:
   rejected.
 - `passwordHash` is never returned.
 - Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`.
-- Invitations, billing, workspace switching, workspace-specific public portals,
-  and customer portal accounts remain future roadmap scope.
+- Billing, workspace switching, workspace-specific public portals, and
+  customer portal accounts remain future roadmap scope.
 
 ## 2. User API
 
@@ -269,6 +271,113 @@ Rules:
   workspace.
 
 Deletion should be rejected when retaining the user is necessary for related cases, tasks, documents, news, or activity logs. Disabling is the preferred operation in that situation.
+
+## 2.5 Workspace Invitation API
+
+Workspace invitations are for internal CRM users only. Admin endpoints require
+an active `ADMIN` account and are scoped to `request.user.organizationId`.
+Manager and staff users are blocked by backend authorization.
+
+### List Invitations
+
+```http
+GET /api/invitations
+```
+
+Query parameters:
+
+- `search`
+- `role`: `ADMIN`, `MANAGER`, or `STAFF`
+- `status`: `PENDING`, `ACCEPTED`, `REVOKED`, or `EXPIRED`
+- `page`
+- `limit`
+
+Responses use the paginated envelope and never include `tokenHash`.
+
+### Create Invitation
+
+```http
+POST /api/invitations
+```
+
+Request body:
+
+```json
+{
+  "email": "new.staff@example.com",
+  "role": "STAFF",
+  "expiresInDays": 7
+}
+```
+
+Rules:
+
+- `expiresInDays` defaults to 7 and must be between 1 and 30.
+- Existing global user emails return `409`.
+- A duplicate unexpired pending invitation in the same workspace returns `409`.
+- The server generates a 32-byte random token and stores only a SHA-256
+  `tokenHash`.
+- The response returns a one-time `inviteUrl` for manual private delivery.
+  Invitation lists cannot recover old raw tokens or invite URLs.
+
+### Revoke Invitation
+
+```http
+PATCH /api/invitations/:id/revoke
+```
+
+Only current-workspace `PENDING` invitations can be revoked. Revocation is a
+soft state change to `REVOKED`; the record remains for audit and list history.
+
+### Public Invitation Preview
+
+```http
+GET /api/invitations/public/:token
+```
+
+Preview returns safe invitation details:
+
+```json
+{
+  "invitation": {
+    "email": "new.staff@example.com",
+    "role": "STAFF",
+    "expiresAt": "2026-07-11T00:00:00.000Z",
+    "organization": {
+      "id": "<organization-uuid>",
+      "name": "Advisora Demo Workspace",
+      "slug": "advisora-demo"
+    }
+  }
+}
+```
+
+Invalid, expired, revoked, accepted, or inactive-workspace invitations return a
+generic public error and do not use `401`, so the frontend does not clear an
+unrelated current session.
+
+### Public Invitation Accept
+
+```http
+POST /api/invitations/public/:token/accept
+```
+
+Request body:
+
+```json
+{
+  "fullName": "New Staff User",
+  "phone": "0123456789",
+  "password": "Strong-Password-2026!",
+  "confirmPassword": "Strong-Password-2026!"
+}
+```
+
+Accept creates an active user in the invitation's workspace with the
+invitation's role. Clients cannot submit or override `role`, `organizationId`,
+`isActive`, or `passwordHash`. Successful accept marks the invitation
+`ACCEPTED`, links `acceptedById`, writes an activity log without token data,
+and returns `accessToken`, safe `user`, and safe `organization` for auto-login.
 
 ## 3. Customer API
 
