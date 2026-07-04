@@ -59,6 +59,11 @@ const ServicesPage = lazy(() =>
     default: module.ServicesPage,
   })),
 )
+const WorkspaceSignupPage = lazy(() =>
+  import('../pages/WorkspaceSignupPage').then((module) => ({
+    default: module.WorkspaceSignupPage,
+  })),
+)
 
 const AdminAppointmentsPage = lazy(() =>
   import('../pages/admin/AdminAppointmentsPage').then((module) => ({
@@ -205,6 +210,10 @@ export function AppRoutes() {
           element={routeElement(<NewsDetailPage />)}
         />
         <Route path="contact" element={routeElement(<ContactPage />)} />
+        <Route
+          path="workspace-signup"
+          element={routeElement(<WorkspaceSignupPage />)}
+        />
         <Route
           path="consultation"
           element={routeElement(<ConsultationPage />)}

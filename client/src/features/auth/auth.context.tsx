@@ -96,6 +96,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     [],
   )
 
+  const acceptSession = useCallback((accessToken: string, nextUser: User) => {
+    setAccessToken(accessToken)
+    setToken(accessToken)
+    setUser(nextUser)
+    setIsLoading(false)
+  }, [])
+
   const logout = useCallback(async (): Promise<void> => {
     try {
       await logoutRequest()
@@ -112,10 +119,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       token,
       isAuthenticated: Boolean(user && token),
       isLoading,
+      acceptSession,
       login,
       logout,
     }),
-    [isLoading, login, logout, token, user],
+    [acceptSession, isLoading, login, logout, token, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

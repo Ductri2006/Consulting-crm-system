@@ -72,7 +72,10 @@ Slug: advisora-demo
 
 The public consultation form creates requests under the workspace configured by
 `DEFAULT_ORGANIZATION_SLUG`, which defaults to `advisora-demo`. Public
-workspace signup and invitations are not part of this step.
+workspace signup is available only when the backend has
+`WORKSPACE_SIGNUP_ENABLED=true`. Invitations, billing, workspace switching,
+workspace-specific public intake pages, and customer portal accounts are not
+part of this step.
 
 Intentional portfolio staging demo accounts:
 
@@ -177,6 +180,41 @@ Manual isolation checklist:
 The second workspace seed is idempotent and does not seed physical document
 files. Upload tiny fictional files manually only if document smoke testing is
 needed, then delete them and confirm they are not staged in Git.
+
+## Workspace Signup Demo
+
+Step 23 adds `/workspace-signup` for controlled local or staging onboarding.
+Before testing, enable the backend flag outside the repository:
+
+```powershell
+$env:WORKSPACE_SIGNUP_ENABLED = "true"
+```
+
+Use fictional data such as:
+
+```text
+Workspace name: Acme Advisory Workspace
+Owner full name: Acme Demo Owner
+Owner email: owner.demo@acme.test
+Password: Acme-Demo-Owner-2026!
+```
+
+Expected result:
+
+- The frontend calls `POST /api/workspaces/signup`.
+- A new workspace is created with a normalized slug such as
+  `acme-advisory-workspace`.
+- The owner user is created as `ADMIN`.
+- The frontend stores the returned access token like the existing login flow.
+- The browser redirects to `/admin/dashboard`.
+- Dashboard, Customers, Cases, Tasks, Appointments, Documents, Reports, and
+  Team Members load without crashing on an empty workspace.
+- Team Members shows the owner user.
+- Advisora and Northstar customers/cases are not visible.
+
+The public consultation form still creates requests under
+`DEFAULT_ORGANIZATION_SLUG`; it does not route to the newly signed-up
+workspace.
 
 ## Recommended Demo Order
 
@@ -365,8 +403,8 @@ Talk track:
   only, and team members belong to the current workspace.
 - Public visitors do not need accounts.
 - Customer accounts and a customer portal remain future roadmap scope.
-- Multi-company workspace signup and invitation flows remain future roadmap
-  scope.
+- Workspace signup creates the first owner administrator only; invitations and
+  customer portal accounts remain future roadmap scope.
 - Deactivation is used instead of hard delete so historical assignments remain
   intact.
 
@@ -433,7 +471,7 @@ Talk track:
 - Contact and appointment public forms validate locally but do not create
   backend records yet.
 - Public consultation requests map to one configured default workspace until
-  workspace signup or custom-domain routing exists.
+  workspace-specific public portals or custom-domain routing exists.
 - No request-to-customer conversion workflow yet.
 - No customer portal yet.
 - No OCR, malware scanning, or private object storage yet.

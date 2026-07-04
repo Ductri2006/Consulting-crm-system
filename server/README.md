@@ -49,6 +49,7 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `UPLOAD_DIR` | No | Local-development upload directory, defaults to `uploads` |
 | `MAX_FILE_SIZE_MB` | No | Per-file upload limit from 1 to 50 MB, defaults to `10` |
 | `DEFAULT_ORGANIZATION_SLUG` | No | Workspace slug used by public consultation requests, defaults to `advisora-demo` |
+| `WORKSPACE_SIGNUP_ENABLED` | No | Enables public `POST /api/workspaces/signup` only when set to `true`; defaults to `false` |
 
 Example:
 
@@ -62,6 +63,7 @@ JWT_EXPIRES_IN="7d"
 UPLOAD_DIR="uploads"
 MAX_FILE_SIZE_MB=10
 DEFAULT_ORGANIZATION_SLUG="advisora-demo"
+WORKSPACE_SIGNUP_ENABLED=false
 ```
 
 `CLIENT_URL` can be a single origin such as `http://localhost:5173` or a
@@ -186,6 +188,78 @@ protected request. Inactive users or inactive workspaces are denied. Tokens
 created before the workspace foundation do not crash the app; if they still
 verify, the middleware derives the user's current organization from the
 database.
+
+## Workspace signup
+
+Step 23 adds guarded public workspace onboarding:
+
+```http
+POST /api/workspaces/signup
+Content-Type: application/json
+```
+
+`WORKSPACE_SIGNUP_ENABLED` defaults to `false`. When the flag is not exactly
+`true`, the backend returns `403` with:
+
+```text
+Workspace signup is currently disabled.
+```
+
+When enabled, the endpoint:
+
+- Normalizes or generates a unique workspace slug.
+- Creates a new `Organization`.
+- Creates the first active owner user with role `ADMIN`.
+- Hashes the password with bcrypt.
+- Records a `WORKSPACE_CREATED` activity log.
+- Returns `accessToken`, sanitized `user`, and safe `organization` info.
+
+Example request:
+
+```json
+{
+  "workspaceName": "Acme Advisory Workspace",
+  "ownerFullName": "Acme Demo Owner",
+  "ownerEmail": "owner.demo@acme.test",
+  "password": "Acme-Demo-Owner-2026!",
+  "confirmPassword": "Acme-Demo-Owner-2026!"
+}
+```
+
+Example response data:
+
+```json
+{
+  "accessToken": "<jwt>",
+  "user": {
+    "id": "<user-id>",
+    "organizationId": "<organization-id>",
+    "fullName": "Acme Demo Owner",
+    "email": "owner.demo@acme.test",
+    "role": "ADMIN",
+    "organization": {
+      "id": "<organization-id>",
+      "name": "Acme Advisory Workspace",
+      "slug": "acme-advisory-workspace"
+    }
+  },
+  "organization": {
+    "id": "<organization-id>",
+    "name": "Acme Advisory Workspace",
+    "slug": "acme-advisory-workspace"
+  }
+}
+```
+
+The endpoint rejects client-supplied `role`, `organizationId`, `isActive`, and
+`passwordHash`. `User.email` is still globally unique in Step 23, so an owner
+email cannot be reused in another workspace. Public consultation requests
+continue to map to `DEFAULT_ORGANIZATION_SLUG`; signup does not create a
+workspace-specific public portal or intake URL.
+
+This is a portfolio/staging Bearer-token flow. Do not treat it as production
+auth hardening until token storage, refresh/revocation, captcha or stronger
+abuse protection, and production observability are reviewed.
 
 ### Assignable users
 
@@ -712,7 +786,8 @@ and reporting APIs. Step 22 adds the Organization / Workspace tenant foundation
 using a single default `Advisora Demo Workspace`; multi-company signup,
 invitations, billing, and customer portal access remain future work. Step 22.5
 adds a `Northstar Legal Workspace` seed plus `verify:tenant-isolation` for
-staging tenant QA. The repository also includes production readiness,
+staging tenant QA. Step 23 adds guarded public workspace signup/onboarding for
+creating a new internal CRM workspace and first owner admin. The repository also includes production readiness,
 deployment, and final QA documentation. It does not include
 request-to-customer conversion, OCR, cloud object storage, report exports,
 realtime updates, or real production deployment.

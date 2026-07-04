@@ -94,6 +94,7 @@ credentials.
 | `UPLOAD_DIR` | `uploads` or provider writable path | Local disk is only for limited staging smoke tests. |
 | `MAX_FILE_SIZE_MB` | `10` or another reviewed value from 1 to 50 | Must match the expected staging upload limit. |
 | `DEFAULT_ORGANIZATION_SLUG` | `advisora-demo` unless intentionally changed | Public consultation requests are assigned to this active workspace. |
+| `WORKSPACE_SIGNUP_ENABLED` | `false` by default; `true` only for controlled signup QA | Enables `POST /api/workspaces/signup`. Do not leave enabled for public long-lived staging without abuse protection and auth review. |
 
 Backend rules:
 
@@ -107,6 +108,8 @@ Backend rules:
 - `DEFAULT_ORGANIZATION_SLUG` must resolve to an active `Organization`. The
   current staging/demo workspace is `Advisora Demo Workspace`
   (`advisora-demo`).
+- `WORKSPACE_SIGNUP_ENABLED` should remain `false` unless Step 23 signup QA is
+  intentionally in progress.
 - Do not reuse local demo secrets.
 
 One-time demo seed flag:
@@ -141,6 +144,8 @@ Frontend rules:
 - [ ] Confirm `JWT_SECRET` is unique for staging.
 - [ ] Confirm `DEFAULT_ORGANIZATION_SLUG=advisora-demo` or document the
   intentional replacement workspace.
+- [ ] Confirm `WORKSPACE_SIGNUP_ENABLED=false`, or document the short QA window
+  when it is intentionally set to `true`.
 - [ ] Confirm `UPLOAD_DIR` is writable if document smoke testing is planned.
 - [ ] Install dependencies with `npm install`.
 - [ ] Generate Prisma Client with `npm run prisma:generate`.
@@ -383,6 +388,13 @@ Before real customer documents:
 - [ ] Public consultation form validates required fields.
 - [ ] Public consultation form submits to the staging backend.
 - [ ] Public consultation request appears under `Advisora Demo Workspace`.
+- [ ] `/workspace-signup` shows the signup form.
+- [ ] With `WORKSPACE_SIGNUP_ENABLED=false`, signup returns a friendly disabled
+  message.
+- [ ] During controlled QA with `WORKSPACE_SIGNUP_ENABLED=true`, signup creates
+  a new workspace, auto-logs in, and redirects to `/admin/dashboard`.
+- [ ] The newly signed-up workspace dashboard and admin pages load with empty
+  or low-count data and do not show Advisora or Northstar records.
 - [ ] Admin login page loads.
 - [ ] Admin login succeeds with a staging-safe account.
 - [ ] Refreshing a protected deep link preserves or restores the session.
@@ -482,7 +494,8 @@ Required go conditions:
 Choose `Go with accepted limitations`, not full `Go`, when:
 
 - Browser-readable Bearer token storage remains in use.
-- Login and public form rate limiting is not active yet.
+- Signup has only a basic in-memory rate limit; login and other public form
+  rate limiting are not production-grade yet.
 - Local disk upload storage is used only for tiny fictional smoke-test files.
 - The staging environment is private or short-lived portfolio review only.
 
@@ -493,7 +506,9 @@ Known staging limitations to acknowledge:
 - Local disk upload storage is not suitable for real multi-instance document
   handling.
 - Access tokens are stored in browser local storage in this portfolio phase.
+- Workspace signup is guarded by `WORKSPACE_SIGNUP_ENABLED` and should be
+  enabled only for controlled QA windows.
 - Public contact and appointment forms are validation/demo flows only.
-- No production rate limiting, captcha, centralized monitoring, alerting,
+- No production-grade rate limiting, captcha, centralized monitoring, alerting,
   refresh-token revocation, malware scanning, report export, or automated E2E
   suite yet.

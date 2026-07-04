@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, Scale } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { LoadingState } from '../../components/admin'
 import { useAuth } from '../../features/auth'
@@ -201,6 +201,16 @@ export function AdminLoginPage() {
               <p className="font-bold">Portfolio demo</p>
               <p>Use the internal demo account shared for this review.</p>
             </div>
+
+            <p className="mt-5 text-center text-sm text-slate-500">
+              Need a workspace?{' '}
+              <Link
+                className="font-bold text-blue-700 underline-offset-4 hover:underline"
+                to="/workspace-signup"
+              >
+                Create one
+              </Link>
+            </p>
           </div>
           <p className="mt-6 text-center text-xs text-slate-400">
             Protected access for authorised team members.

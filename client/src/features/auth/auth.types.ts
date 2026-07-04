@@ -49,6 +49,7 @@ export interface AuthContextValue {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  acceptSession: (accessToken: string, user: User) => void
   login: (email: string, password: string) => Promise<User>
   logout: () => Promise<void>
 }

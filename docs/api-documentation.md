@@ -2,8 +2,8 @@
 
 This document defines the REST API contract for the Consulting CRM System. It
 started as a design reference and now tracks the implemented portfolio API for
-auth, CRM workflows, internal users, documents, dashboard, reports, and the
-Organization / Workspace tenant foundation.
+auth, workspace signup, CRM workflows, internal users, documents, dashboard,
+reports, and the Organization / Workspace tenant foundation.
 
 ## Base URL and Conventions
 
@@ -81,6 +81,87 @@ POST /api/auth/logout
 ```
 
 The implementation should either revoke the active session/token or instruct the client to discard it, depending on the JWT session strategy selected during backend development.
+
+## Workspace Signup API
+
+Public workspace signup is disabled unless the backend environment has:
+
+```env
+WORKSPACE_SIGNUP_ENABLED=true
+```
+
+### Create Workspace
+
+```http
+POST /api/workspaces/signup
+```
+
+Request body:
+
+```json
+{
+  "workspaceName": "Acme Advisory Workspace",
+  "workspaceSlug": "acme-advisory",
+  "industry": "Legal Consulting",
+  "website": "https://example.com",
+  "phone": "+1 202 555 0100",
+  "email": "hello@example.com",
+  "address": "Demo office address",
+  "ownerFullName": "Acme Demo Owner",
+  "ownerEmail": "owner.demo@acme.test",
+  "ownerPhone": "+1 202 555 0101",
+  "password": "Acme-Demo-Owner-2026!",
+  "confirmPassword": "Acme-Demo-Owner-2026!"
+}
+```
+
+Required fields are `workspaceName`, `ownerFullName`, `ownerEmail`, and
+`password`. `confirmPassword` is optional for API clients but must match
+`password` when sent.
+
+Slug rules:
+
+- Explicit `workspaceSlug` is normalized to lowercase and may contain only
+  lowercase letters, numbers, and hyphens after normalization.
+- Explicit duplicate slugs return `409 Conflict`.
+- If omitted, the backend generates a slug from `workspaceName` and appends
+  `-2`, `-3`, and so on when needed.
+
+Successful response data:
+
+```json
+{
+  "accessToken": "jwt_token",
+  "user": {
+    "id": "user_id",
+    "organizationId": "organization_id",
+    "fullName": "Acme Demo Owner",
+    "email": "owner.demo@acme.test",
+    "role": "ADMIN",
+    "organization": {
+      "id": "organization_id",
+      "name": "Acme Advisory Workspace",
+      "slug": "acme-advisory-workspace"
+    }
+  },
+  "organization": {
+    "id": "organization_id",
+    "name": "Acme Advisory Workspace",
+    "slug": "acme-advisory-workspace"
+  }
+}
+```
+
+Notes:
+
+- The owner user is created as the first active `ADMIN`.
+- `User.email` is globally unique in Step 23.
+- Client-supplied `role`, `organizationId`, `isActive`, and `passwordHash` are
+  rejected.
+- `passwordHash` is never returned.
+- Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`.
+- Invitations, billing, workspace switching, workspace-specific public portals,
+  and customer portal accounts remain future roadmap scope.
 
 ## 2. User API
 
@@ -921,9 +1002,10 @@ Recommended HTTP status codes:
   internal users and CRM business records. Dashboard and report aggregates are
   scoped by the current workspace.
 - The current demo/staging deployment uses one default workspace:
-  `Advisora Demo Workspace` (`advisora-demo`). Multi-company signup,
-  invitations, billing, and customer portal accounts remain future roadmap
-  scope.
+  `Advisora Demo Workspace` (`advisora-demo`). Workspace signup can create
+  additional internal CRM workspaces when `WORKSPACE_SIGNUP_ENABLED=true`.
+  Invitations, billing, workspace switching, workspace-specific public portals,
+  and customer portal accounts remain future roadmap scope.
 - A customer portal and customer-authenticated endpoints are deferred to a future version.
 - Authorization must be enforced by the backend; hiding UI actions is not a security control.
 - Sensitive fields, including `passwordHash`, must never be returned by the API.

@@ -16,12 +16,14 @@ import {
 } from "../modules/services/service.routes";
 import { taskRouter } from "../modules/tasks/task.routes";
 import { userRouter } from "../modules/users/user.routes";
+import { workspaceRouter } from "../modules/workspaces/workspace.routes";
 import { healthRouter } from "./health.routes";
 
 const apiRouter = Router();
 
 apiRouter.use("/health", healthRouter);
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/workspaces", workspaceRouter);
 apiRouter.use("/public/services", publicServiceRouter);
 apiRouter.use(
   "/public/consultation-requests",

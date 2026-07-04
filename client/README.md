@@ -78,7 +78,9 @@ environment. Do not commit local environment files, tokens, or other secrets.
 Before handling real customer data in production, review this token storage
 strategy and consider an HttpOnly secure cookie session flow.
 The public website routes remain available alongside the protected admin
-workspace. The customer page supports list, search, pagination, create, edit,
+workspace. Public workspace signup is available at `/workspace-signup` when
+the backend has `WORKSPACE_SIGNUP_ENABLED=true`; successful signup stores the
+same Bearer token as login and redirects to `/admin/dashboard`. The customer page supports list, search, pagination, create, edit,
 and delete workflows. The consultation request page supports list, search,
 status filtering, request details, and status updates. The case management page
 supports search, status and priority filters, overdue cases, pagination,
@@ -88,6 +90,9 @@ schedule filters, today appointments, overdue tasks, creation, editing, status
 updates, and role-aware deletion. Team member management lets administrators
 create, edit, activate/deactivate, and reset passwords for internal CRM users
 in the current workspace; there is no workspace picker in this step.
+Workspace signup creates only the first owner administrator for a new internal
+CRM workspace. It does not add invitations, billing, workspace switching,
+workspace-specific public intake forms, or customer portal accounts.
 Document management adds search, filters,
 multipart upload, protected download, detail review, and role-aware deletion.
 Reports use the dashboard/reporting APIs for operational insight, with staff

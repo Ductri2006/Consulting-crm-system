@@ -84,7 +84,10 @@ export function Header() {
           </ul>
         </nav>
 
-        <div className="hidden lg:block">
+        <div className="hidden items-center gap-2 lg:flex">
+          <Button size="sm" to="/workspace-signup" variant="outline">
+            Create workspace
+          </Button>
           <Button size="sm" to="/consultation">
             Get Consultation
             <ArrowRight aria-hidden="true" className="size-4" />
@@ -136,6 +139,14 @@ export function Header() {
           <Button className="mt-4 w-full" size="md" to="/consultation">
             Get Consultation
             <ArrowRight aria-hidden="true" className="size-4" />
+          </Button>
+          <Button
+            className="mt-2 w-full"
+            size="md"
+            to="/workspace-signup"
+            variant="outline"
+          >
+            Create workspace
           </Button>
         </Container>
       </div>

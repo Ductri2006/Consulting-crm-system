@@ -323,9 +323,10 @@ Slug: northstar-legal
 ```
 
 The public consultation form maps new requests to the workspace configured by
-`DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. Public workspace
-signup, invitations, billing, and customer portal access remain future roadmap
-scope.
+`DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. Workspace signup
+creates a new internal CRM workspace only when `WORKSPACE_SIGNUP_ENABLED=true`.
+Invitations, billing, workspace switching, workspace-specific public portals,
+and customer portal access remain future roadmap scope.
 
 Intentional portfolio demo accounts created by `npm run seed:demo`:
 
@@ -398,6 +399,22 @@ consultation requests, appointments, tasks, case history, and activity logs. It
 is idempotent, does not reset the database, does not delete Advisora demo data,
 and does not seed physical document files. Public consultation requests still
 map to `DEFAULT_ORGANIZATION_SLUG`.
+
+Step 23 adds public workspace onboarding at `/workspace-signup`, backed by:
+
+```http
+POST /api/workspaces/signup
+```
+
+The backend enforces `WORKSPACE_SIGNUP_ENABLED=false` by default. Set
+`WORKSPACE_SIGNUP_ENABLED=true` only for a local or controlled staging test.
+Successful signup creates a new `Organization`, creates the first active
+`ADMIN` owner user, signs a JWT with `organizationId`, auto-logs the frontend
+in, and redirects to `/admin/dashboard`. The owner email remains globally
+unique across all workspaces in this step.
+
+Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`; signup
+does not create a custom public intake URL for the new workspace.
 
 Use only fictional demo data. Do not paste real customer data, real database
 URLs, access tokens, or production credentials into the app, docs, commits, or
@@ -515,7 +532,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, internal users, documents, and reports |
 | Backend API | Implemented for auth, CRM workflows, internal user management, documents, dashboard, and reports |
 | Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
-| Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; multi-company signup is future work |
+| Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED` |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
@@ -532,10 +549,13 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Local disk uploads are for development only.
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create backend records yet.
-- Internal user management is for CRM team members only; public visitors and customers do not have accounts yet.
-- No public workspace signup, invitation system, customer portal, billing, OCR,
-  malware scanning, cloud object storage, report exports, realtime updates,
-  production rate limiting, or centralized observability yet.
+- Internal user management is for CRM team members only; customer portal
+  accounts remain future work.
+- Workspace signup is gated by `WORKSPACE_SIGNUP_ENABLED` and intended for
+  local or controlled staging onboarding tests in this portfolio phase.
+- No invitation system, customer portal, billing, OCR, malware scanning, cloud
+  object storage, report exports, realtime updates, production-grade rate
+  limiting, or centralized observability yet.
 
 ## Learning Goals
 
@@ -638,3 +658,7 @@ customers, requests, cases, appointments, tasks, documents, dashboard, and
 reports by `organizationId`. Production deployment remains a future phase.
 Step 22.5 adds an optional Northstar Legal Workspace seed and a Prisma-based
 tenant-isolation verification script for staging QA.
+Step 23 adds public Workspace Signup / Organization Onboarding: a guarded
+`POST /api/workspaces/signup` endpoint, a `/workspace-signup` frontend page,
+automatic owner admin login, and docs for the signup flag and default public
+consultation behavior.

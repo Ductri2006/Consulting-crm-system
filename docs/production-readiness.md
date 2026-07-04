@@ -72,6 +72,7 @@ Server:
 | `UPLOAD_DIR` | Local upload directory used by the current document module. |
 | `MAX_FILE_SIZE_MB` | Per-file upload limit from 1 to 50 MB. |
 | `DEFAULT_ORGANIZATION_SLUG` | Workspace slug used by public consultation requests, defaults to `advisora-demo`. |
+| `WORKSPACE_SIGNUP_ENABLED` | Public workspace signup flag. Defaults to `false`; use `true` only for controlled onboarding QA until production abuse protection and auth hardening are complete. |
 
 Client:
 
@@ -87,6 +88,8 @@ Production rules:
 - `VITE_API_BASE_URL` must match the deployed backend API URL.
 - `DEFAULT_ORGANIZATION_SLUG` must point to an active workspace. In current
   staging, use `advisora-demo`.
+- `WORKSPACE_SIGNUP_ENABLED` should remain `false` for production unless
+  signup abuse protection, monitoring, and token/session hardening are reviewed.
 - Do not commit `.env`, tokens, local upload files, or generated secrets.
 
 ## Database Readiness
@@ -230,10 +233,13 @@ Recommended later upgrade:
 - Render Free may cold start during portfolio staging.
 - No refresh tokens or token revocation workflow yet.
 - Current frontend token storage uses local storage, not HttpOnly cookies.
+- Workspace signup exists for controlled staging/local onboarding tests and is
+  gated by `WORKSPACE_SIGNUP_ENABLED`; keep it disabled for production until
+  abuse protection and session hardening are reviewed.
 - Public contact and appointment forms are validation/demo flows only.
 - No password reset or account-management UI yet.
-- No public workspace signup, invitation system, billing, or workspace switcher
-  yet.
+- No invitation system, billing, customer portal, workspace switcher, or
+  workspace-specific public intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production
   tenant onboarding flow.
 - No production rate limiting, captcha, or dedicated abuse-protection layer yet.

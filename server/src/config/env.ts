@@ -79,6 +79,7 @@ const envSchema = z.object({
       "DEFAULT_ORGANIZATION_SLUG must be a lowercase URL-safe slug.",
     )
     .default("advisora-demo"),
+  WORKSPACE_SIGNUP_ENABLED: z.enum(["true", "false"]).default("false"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
