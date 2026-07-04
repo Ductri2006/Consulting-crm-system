@@ -58,6 +58,7 @@ validation/demo flows until their public backend intake endpoints are added.
 - Cases: `/admin/cases`
 - Appointments: `/admin/appointments`
 - Tasks: `/admin/tasks`
+- Team members: `/admin/users`
 - Documents: `/admin/documents`
 - Reports: `/admin/reports`
 - Demo accounts: see `../docs/demo-walkthrough.md`
@@ -79,7 +80,9 @@ supports search, status and priority filters, overdue cases, pagination,
 creation, editing, status transitions, staff assignment, history, and deletion
 subject to role and backend workflow rules. Appointment and task management add
 schedule filters, today appointments, overdue tasks, creation, editing, status
-updates, and role-aware deletion. Document management adds search, filters,
+updates, and role-aware deletion. Team member management lets administrators
+create, edit, activate/deactivate, and reset passwords for internal CRM users.
+Document management adds search, filters,
 multipart upload, protected download, detail review, and role-aware deletion.
 Reports use the dashboard/reporting APIs for operational insight, with staff
 performance available to administrators and managers only. Admin and public page

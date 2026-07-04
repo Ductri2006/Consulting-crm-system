@@ -118,9 +118,10 @@ fixed fictional records and does not seed physical document files.
 9. Cases.
 10. Appointments.
 11. Tasks.
-12. Documents.
-13. Reports.
-14. Production readiness docs.
+12. Team Members.
+13. Documents.
+14. Reports.
+15. Production readiness docs.
 
 ## Public Website Demo
 
@@ -172,7 +173,8 @@ Admin demo flow:
 2. View dashboard metrics and recent activity.
 3. Check consultation requests.
 4. Open cases and inspect status coverage.
-5. Check tasks, appointments, documents, and reports.
+5. Manage internal team members.
+6. Check tasks, appointments, documents, and reports.
 
 ## Dashboard Demo
 
@@ -263,6 +265,33 @@ Show:
 - Edit details.
 - Move status from `TODO` to `IN_PROGRESS`.
 - Delete the QA task if allowed by workflow rules.
+
+## Team Members Demo
+
+Open:
+
+- `/admin/users`
+
+Show:
+
+- Admin-only access to internal CRM users.
+- Search, role filter, active/inactive filter, and pagination.
+- Create a fictional staff user.
+- Edit full name, phone, avatar URL, role, and active status.
+- Reset a temporary password without exposing `passwordHash`.
+- Deactivate and reactivate the QA user.
+- Confirm Manager and Staff accounts do not see the Team Members sidebar item.
+- Confirm direct access to `/admin/users` redirects or shows forbidden behavior
+  for Manager and Staff users.
+
+Talk track:
+
+- User management is for internal `ADMIN`, `MANAGER`, and `STAFF` accounts
+  only.
+- Public visitors do not need accounts.
+- Customer accounts and a customer portal remain future roadmap scope.
+- Deactivation is used instead of hard delete so historical assignments remain
+  intact.
 
 ## Documents Demo
 

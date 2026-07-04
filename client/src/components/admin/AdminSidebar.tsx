@@ -7,13 +7,23 @@ import {
   LayoutDashboard,
   MessageSquareText,
   Scale,
+  UserCog,
   UsersRound,
   X,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { useAuth, type UserRole } from '../../features/auth'
 import { cn } from '../../utils/cn'
 
-const navigation = [
+interface NavigationItem {
+  label: string
+  icon: typeof LayoutDashboard
+  to: string
+  active: boolean
+  allowedRoles?: readonly UserRole[]
+}
+
+const navigation: readonly NavigationItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/admin/dashboard', active: true },
   { label: 'Customers', icon: UsersRound, to: '/admin/customers', active: true },
   {
@@ -25,6 +35,13 @@ const navigation = [
   { label: 'Cases', icon: FolderKanban, to: '/admin/cases', active: true },
   { label: 'Appointments', icon: CalendarDays, to: '/admin/appointments', active: true },
   { label: 'Tasks', icon: ClipboardCheck, to: '/admin/tasks', active: true },
+  {
+    label: 'Team Members',
+    icon: UserCog,
+    to: '/admin/users',
+    active: true,
+    allowedRoles: ['ADMIN'],
+  },
   { label: 'Documents', icon: Files, to: '/admin/documents', active: true },
   { label: 'Reports', icon: BarChart3, to: '/admin/reports', active: true },
 ]
@@ -35,6 +52,11 @@ export interface AdminSidebarProps {
 }
 
 function SidebarContent({ onClose }: Pick<AdminSidebarProps, 'onClose'>) {
+  const { user } = useAuth()
+  const visibleNavigation = navigation.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(user?.role ?? 'STAFF'),
+  )
+
   return (
     <div className="flex h-full flex-col bg-slate-950 text-white">
       <div className="flex h-20 items-center justify-between border-b border-white/10 px-6">
@@ -69,7 +91,7 @@ function SidebarContent({ onClose }: Pick<AdminSidebarProps, 'onClose'>) {
           Workspace
         </p>
         <ul className="space-y-1.5">
-          {navigation.map(({ label, icon: Icon, to, active }) => (
+          {visibleNavigation.map(({ label, icon: Icon, to, active }) => (
             <li key={label}>
               {active && to ? (
                 <NavLink

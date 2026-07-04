@@ -296,6 +296,8 @@ Before real customer documents:
 - [ ] Cases page loads.
 - [ ] Appointments page loads.
 - [ ] Tasks page loads.
+- [ ] Team Members page loads for admin users.
+- [ ] Manager and staff users cannot access Team Members directly.
 - [ ] Documents page loads.
 - [ ] Reports page loads.
 - [ ] Logout clears the client session.
@@ -315,6 +317,10 @@ Before real customer documents:
 - [ ] Secret scan over tracked files finds no real provider credentials.
 - [ ] `passwordHash` is not returned by auth, users, dashboard, or assignment
   endpoints.
+- [ ] User create, edit, password reset, activate, and deactivate responses do
+  not include `passwordHash`.
+- [ ] Deactivated users cannot log in.
+- [ ] The last active admin cannot be deactivated or demoted.
 - [ ] CORS allows only the staging frontend origin or intentional preview
   origins.
 - [ ] Browser console does not log access tokens, passwords, consultation form

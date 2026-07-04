@@ -1,9 +1,22 @@
-import { UserRole, type User } from "@prisma/client";
+import { Prisma, UserRole, type User } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
+import {
+  createPaginationMeta,
+  getPagination,
+} from "../../utils/pagination";
+import { isPrismaError } from "../../utils/prismaError";
 import { sanitizeUser, type SafeUser } from "../../utils/sanitizeUser";
+import type {
+  CreateUserInput,
+  ResetUserPasswordInput,
+  UpdateUserInput,
+  UserListQuery,
+  UserListResult,
+} from "./user.types";
 
 export type AssignableUser = Pick<
   User,
@@ -16,23 +29,137 @@ export type AssignableUser = Pick<
   | "isActive"
 >;
 
-export const findUsers = async (): Promise<SafeUser[]> => {
-  const users = await prisma.user.findMany({
-    orderBy: {
-      createdAt: "desc",
+const internalUserRoles = [
+  UserRole.ADMIN,
+  UserRole.MANAGER,
+  UserRole.STAFF,
+];
+
+const internalUserWhere = {
+  role: {
+    in: internalUserRoles,
+  },
+} satisfies Prisma.UserWhereInput;
+
+const throwUserWriteError = (error: unknown): never => {
+  if (isPrismaError(error, "P2002")) {
+    throw new AppError(
+      "A user with this email already exists.",
+      HTTP_STATUS.CONFLICT,
+    );
+  }
+
+  if (isPrismaError(error, "P2025")) {
+    throw new AppError("User not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  throw error;
+};
+
+const getInternalUserWhere = (
+  query: UserListQuery,
+): Prisma.UserWhereInput => {
+  const where: Prisma.UserWhereInput = {
+    role: query.role
+      ? query.role
+      : {
+          in: internalUserRoles,
+        },
+  };
+
+  if (query.isActive !== undefined) {
+    where.isActive = query.isActive;
+  }
+
+  if (query.search) {
+    where.OR = [
+      { fullName: { contains: query.search, mode: "insensitive" } },
+      { email: { contains: query.search, mode: "insensitive" } },
+      { phone: { contains: query.search, mode: "insensitive" } },
+    ];
+  }
+
+  return where;
+};
+
+const assertAdminWouldRemain = async (
+  userId: string,
+  input: UpdateUserInput,
+): Promise<void> => {
+  const target = await prisma.user.findFirst({
+    where: {
+      id: userId,
+      ...internalUserWhere,
+    },
+    select: {
+      id: true,
+      isActive: true,
+      role: true,
     },
   });
 
-  return users.map(sanitizeUser);
+  if (!target) {
+    throw new AppError("User not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  const canRemoveAdminAccess =
+    input.isActive === false ||
+    (input.role !== undefined && input.role !== UserRole.ADMIN);
+
+  if (!canRemoveAdminAccess) {
+    return;
+  }
+
+  if (target.role !== UserRole.ADMIN || !target.isActive) {
+    return;
+  }
+
+  const remainingActiveAdminCount = await prisma.user.count({
+    where: {
+      id: {
+        not: userId,
+      },
+      isActive: true,
+      role: UserRole.ADMIN,
+    },
+  });
+
+  if (remainingActiveAdminCount === 0) {
+    throw new AppError(
+      "At least one active administrator must remain.",
+      HTTP_STATUS.CONFLICT,
+    );
+  }
+};
+
+export const findUsers = async (
+  query: UserListQuery,
+): Promise<UserListResult> => {
+  const { page, limit } = query;
+  const { skip, take } = getPagination(page, limit);
+  const where = getInternalUserWhere(query);
+
+  const [users, total] = await prisma.$transaction([
+    prisma.user.findMany({
+      where,
+      skip,
+      take,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return {
+    items: users.map(sanitizeUser),
+    meta: createPaginationMeta(page, limit, total),
+  };
 };
 
 export const findAssignableUsers = async (): Promise<AssignableUser[]> =>
   prisma.user.findMany({
     where: {
       isActive: true,
-      role: {
-        in: [UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF],
-      },
+      ...internalUserWhere,
     },
     select: {
       id: true,
@@ -49,8 +176,11 @@ export const findAssignableUsers = async (): Promise<AssignableUser[]> =>
   });
 
 export const findUserById = async (id: string): Promise<SafeUser> => {
-  const user = await prisma.user.findUnique({
-    where: { id },
+  const user = await prisma.user.findFirst({
+    where: {
+      id,
+      ...internalUserWhere,
+    },
   });
 
   if (!user) {
@@ -58,4 +188,87 @@ export const findUserById = async (id: string): Promise<SafeUser> => {
   }
 
   return sanitizeUser(user);
+};
+
+export const createUser = async (
+  input: CreateUserInput,
+): Promise<SafeUser> => {
+  if (!input.password) {
+    throw new AppError(
+      "Password or temporary password is required.",
+      HTTP_STATUS.BAD_REQUEST,
+    );
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, 12);
+
+  try {
+    const user = await prisma.user.create({
+      data: {
+        fullName: input.fullName,
+        email: input.email,
+        phone: input.phone,
+        avatarUrl: input.avatarUrl,
+        role: input.role,
+        isActive: input.isActive,
+        passwordHash,
+      },
+    });
+
+    return sanitizeUser(user);
+  } catch (error) {
+    return throwUserWriteError(error);
+  }
+};
+
+export const updateUser = async (
+  id: string,
+  input: UpdateUserInput,
+): Promise<SafeUser> => {
+  await assertAdminWouldRemain(id, input);
+
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: input,
+    });
+
+    return sanitizeUser(user);
+  } catch (error) {
+    return throwUserWriteError(error);
+  }
+};
+
+export const resetUserPassword = async (
+  id: string,
+  input: ResetUserPasswordInput,
+): Promise<SafeUser> => {
+  const target = await prisma.user.findFirst({
+    where: {
+      id,
+      ...internalUserWhere,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!target) {
+    throw new AppError("User not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  const passwordHash = await bcrypt.hash(input.newPassword, 12);
+
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        passwordHash,
+      },
+    });
+
+    return sanitizeUser(user);
+  } catch (error) {
+    return throwUserWriteError(error);
+  }
 };

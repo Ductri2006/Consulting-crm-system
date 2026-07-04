@@ -36,7 +36,7 @@ Backend API:
 
 - Authentication and role authorization.
 - Customers, services, consultation requests, cases, appointments, tasks,
-  documents, dashboard, and reporting APIs.
+  internal users, documents, dashboard, and reporting APIs.
 - Prisma migration, seed, database verification command, and health route.
 
 Admin CRM modules:
@@ -47,6 +47,7 @@ Admin CRM modules:
 - Cases.
 - Appointments.
 - Tasks.
+- Team Members.
 - Documents.
 - Reports.
 

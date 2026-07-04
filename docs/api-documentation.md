@@ -69,7 +69,10 @@ The implementation should either revoke the active session/token or instruct the
 
 ## 2. User API
 
-All user-management endpoints are protected. User creation, disabling, and deletion are restricted to administrators.
+All user-management endpoints are protected. Internal user management is
+restricted to administrators and covers only CRM users: `ADMIN`, `MANAGER`, and
+`STAFF`. Public visitors do not have accounts yet; the customer portal remains
+future roadmap scope.
 
 ### Get Users
 
@@ -80,10 +83,24 @@ GET /api/users
 Query parameters:
 
 - `search`
-- `role`: `ADMIN`, `MANAGER`, `STAFF`, or `CUSTOMER`
-- `isActive`
+- `role`: `ADMIN`, `MANAGER`, or `STAFF`
+- `isActive`: `true` or `false`
 - `page`
 - `limit`
+
+Response data uses the paginated envelope:
+
+```json
+{
+  "items": [],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 0,
+    "totalPages": 0
+  }
+}
+```
 
 ### Get User Detail
 
@@ -103,9 +120,10 @@ Request body:
 {
   "fullName": "Staff User",
   "email": "staff@example.com",
-  "password": "password123",
   "phone": "0123456789",
-  "role": "STAFF"
+  "role": "STAFF",
+  "password": "temporary-password",
+  "isActive": true
 }
 ```
 
@@ -115,19 +133,40 @@ Request body:
 PATCH /api/users/:id
 ```
 
-### Disable User
+Allowed fields:
+
+- `fullName`
+- `phone`
+- `avatarUrl`
+- `role`
+- `isActive`
+
+Setting `isActive=false` deactivates the account. Reactivate by setting
+`isActive=true`.
+
+### Reset User Password
 
 ```http
-PATCH /api/users/:id/disable
+PATCH /api/users/:id/password
 ```
 
-Disabling a user sets `isActive` to `false` while retaining historical ownership and audit data.
+Request body:
 
-### Delete User
-
-```http
-DELETE /api/users/:id
+```json
+{
+  "newPassword": "temporary-password"
+}
 ```
+
+Rules:
+
+- Hard delete is not available in this phase.
+- Deactivation is used instead of delete to preserve historical ownership.
+- The API prevents the last active administrator from being deactivated or
+  demoted.
+- User responses never include `passwordHash`.
+- `/api/users/assignable` remains available to `ADMIN` and `MANAGER` for
+  assignment dropdowns and returns only active internal users.
 
 Deletion should be rejected when retaining the user is necessary for related cases, tasks, documents, news, or activity logs. Disabling is the preferred operation in that situation.
 

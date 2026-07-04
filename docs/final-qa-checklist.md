@@ -95,6 +95,21 @@ Tasks:
 - [ ] Status transitions follow the workflow rules.
 - [ ] Delete is restricted to allowed roles.
 
+Team Members:
+
+- [ ] `/admin/users` loads for `ADMIN`.
+- [ ] `/admin/users` is hidden or forbidden for `MANAGER` and `STAFF`.
+- [ ] List, search, role filter, status filter, and pagination work.
+- [ ] Create internal `STAFF` user works with a temporary password.
+- [ ] Edit full name, phone, avatar URL, role, and active status works.
+- [ ] Password reset works and response does not include `passwordHash`.
+- [ ] Deactivated users cannot log in.
+- [ ] Reactivated users can log in with the current password.
+- [ ] The last active admin cannot be deactivated or demoted.
+- [ ] User hard delete is not available in the UI or API.
+- [ ] Case, appointment, and task assignment dropdowns still load assignable
+  users.
+
 Documents:
 
 - [ ] Upload accepts allowed file types.
@@ -144,6 +159,8 @@ testing.
 - [ ] Dashboard API returns data.
 - [ ] Document upload and download work.
 - [ ] Reports APIs return data for an admin account.
+- [ ] Admin user management create/edit/reset/deactivate/reactivate smoke works
+  with fictional users.
 - [ ] Public consultation form submits to the backend.
 - [ ] Public contact and appointment forms validate locally as documented demo flows.
 - [ ] Refreshing a protected admin deep link keeps or restores session correctly.

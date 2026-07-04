@@ -200,7 +200,38 @@ GET /api/users/<user-uuid>
 Authorization: Bearer <token>
 ```
 
-Both endpoints require an active authenticated user with the `ADMIN` role. They are read-only in this phase and never include `passwordHash`. Missing or invalid authentication returns `401`, insufficient permissions returns `403`, and a missing user record returns `404`.
+```http
+POST /api/users
+Authorization: Bearer <token>
+```
+
+```http
+PATCH /api/users/<user-uuid>
+Authorization: Bearer <token>
+```
+
+```http
+PATCH /api/users/<user-uuid>/password
+Authorization: Bearer <token>
+```
+
+These endpoints require an active authenticated user with the `ADMIN` role.
+They manage internal CRM users only: `ADMIN`, `MANAGER`, and `STAFF`. Public
+visitors and future customer-portal users are outside this module.
+
+The user list supports `page`, `limit`, `search`, `role`, and `isActive` query
+parameters. User create accepts `fullName`, unique `email`, optional `phone`,
+`role`, `password` or `temporaryPassword`, optional `avatarUrl`, and optional
+`isActive`. User update accepts `fullName`, `phone`, `avatarUrl`, `role`, and
+`isActive`. Password reset accepts `newPassword`.
+
+User responses never include `passwordHash`. Hard delete is intentionally not
+available; deactivate users with `isActive=false` instead. The API prevents the
+last active administrator from being deactivated or demoted.
+
+Missing or invalid authentication returns `401`, insufficient permissions
+returns `403`, validation errors return `400`, duplicate email returns `409`,
+and a missing user record returns `404`.
 
 ## Core CRM APIs
 

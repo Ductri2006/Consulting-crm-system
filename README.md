@@ -84,7 +84,7 @@ This project addresses that need with a centralized platform that connects publi
 
 ### Internal Management
 
-- User management
+- Internal user management for Admin, Manager, and Staff accounts
 - Role-based access control
 - Task creation and assignment
 - Daily, weekly, and monthly reports
@@ -115,7 +115,7 @@ This project addresses that need with a centralized platform that connects publi
 
 Administrators have full system access. They can:
 
-- Manage users and permissions
+- Manage internal team members, roles, activation status, and password resets
 - Manage customers and all case profiles
 - Manage services, appointments, tasks, and documents
 - View reports and activity logs
@@ -365,7 +365,8 @@ Recommended admin demo flow:
 2. View the dashboard.
 3. Check consultation requests.
 4. Open cases.
-5. Check tasks, appointments, documents, and reports.
+5. Manage internal team members from Team Members.
+6. Check tasks, appointments, documents, and reports.
 
 See [Demo Walkthrough](docs/demo-walkthrough.md) for the full script.
 
@@ -408,6 +409,7 @@ development.
 - `/admin/cases`
 - `/admin/appointments`
 - `/admin/tasks`
+- `/admin/users`
 - `/admin/documents`
 - `/admin/reports`
 
@@ -460,8 +462,8 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Public website | Implemented with typed local content and responsive routes |
 | Public consultation request | Submits to the backend public consultation API |
 | Public contact and appointment forms | Validation/demo flows only; backend intake remains future work |
-| Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, documents, and reports |
-| Backend API | Implemented for auth, CRM workflows, documents, dashboard, and reports |
+| Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, internal users, documents, and reports |
+| Backend API | Implemented for auth, CRM workflows, internal user management, documents, dashboard, and reports |
 | Database | Prisma schema, migration, seed, and Neon verification completed |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
@@ -479,6 +481,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Local disk uploads are for development only.
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create backend records yet.
+- Internal user management is for CRM team members only; public visitors and customers do not have accounts yet.
 - No customer portal, OCR, malware scanning, cloud object storage, report exports, realtime updates, production rate limiting, or centralized observability yet.
 
 ## Learning Goals
@@ -522,12 +525,13 @@ This project is designed to practice:
 - [x] Staging deployment preparation
 - [x] Vercel/Render/Neon staging deployment guide
 - [x] Staging demo data and safer demo accounts
+- [x] Internal user management
 - [x] Staging deployment
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Phase 20 complete - staging demo data and safer demo accounts
+**Current phase:** Phase 21 complete - internal user management
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -556,7 +560,10 @@ Document management now covers list/search/filter/pagination, multipart upload,
 detail review, protected download, and role-aware deletion. Reports now use the
 dashboard/reporting APIs for overview metrics, case status distribution, monthly
 case trends, upcoming deadlines, staff performance, and recent activities. Staff
-performance is available only to administrators and managers. Admin pages are
+performance is available only to administrators and managers. User management
+now lets administrators list, create, edit, activate/deactivate, and reset
+passwords for internal CRM users, using deactivation rather than hard delete.
+Admin pages are
 route-lazy-loaded for better bundle splitting. Phase 17 adds production
 readiness documentation, a provider-neutral deployment guide, final QA
 checklists, CORS production guidance, environment-variable guidance, and file
@@ -568,4 +575,6 @@ criteria. Phase 19 adds a Vercel frontend, Render backend, and Neon database
 staging runbook plus Vercel SPA rewrite support for route refreshes. Phase 20
 adds an idempotent staging demo seed with fictional CRM data, safer demo
 accounts for admin/manager/staff review, Render JWT rotation notes, and
-portfolio demo guidance. Production deployment remains a future phase.
+portfolio demo guidance. Phase 21 adds internal Team Members management for
+administrator-only CRM user administration. Production deployment remains a
+future phase.

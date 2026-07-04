@@ -110,6 +110,11 @@ const AdminTasksPage = lazy(() =>
     default: module.AdminTasksPage,
   })),
 )
+const AdminUsersPage = lazy(() =>
+  import('../pages/admin/AdminUsersPage').then((module) => ({
+    default: module.AdminUsersPage,
+  })),
+)
 
 function AdminIndexRoute() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -161,6 +166,14 @@ export function AppRoutes() {
             element={routeElement(<AdminAppointmentsPage />)}
           />
           <Route path="tasks" element={routeElement(<AdminTasksPage />)} />
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                {routeElement(<AdminUsersPage />)}
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="documents"
             element={routeElement(<AdminDocumentsPage />)}
