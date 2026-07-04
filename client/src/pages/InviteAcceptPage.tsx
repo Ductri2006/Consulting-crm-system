@@ -57,6 +57,9 @@ const formatDateTime = (value: string): string => {
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
 
+const staleInvitationMessage =
+  'This invitation link is no longer active. It may have expired, been used, or been replaced by a newer invitation. Ask your workspace admin for a fresh link.'
+
 function FieldError({
   message,
 }: {
@@ -172,7 +175,7 @@ export function InviteAcceptPage() {
           setPreviewError(
             getErrorMessage(
               error,
-              'This invitation is invalid, expired, revoked, or already accepted.',
+              staleInvitationMessage,
             ),
           )
         }
@@ -205,7 +208,7 @@ export function InviteAcceptPage() {
       <InvalidInviteState
         message={
           previewError ??
-          'This invitation is invalid, expired, revoked, or already accepted.'
+          staleInvitationMessage
         }
       />
     )

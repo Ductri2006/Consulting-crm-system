@@ -3,6 +3,7 @@ export {
   createInvitation,
   listInvitations,
   previewInvitation,
+  resendInvitation,
   revokeInvitation,
 } from './invitations.api'
 export type {
@@ -16,7 +17,12 @@ export type {
   InvitationRole,
   InvitationStatus,
   PaginationMeta,
+  ResendInvitationInput,
+  ResendInvitationResult,
   WorkspaceInvitation,
+  EmailDeliveryResult,
+  EmailDeliveryStatus,
+  EmailProvider,
 } from './invitations.types'
 export {
   acceptInvitationFormSchema,

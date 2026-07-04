@@ -92,9 +92,12 @@ schedule filters, today appointments, overdue tasks, creation, editing, status
 updates, and role-aware deletion. Team member management lets administrators
 create, edit, activate/deactivate, and reset passwords for internal CRM users
 in the current workspace. Invitation management lets administrators list,
-search, filter, create, and revoke workspace invitations. The invite link is
-shown only immediately after create, and `/invite/:token` lets the invited user
-accept and auto-login. There is no workspace picker in this step.
+search, filter, create, resend, and revoke workspace invitations. Create can
+send an invitation email immediately, and the UI shows `emailDelivery` status.
+The invite link is shown only immediately after create or resend for manual
+fallback. Resending rotates the invite link, so older links stop working.
+`/invite/:token` lets the invited user accept and auto-login. There is no
+workspace picker in this step.
 Workspace signup creates only the first owner administrator for a new internal
 CRM workspace. It does not add billing, workspace switching,
 workspace-specific public intake forms, or customer portal accounts.

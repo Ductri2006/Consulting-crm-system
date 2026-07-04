@@ -80,6 +80,37 @@ const envSchema = z.object({
     )
     .default("advisora-demo"),
   WORKSPACE_SIGNUP_ENABLED: z.enum(["true", "false"]).default("false"),
+  APP_NAME: z.string().trim().min(1, "APP_NAME cannot be empty.").default("Advisora CRM"),
+  EMAIL_PROVIDER: z.enum(["disabled", "console", "resend"]).default("console"),
+  EMAIL_FROM: z
+    .string()
+    .trim()
+    .min(1, "EMAIL_FROM cannot be empty.")
+    .default("Advisora CRM <no-reply@advisora.test>"),
+  EMAIL_REPLY_TO: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return undefined;
+      }
+
+      const trimmed = value.trim();
+      return trimmed || undefined;
+    }),
+  RESEND_API_KEY: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return undefined;
+      }
+
+      const trimmed = value.trim();
+      return trimmed || undefined;
+    }),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

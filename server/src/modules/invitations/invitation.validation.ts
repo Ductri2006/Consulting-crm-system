@@ -61,10 +61,15 @@ export const createInvitationSchema = z.object({
   email: emailSchema,
   role: invitationRoleSchema,
   expiresInDays: z.coerce.number().int().min(1).max(30).default(7),
+  sendEmail: z.boolean().optional().default(true),
 }).strict();
 
 export const invitationIdParamsSchema = z.object({
   id: z.string().uuid("Invitation id must be a valid UUID."),
+}).strict();
+
+export const resendInvitationSchema = z.object({
+  expiresInDays: z.coerce.number().int().min(1).max(30).default(7),
 }).strict();
 
 export const invitationTokenParamsSchema = z.object({

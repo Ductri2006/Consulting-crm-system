@@ -50,6 +50,11 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `MAX_FILE_SIZE_MB` | No | Per-file upload limit from 1 to 50 MB, defaults to `10` |
 | `DEFAULT_ORGANIZATION_SLUG` | No | Workspace slug used by public consultation requests, defaults to `advisora-demo` |
 | `WORKSPACE_SIGNUP_ENABLED` | No | Enables public `POST /api/workspaces/signup` only when set to `true`; defaults to `false` |
+| `APP_NAME` | No | Name used in invitation email templates; defaults to `Advisora CRM` |
+| `EMAIL_PROVIDER` | No | Invitation email provider: `disabled`, `console`, or `resend`; defaults to `console` |
+| `EMAIL_FROM` | No | Sender identity for invitation emails |
+| `EMAIL_REPLY_TO` | No | Optional reply-to address for invitation emails |
+| `RESEND_API_KEY` | No | Resend API key, required only when `EMAIL_PROVIDER=resend`; never commit it |
 
 Example:
 
@@ -64,6 +69,11 @@ UPLOAD_DIR="uploads"
 MAX_FILE_SIZE_MB=10
 DEFAULT_ORGANIZATION_SLUG="advisora-demo"
 WORKSPACE_SIGNUP_ENABLED=false
+APP_NAME="Advisora CRM"
+EMAIL_PROVIDER=console
+EMAIL_FROM="Advisora CRM <no-reply@advisora.test>"
+EMAIL_REPLY_TO=
+RESEND_API_KEY=
 ```
 
 `CLIENT_URL` can be a single origin such as `http://localhost:5173` or a
@@ -72,7 +82,8 @@ comma-separated allowlist such as
 no paths, queries, hashes, trailing slashes, or wildcard origins. Do not leave
 trailing commas.
 
-Do not commit `.env` or use the example database credentials in a shared or production environment.
+Do not commit `.env`, real email provider API keys, or verified sender
+credentials in a shared or production environment.
 
 ## Run with a real database
 
@@ -334,19 +345,39 @@ Authorization: Bearer <token>
 ```
 
 ```http
+POST /api/invitations/<invitation-uuid>/resend
+Authorization: Bearer <token>
+```
+
+```http
 PATCH /api/invitations/<invitation-uuid>/revoke
 Authorization: Bearer <token>
 ```
 
 These endpoints require an active authenticated `ADMIN` in the current
 workspace. Invitation create accepts a unique email, `ADMIN`, `MANAGER`, or
-`STAFF` role, and optional `expiresInDays` from 1 to 30. Existing account
-emails and duplicate unexpired pending invitations return `409`.
+`STAFF` role, optional `expiresInDays` from 1 to 30, and optional
+`sendEmail` defaulting to `true`. Existing account emails and duplicate
+unexpired pending invitations return `409`.
 
 The API stores only a SHA-256 `tokenHash`. Admin list, create, and revoke
-responses never include `tokenHash` or the raw token. Because there is no email
-delivery provider in this portfolio phase, create returns a one-time `inviteUrl`
-for manual private delivery. Old invitation list rows cannot recover the link.
+responses never include `tokenHash`. Create and resend return a one-time
+`inviteUrl` so an administrator can copy the link if email delivery is disabled
+or fails. Old invitation list rows cannot recover the link.
+
+Email delivery is configured with `EMAIL_PROVIDER`:
+
+- `console` is the default for local and staging. It logs a masked preview with
+  a redacted accept URL and returns `emailDelivery.status = MOCK_SENT`.
+- `disabled` does not send email and returns `DISABLED`.
+- `resend` uses the Resend REST API via Node `fetch`. It requires
+  `RESEND_API_KEY` and `EMAIL_FROM` to be supplied through environment
+  variables outside the repository. Missing or rejected provider config returns
+  `FAILED` in `emailDelivery` without deleting the invitation.
+
+Resend rotates the invitation token, sets the invitation back to `PENDING`,
+updates the expiry, and invalidates older links immediately. Accepted and
+revoked invitations cannot be resent.
 
 ```http
 GET /api/invitations/public/<invite-token>
@@ -832,7 +863,9 @@ adds a `Northstar Legal Workspace` seed plus `verify:tenant-isolation` for
 staging tenant QA. Step 23 adds guarded public workspace signup/onboarding for
 creating a new internal CRM workspace and first owner admin. Step 24 adds
 admin-only workspace invitations with hashed one-time tokens and public accept
-auto-login. The repository also includes production readiness,
+auto-login. Step 25 adds invitation email delivery with console and Resend
+providers, `sendEmail` control, delivery result reporting, and resend token
+rotation. The repository also includes production readiness,
 deployment, and final QA documentation. It does not include
 request-to-customer conversion, OCR, cloud object storage, report exports,
 realtime updates, or real production deployment.

@@ -11,10 +11,12 @@ import { apiRouter } from "./routes";
 const app = express();
 const allowedOrigins = env.CLIENT_URL.split(",").map((origin) => origin.trim());
 const redactRequestUrl = (url: string | undefined): string =>
-  (url ?? "").replace(
-    /(\/api\/invitations\/public\/)[^/?#]+/g,
-    "$1<invite-token>",
-  );
+  (url ?? "")
+    .replace(
+      /(\/api\/invitations\/public\/)[^/?#]+/g,
+      "$1[redacted-token]",
+    )
+    .replace(/(\/invite\/)[^/?#]+/g, "$1[redacted-token]");
 
 app.use(helmet());
 app.use(
@@ -25,7 +27,13 @@ app.use(
 app.use(express.json());
 
 if (env.NODE_ENV === "development") {
-  morgan.token("safe-url", (request) => redactRequestUrl(request.url));
+  morgan.token("safe-url", (request) => {
+    const expressRequest = request as typeof request & {
+      originalUrl?: string;
+    };
+
+    return redactRequestUrl(expressRequest.originalUrl ?? request.url);
+  });
   app.use(
     morgan(":method :safe-url :status :response-time ms - :res[content-length]"),
   );

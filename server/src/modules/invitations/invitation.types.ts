@@ -10,11 +10,14 @@ import type {
   acceptInvitationSchema,
   createInvitationSchema,
   invitationListQuerySchema,
+  resendInvitationSchema,
 } from "./invitation.validation";
+import type { EmailDeliveryResult } from "../../lib/email";
 
 export type InvitationListQuery = z.infer<typeof invitationListQuerySchema>;
 export type CreateInvitationInput = z.infer<typeof createInvitationSchema>;
 export type AcceptInvitationInput = z.infer<typeof acceptInvitationSchema>;
+export type ResendInvitationInput = z.infer<typeof resendInvitationSchema>;
 
 export interface InvitationUserSummary {
   id: string;
@@ -49,7 +52,10 @@ export interface InvitationListResult {
 export interface CreateInvitationResult {
   invitation: SafeInvitation;
   inviteUrl: string;
+  emailDelivery: EmailDeliveryResult;
 }
+
+export type ResendInvitationResult = CreateInvitationResult;
 
 export interface InvitationPreview {
   email: string;

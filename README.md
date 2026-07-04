@@ -325,8 +325,9 @@ Slug: northstar-legal
 The public consultation form maps new requests to the workspace configured by
 `DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. Workspace signup
 creates a new internal CRM workspace only when `WORKSPACE_SIGNUP_ENABLED=true`.
-Invitations, billing, workspace switching, workspace-specific public portals,
-and customer portal access remain future roadmap scope.
+Workspace invitations can add later internal users by email. Billing,
+workspace switching, workspace-specific public portals, and customer portal
+access remain future roadmap scope.
 
 Intentional portfolio demo accounts created by `npm run seed:demo`:
 
@@ -536,7 +537,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Backend API | Implemented for auth, workspace signup, workspace invitations, CRM workflows, internal user management, documents, dashboard, and reports |
 | Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
 | Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED` |
-| Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens |
+| Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens, console email preview, optional Resend delivery, and resend token rotation |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
@@ -557,6 +558,8 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
   only; customer portal accounts remain future work.
 - Workspace signup is gated by `WORKSPACE_SIGNUP_ENABLED` and intended for
   local or controlled staging onboarding tests in this portfolio phase.
+- Invitation email delivery defaults to `EMAIL_PROVIDER=console`; real Resend
+  sending requires provider secrets configured outside the repository.
 - No customer portal, billing, OCR, malware scanning, cloud object storage,
   report exports, realtime updates, production-grade rate limiting, or
   centralized observability yet.
@@ -669,3 +672,7 @@ consultation behavior.
 Step 24 adds workspace invitations: admin-only invitation list/create/revoke,
 public invite preview and accept, hashed one-time tokens, auto-login after
 accept, and `/admin/invitations` plus `/invite/:token` frontend routes.
+Step 25 adds invitation email delivery: `EMAIL_PROVIDER` supports
+`disabled`, `console`, and `resend`; create invitation can send email or skip
+delivery; resend rotates the invite token so older links stop working; email
+failure keeps the invitation and returns a copyable one-time link.

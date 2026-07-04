@@ -40,6 +40,7 @@ export const createInvitationFormSchema = z.object({
     .int('Expiry must be a whole number.')
     .min(1, 'Expiry must be at least 1 day.')
     .max(30, 'Expiry must not exceed 30 days.'),
+  sendEmail: z.boolean(),
 })
 
 export const acceptInvitationFormSchema = z

@@ -306,19 +306,55 @@ Request body:
 {
   "email": "new.staff@example.com",
   "role": "STAFF",
-  "expiresInDays": 7
+  "expiresInDays": 7,
+  "sendEmail": true
 }
 ```
 
 Rules:
 
 - `expiresInDays` defaults to 7 and must be between 1 and 30.
+- `sendEmail` defaults to `true`; when false, the invitation is created and
+  email delivery returns `DISABLED`.
 - Existing global user emails return `409`.
 - A duplicate unexpired pending invitation in the same workspace returns `409`.
 - The server generates a 32-byte random token and stores only a SHA-256
   `tokenHash`.
-- The response returns a one-time `inviteUrl` for manual private delivery.
-  Invitation lists cannot recover old raw tokens or invite URLs.
+- The response returns `invitation`, a one-time `inviteUrl`, and
+  `emailDelivery`. The link is available only at create/resend time for manual
+  fallback; invitation lists cannot recover old raw tokens or invite URLs.
+- `emailDelivery.status` is `DISABLED`, `MOCK_SENT`, `SENT`, or `FAILED`.
+  Provider errors are sanitized and email failure does not delete the
+  invitation.
+
+### Resend Invitation
+
+```http
+POST /api/invitations/:id/resend
+```
+
+Request body:
+
+```json
+{
+  "expiresInDays": 7
+}
+```
+
+Only current-workspace `PENDING` or `EXPIRED` invitations can be resent.
+Resending generates a new raw token, stores a new SHA-256 `tokenHash`, sets the
+status to `PENDING`, updates `expiresAt`, and returns a new one-time
+`inviteUrl` plus `emailDelivery`. Older invite links immediately stop working.
+Accepted and revoked invitations return `409`.
+
+Email provider modes:
+
+- `EMAIL_PROVIDER=console` returns `MOCK_SENT` and logs only masked recipient
+  and redacted accept URL metadata.
+- `EMAIL_PROVIDER=disabled` returns `DISABLED`.
+- `EMAIL_PROVIDER=resend` sends through Resend when `RESEND_API_KEY` and
+  `EMAIL_FROM` are configured outside the repo; missing config returns
+  `FAILED` without rolling back the invitation.
 
 ### Revoke Invitation
 
@@ -1113,8 +1149,9 @@ Recommended HTTP status codes:
 - The current demo/staging deployment uses one default workspace:
   `Advisora Demo Workspace` (`advisora-demo`). Workspace signup can create
   additional internal CRM workspaces when `WORKSPACE_SIGNUP_ENABLED=true`.
-  Invitations, billing, workspace switching, workspace-specific public portals,
-  and customer portal accounts remain future roadmap scope.
+  Workspace invitations can add later internal users; billing, workspace
+  switching, workspace-specific public portals, and customer portal accounts
+  remain future roadmap scope.
 - A customer portal and customer-authenticated endpoints are deferred to a future version.
 - Authorization must be enforced by the backend; hiding UI actions is not a security control.
 - Sensitive fields, including `passwordHash`, must never be returned by the API.

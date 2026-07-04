@@ -10,6 +10,7 @@ import {
   createInvitationController,
   getInvitations,
   previewInvitationController,
+  resendInvitationController,
   revokeInvitationController,
 } from "./invitation.controller";
 import { limitInvitationAccept } from "./invitation.middleware";
@@ -19,6 +20,7 @@ import {
   invitationIdParamsSchema,
   invitationListQuerySchema,
   invitationTokenParamsSchema,
+  resendInvitationSchema,
 } from "./invitation.validation";
 
 const invitationRouter = Router();
@@ -49,6 +51,14 @@ invitationRouter.post(
   "/",
   validate({ body: createInvitationSchema }),
   asyncHandler(createInvitationController),
+);
+invitationRouter.post(
+  "/:id/resend",
+  validate({
+    params: invitationIdParamsSchema,
+    body: resendInvitationSchema,
+  }),
+  asyncHandler(resendInvitationController),
 );
 invitationRouter.patch(
   "/:id/revoke",

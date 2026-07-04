@@ -9,12 +9,14 @@ import {
   createInvitation,
   findInvitations,
   previewInvitation,
+  resendInvitation,
   revokeInvitation,
 } from "./invitation.service";
 import type {
   AcceptInvitationInput,
   CreateInvitationInput,
   InvitationListQuery,
+  ResendInvitationInput,
 } from "./invitation.types";
 
 const getActor = (request: Request): SafeUser => {
@@ -90,6 +92,28 @@ export const revokeInvitationController = async (
       invitation,
     }),
   );
+};
+
+export const resendInvitationController = async (
+  request: Request,
+  response: Response,
+): Promise<void> => {
+  const actor = getActor(request);
+  const id = getStringParam(
+    request,
+    "id",
+    "Invitation id must be a valid UUID.",
+  );
+  const result = await resendInvitation(
+    id,
+    request.body as ResendInvitationInput,
+    actor.id,
+    actor.organizationId,
+  );
+
+  response
+    .status(HTTP_STATUS.OK)
+    .json(successResponse("Invitation email resent successfully.", result));
 };
 
 export const previewInvitationController = async (

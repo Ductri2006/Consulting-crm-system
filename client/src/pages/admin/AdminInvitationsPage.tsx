@@ -7,6 +7,7 @@ import {
   MailPlus,
   RefreshCw,
   SearchX,
+  Send,
 } from 'lucide-react'
 import {
   useCallback,
@@ -31,9 +32,11 @@ import {
   invitationRoles,
   invitationStatuses,
   listInvitations,
+  resendInvitation,
   revokeInvitation,
   type CreateInvitationFormValues,
   type CreateInvitationInput,
+  type EmailDeliveryResult,
   type InvitationRole,
   type InvitationStatus,
   type PaginationMeta,
@@ -54,12 +57,14 @@ const EMPTY_CREATE_FORM: CreateInvitationFormValues = {
   email: '',
   role: 'STAFF',
   expiresInDays: 7,
+  sendEmail: true,
 }
 
 interface Feedback {
-  type: 'success' | 'error'
+  type: 'success' | 'warning' | 'error'
   message: string
   inviteUrl?: string
+  emailDelivery?: EmailDeliveryResult
 }
 
 const formatLabel = (value: string): string =>
@@ -108,7 +113,37 @@ const toCreateInput = (
   email: values.email.trim().toLowerCase(),
   role: values.role,
   expiresInDays: values.expiresInDays,
+  sendEmail: values.sendEmail,
 })
+
+const getEmailDeliveryMessage = (
+  delivery?: EmailDeliveryResult,
+): string | null => {
+  if (!delivery) {
+    return null
+  }
+
+  if (delivery.status === 'MOCK_SENT') {
+    return 'Email preview generated in console mode.'
+  }
+
+  if (delivery.status === 'SENT') {
+    return 'Invitation email sent.'
+  }
+
+  if (delivery.status === 'FAILED') {
+    return `Invitation created, but email delivery failed.${delivery.error ? ` ${delivery.error}` : ''}`
+  }
+
+  return 'Email delivery disabled. Copy the link manually.'
+}
+
+const getDeliveryFeedbackType = (
+  delivery: EmailDeliveryResult,
+): Feedback['type'] =>
+  delivery.status === 'FAILED' || delivery.status === 'DISABLED'
+    ? 'warning'
+    : 'success'
 
 const copyText = async (value: string): Promise<void> => {
   if (navigator.clipboard?.writeText) {
@@ -168,6 +203,8 @@ function FeedbackBanner({
   onDismiss: () => void
 }) {
   const isSuccess = feedback.type === 'success'
+  const isWarning = feedback.type === 'warning'
+  const emailDeliveryMessage = getEmailDeliveryMessage(feedback.emailDelivery)
 
   return (
     <div
@@ -175,6 +212,8 @@ function FeedbackBanner({
         'mt-5 flex flex-col gap-3 rounded-xl border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between',
         isSuccess
           ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          : isWarning
+            ? 'border-amber-200 bg-amber-50 text-amber-800'
           : 'border-rose-200 bg-rose-50 text-rose-700',
       )}
       role={isSuccess ? 'status' : 'alert'}
@@ -185,7 +224,14 @@ function FeedbackBanner({
         ) : (
           <AlertCircle className="mt-0.5 h-4 w-4" aria-hidden="true" />
         )}
-        {feedback.message}
+        <span>
+          <span className="block">{feedback.message}</span>
+          {emailDeliveryMessage ? (
+            <span className="mt-1 block text-xs font-semibold">
+              {emailDeliveryMessage}
+            </span>
+          ) : null}
+        </span>
       </span>
       <span className="flex shrink-0 gap-2">
         {feedback.inviteUrl ? (
@@ -365,11 +411,20 @@ function CreateInvitationForm({
               message={errors.expiresInDays?.message}
             />
           </div>
+
+          <label className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 sm:col-span-2">
+            <input
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              type="checkbox"
+              {...register('sendEmail')}
+            />
+            Send invitation email now
+          </label>
         </div>
 
         <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-          The invite link is shown only after this create action. Store or send
-          it privately before leaving the page.
+          The invite link is shown only after this create action. If email
+          delivery is disabled or fails, copy it and share it privately.
         </div>
       </div>
 
@@ -443,6 +498,117 @@ function RevokeInvitationDialog({
   )
 }
 
+function ResendInvitationDialog({
+  error,
+  invitation,
+  isLoading,
+  onCancel,
+  onSubmit,
+}: {
+  error: string | null
+  invitation: WorkspaceInvitation | null
+  isLoading: boolean
+  onCancel: () => void
+  onSubmit: (values: { expiresInDays: number }) => void
+}) {
+  const [expiresInDays, setExpiresInDays] = useState(7)
+
+  useEffect(() => {
+    if (invitation) {
+      setExpiresInDays(7)
+    }
+  }, [invitation])
+
+  if (!invitation) {
+    return null
+  }
+
+  return (
+    <Modal
+      isDismissible={!isLoading}
+      isOpen={Boolean(invitation)}
+      onClose={onCancel}
+      role="alertdialog"
+      size="sm"
+      title="Resend invitation"
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          onSubmit({ expiresInDays })
+        }}
+      >
+        <div className="p-5 sm:p-6">
+          <div className="flex gap-4">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700">
+              <Send className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="pt-1 text-sm leading-6 text-slate-600">
+              <p>
+                Resend the invitation for{' '}
+                <span className="font-bold text-slate-900">
+                  {invitation.email}
+                </span>
+                .
+              </p>
+              <p className="mt-2 font-semibold text-amber-800">
+                Resending rotates the invite link. Older links will stop
+                working.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5">
+            <label className="field-label" htmlFor="resend-invitation-expiry">
+              Expires in days
+            </label>
+            <input
+              className="field-input"
+              id="resend-invitation-expiry"
+              max={30}
+              min={1}
+              onChange={(event) =>
+                setExpiresInDays(Number(event.target.value))
+              }
+              type="number"
+              value={expiresInDays}
+            />
+          </div>
+          {error ? (
+            <div
+              className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+              role="alert"
+            >
+              {error}
+            </div>
+          ) : null}
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              disabled={isLoading}
+              onClick={onCancel}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={
+                isLoading ||
+                !Number.isInteger(expiresInDays) ||
+                expiresInDays < 1 ||
+                expiresInDays > 30
+              }
+              type="submit"
+            >
+              {isLoading ? 'Resending...' : 'Resend'}
+            </button>
+          </div>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 export function AdminInvitationsPage() {
   const { user: currentUser } = useAuth()
   const [invitations, setInvitations] = useState<WorkspaceInvitation[]>([])
@@ -460,6 +626,10 @@ export function AdminInvitationsPage() {
   const [revokeTarget, setRevokeTarget] =
     useState<WorkspaceInvitation | null>(null)
   const [isRevoking, setIsRevoking] = useState(false)
+  const [resendTarget, setResendTarget] =
+    useState<WorkspaceInvitation | null>(null)
+  const [resendError, setResendError] = useState<string | null>(null)
+  const [isResending, setIsResending] = useState(false)
   const listSequence = useRef(0)
 
   const loadInvitations = useCallback(async () => {
@@ -557,16 +727,59 @@ export function AdminInvitationsPage() {
     try {
       const result = await createInvitation(toCreateInput(values))
       closeCreate()
+      const emailDeliveryType = getDeliveryFeedbackType(result.emailDelivery)
       setFeedback({
-        type: 'success',
+        type: emailDeliveryType,
         message: `Invitation for ${result.invitation.email} created. Copy the invite link now; it will not be shown again.`,
         inviteUrl: result.inviteUrl,
+        emailDelivery: result.emailDelivery,
       })
       await refreshFromFirstPage()
     } catch (error) {
       setCreateError(
         getErrorMessage(error, 'The invitation could not be created.'),
       )
+    }
+  }
+
+  const openResend = (invitation: WorkspaceInvitation) => {
+    setResendError(null)
+    setResendTarget(invitation)
+  }
+
+  const closeResend = () => {
+    if (!isResending) {
+      setResendTarget(null)
+      setResendError(null)
+    }
+  }
+
+  const handleResend = async (values: { expiresInDays: number }) => {
+    if (!resendTarget) {
+      return
+    }
+
+    setIsResending(true)
+    setResendError(null)
+
+    try {
+      const result = await resendInvitation(resendTarget.id, {
+        expiresInDays: values.expiresInDays,
+      })
+      setFeedback({
+        type: getDeliveryFeedbackType(result.emailDelivery),
+        message: `Invitation for ${result.invitation.email} resent. Copy the new link now; older links no longer work.`,
+        inviteUrl: result.inviteUrl,
+        emailDelivery: result.emailDelivery,
+      })
+      setResendTarget(null)
+      await loadInvitations()
+    } catch (error) {
+      setResendError(
+        getErrorMessage(error, 'The invitation could not be resent.'),
+      )
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -650,25 +863,48 @@ export function AdminInvitationsPage() {
       headerClassName: 'text-right',
       className: 'text-right',
       render: (invitation) => (
-        <button
-          aria-label={`Revoke invitation for ${invitation.email}`}
-          className={cn(
-            'rounded-lg p-2 transition',
-            invitation.status === 'PENDING'
-              ? 'text-rose-700 hover:bg-rose-50'
-              : 'cursor-not-allowed text-slate-300',
-          )}
-          disabled={invitation.status !== 'PENDING'}
-          onClick={() => setRevokeTarget(invitation)}
-          title={
-            invitation.status === 'PENDING'
-              ? 'Revoke invitation'
-              : 'Only pending invitations can be revoked'
-          }
-          type="button"
-        >
-          <Ban className="h-4 w-4" aria-hidden="true" />
-        </button>
+        <div className="flex justify-end gap-1">
+          <button
+            aria-label={`Resend invitation for ${invitation.email}`}
+            className={cn(
+              'rounded-lg p-2 transition',
+              invitation.status === 'PENDING' || invitation.status === 'EXPIRED'
+                ? 'text-blue-700 hover:bg-blue-50'
+                : 'cursor-not-allowed text-slate-300',
+            )}
+            disabled={
+              invitation.status !== 'PENDING' && invitation.status !== 'EXPIRED'
+            }
+            onClick={() => openResend(invitation)}
+            title={
+              invitation.status === 'PENDING' || invitation.status === 'EXPIRED'
+                ? 'Resend invitation'
+                : 'Accepted and revoked invitations cannot be resent'
+            }
+            type="button"
+          >
+            <Send className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            aria-label={`Revoke invitation for ${invitation.email}`}
+            className={cn(
+              'rounded-lg p-2 transition',
+              invitation.status === 'PENDING'
+                ? 'text-rose-700 hover:bg-rose-50'
+                : 'cursor-not-allowed text-slate-300',
+            )}
+            disabled={invitation.status !== 'PENDING'}
+            onClick={() => setRevokeTarget(invitation)}
+            title={
+              invitation.status === 'PENDING'
+                ? 'Revoke invitation'
+                : 'Only pending invitations can be revoked'
+            }
+            type="button"
+          >
+            <Ban className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
       ),
     },
   ]
@@ -857,6 +1093,14 @@ export function AdminInvitationsPage() {
           }
         }}
         onConfirm={() => void handleRevoke()}
+      />
+
+      <ResendInvitationDialog
+        error={resendError}
+        invitation={resendTarget}
+        isLoading={isResending}
+        onCancel={closeResend}
+        onSubmit={(values) => void handleResend(values)}
       />
     </div>
   )

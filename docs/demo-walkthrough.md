@@ -73,9 +73,9 @@ Slug: advisora-demo
 The public consultation form creates requests under the workspace configured by
 `DEFAULT_ORGANIZATION_SLUG`, which defaults to `advisora-demo`. Public
 workspace signup is available only when the backend has
-`WORKSPACE_SIGNUP_ENABLED=true`. Invitations, billing, workspace switching,
-workspace-specific public intake pages, and customer portal accounts are not
-part of this step.
+`WORKSPACE_SIGNUP_ENABLED=true`. Invitations are managed separately by admins;
+billing, workspace switching, workspace-specific public intake pages, and
+customer portal accounts are not part of this step.
 
 Intentional portfolio staging demo accounts:
 
@@ -418,13 +418,17 @@ Open:
 Show:
 
 - Admin-only list, search, role filter, status filter, and pagination.
-- Create a fictional invitation for a unique `.test` email.
+- Create a fictional invitation for a unique `.test` email with Send invitation
+  email now enabled.
+- Show the email delivery status; in console mode it should report a generated
+  preview without exposing the raw token in logs.
 - Copy the invite link from the create-success banner only.
 - Preview the public invite page while signed out.
 - Accept the invitation and confirm auto-login to `/admin/dashboard`.
 - Confirm the new user belongs to the invited workspace and role.
-- Revoke a separate pending invitation and confirm the public link no longer
-  works.
+- Resend a separate pending or expired invitation, copy the new link, and
+  confirm the old link no longer works.
+- Revoke a pending invitation and confirm the public link no longer works.
 - Confirm Manager and Staff accounts do not see the Invitations sidebar item
   and cannot access `/admin/invitations` directly.
 
@@ -433,8 +437,10 @@ Talk track:
 - Raw invite tokens are never stored. The server stores only `tokenHash`.
 - The invitation decides the workspace and role; the accept form cannot change
   them.
-- Invite URLs are returned once because this portfolio build has no email
-  delivery provider.
+- Invite URLs are returned once at create/resend as a manual fallback.
+- Resending rotates the invite link, so older links stop working immediately.
+- `EMAIL_PROVIDER=console` is safe for local/staging previews; real Resend
+  delivery requires provider secrets outside the repository.
 - Do not use real personal emails or real invite links in portfolio captures.
 
 ## Documents Demo

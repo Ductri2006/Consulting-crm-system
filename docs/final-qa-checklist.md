@@ -115,8 +115,18 @@ Invitations:
 - [ ] `/admin/invitations` loads for `ADMIN`.
 - [ ] `/admin/invitations` is hidden or forbidden for `MANAGER` and `STAFF`.
 - [ ] List, search, role filter, status filter, and pagination work.
-- [ ] Create invitation returns an invite link only immediately after create.
-- [ ] List/create/revoke responses do not include `tokenHash`.
+- [ ] Create invitation supports Send invitation email now.
+- [ ] Create invitation returns invite link and `emailDelivery` only
+  immediately after create.
+- [ ] List/create/resend/revoke responses do not include `tokenHash`.
+- [ ] Console provider masks recipient logs and redacts invite links.
+- [ ] `sendEmail=false` creates invitation, returns `DISABLED`, and manual
+  accept still works.
+- [ ] Resend works for pending/expired invitations and rotates the invite link.
+- [ ] Old invite link fails after resend; new link previews and accepts.
+- [ ] Accepted and revoked invitations cannot be resent.
+- [ ] Email delivery failure does not delete the invitation and copy link still
+  works.
 - [ ] Duplicate existing-user email and duplicate pending invitation return
   safe errors.
 - [ ] Public `/invite/:token` preview shows invited email, role, workspace, and

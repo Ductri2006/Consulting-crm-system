@@ -73,6 +73,11 @@ Server:
 | `MAX_FILE_SIZE_MB` | Per-file upload limit from 1 to 50 MB. |
 | `DEFAULT_ORGANIZATION_SLUG` | Workspace slug used by public consultation requests, defaults to `advisora-demo`. |
 | `WORKSPACE_SIGNUP_ENABLED` | Public workspace signup flag. Defaults to `false`; use `true` only for controlled onboarding QA until production abuse protection and auth hardening are complete. |
+| `APP_NAME` | Name used in transactional email templates. |
+| `EMAIL_PROVIDER` | Invitation email provider: `disabled`, `console`, or `resend`. Defaults to `console`. |
+| `EMAIL_FROM` | Sender identity for invitation emails. Use a verified sender for real Resend delivery. |
+| `EMAIL_REPLY_TO` | Optional reply-to address for invitation emails. |
+| `RESEND_API_KEY` | Resend API key. Required only when `EMAIL_PROVIDER=resend`; never commit it. |
 
 Client:
 
@@ -238,9 +243,10 @@ Recommended later upgrade:
   abuse protection and session hardening are reviewed.
 - Public contact and appointment forms are validation/demo flows only.
 - No password reset or account-management UI yet.
-- Workspace invitations exist for controlled internal onboarding, but there is
-  no email delivery provider; invite URLs are returned once to administrators
-  for manual private delivery.
+- Workspace invitations include email delivery abstraction and Resend support,
+  but real delivery depends on provider DNS/sender setup and secrets configured
+  outside the repository. Invite URLs are still returned once at create/resend
+  as a manual fallback.
 - No billing, customer portal, workspace switcher, or workspace-specific public
   intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production

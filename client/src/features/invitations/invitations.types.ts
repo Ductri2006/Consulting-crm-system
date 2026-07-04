@@ -2,6 +2,12 @@ import type { User } from '../auth'
 
 export type InvitationRole = 'ADMIN' | 'MANAGER' | 'STAFF'
 export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'REVOKED' | 'EXPIRED'
+export type EmailProvider = 'disabled' | 'console' | 'resend'
+export type EmailDeliveryStatus =
+  | 'DISABLED'
+  | 'MOCK_SENT'
+  | 'SENT'
+  | 'FAILED'
 
 export interface PaginationMeta {
   page: number
@@ -58,12 +64,27 @@ export interface CreateInvitationInput {
   email: string
   role: InvitationRole
   expiresInDays: number
+  sendEmail: boolean
+}
+
+export interface ResendInvitationInput {
+  expiresInDays: number
+}
+
+export interface EmailDeliveryResult {
+  status: EmailDeliveryStatus
+  provider: EmailProvider
+  messageId?: string
+  error?: string
 }
 
 export interface CreateInvitationResult {
   invitation: WorkspaceInvitation
   inviteUrl: string
+  emailDelivery: EmailDeliveryResult
 }
+
+export type ResendInvitationResult = CreateInvitationResult
 
 export interface InvitationPreview {
   email: string

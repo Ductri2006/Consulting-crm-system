@@ -5,6 +5,12 @@ import bcrypt from "bcryptjs";
 
 import { env } from "../../config/env";
 import { HTTP_STATUS } from "../../constants/httpStatus";
+import {
+  createInvitationEmailTemplate,
+  sendEmail as sendOutboundEmail,
+  skippedEmailDelivery,
+  type EmailDeliveryResult,
+} from "../../lib/email";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { signAccessToken } from "../../utils/jwt";
@@ -25,6 +31,8 @@ import type {
   InvitationListQuery,
   InvitationListResult,
   InvitationPreview,
+  ResendInvitationInput,
+  ResendInvitationResult,
   SafeInvitation,
 } from "./invitation.types";
 
@@ -107,6 +115,24 @@ const hashInvitationToken = (token: string): string =>
 const buildInviteUrl = (token: string): string => {
   const clientOrigin = env.CLIENT_URL.split(",")[0]?.trim() ?? env.CLIENT_URL;
   return `${clientOrigin}/invite/${encodeURIComponent(token)}`;
+};
+
+const redactInviteUrl = (inviteUrl: string): string => {
+  try {
+    const url = new URL(inviteUrl);
+    const parts = url.pathname.split("/").filter(Boolean);
+
+    if (parts[0] === "invite" && parts[1]) {
+      url.pathname = "/invite/[redacted-token]";
+      url.search = "";
+      url.hash = "";
+      return url.toString();
+    }
+  } catch {
+    return inviteUrl.replace(/(\/invite\/)[^/?#]+/g, "$1[redacted-token]");
+  }
+
+  return inviteUrl.replace(/(\/invite\/)[^/?#]+/g, "$1[redacted-token]");
 };
 
 const throwInvalidInvitation = (): never => {
@@ -246,6 +272,104 @@ const throwAcceptWriteError = (error: unknown): never => {
   throw error;
 };
 
+const getEmailActivityAction = (
+  emailDelivery: EmailDeliveryResult,
+): string => {
+  if (emailDelivery.status === "FAILED") {
+    return "INVITATION_EMAIL_FAILED";
+  }
+
+  if (emailDelivery.status === "DISABLED") {
+    return "INVITATION_EMAIL_SKIPPED";
+  }
+
+  return "INVITATION_EMAIL_SENT";
+};
+
+const getEmailActivityDescription = (
+  emailDelivery: EmailDeliveryResult,
+): string => {
+  if (emailDelivery.status === "FAILED") {
+    return `Invitation email delivery failed via ${emailDelivery.provider}.`;
+  }
+
+  if (emailDelivery.status === "DISABLED") {
+    return `Invitation email delivery skipped for provider ${emailDelivery.provider}.`;
+  }
+
+  return `Invitation email delivery completed via ${emailDelivery.provider}.`;
+};
+
+const recordInvitationEmailActivity = async ({
+  actorId,
+  emailDelivery,
+  invitationId,
+  organizationId,
+}: {
+  actorId: string;
+  emailDelivery: EmailDeliveryResult;
+  invitationId: string;
+  organizationId: string;
+}): Promise<void> => {
+  try {
+    await prisma.activityLog.create({
+      data: {
+        organizationId,
+        userId: actorId,
+        action: getEmailActivityAction(emailDelivery),
+        entityType: "WorkspaceInvitation",
+        entityId: invitationId,
+        description: getEmailActivityDescription(emailDelivery),
+      },
+    });
+  } catch (error) {
+    console.warn("Invitation email activity log could not be written.", {
+      invitationId,
+      organizationId,
+      error: error instanceof Error ? error.message : "Unknown error.",
+    });
+  }
+};
+
+const deliverInvitationEmail = async ({
+  invitation,
+  inviteUrl,
+  shouldSendEmail,
+}: {
+  invitation: SelectedInvitation;
+  inviteUrl: string;
+  shouldSendEmail: boolean;
+}): Promise<EmailDeliveryResult> => {
+  if (!shouldSendEmail) {
+    return skippedEmailDelivery();
+  }
+
+  const template = createInvitationEmailTemplate({
+    appName: env.APP_NAME,
+    workspaceName: invitation.organization.name,
+    invitedEmail: invitation.email,
+    role: invitation.role,
+    invitedBy: invitation.invitedBy
+      ? {
+          fullName: invitation.invitedBy.fullName,
+          email: invitation.invitedBy.email,
+        }
+      : null,
+    inviteUrl,
+    expiresAt: invitation.expiresAt,
+  });
+
+  return sendOutboundEmail({
+    to: invitation.email,
+    subject: template.subject,
+    html: template.html,
+    text: template.text,
+    replyTo: env.EMAIL_REPLY_TO,
+    auditLabel: `WorkspaceInvitation:${invitation.id}`,
+    redactedPreviewUrl: redactInviteUrl(inviteUrl),
+  });
+};
+
 export const findInvitations = async (
   query: InvitationListQuery,
   organizationId: string,
@@ -333,9 +457,144 @@ export const createInvitation = async (
       },
     });
 
+    const inviteUrl = buildInviteUrl(token);
+    const emailDelivery = await deliverInvitationEmail({
+      invitation,
+      inviteUrl,
+      shouldSendEmail: input.sendEmail,
+    });
+
+    await recordInvitationEmailActivity({
+      actorId,
+      emailDelivery,
+      invitationId: invitation.id,
+      organizationId,
+    });
+
     return {
       invitation: toSafeInvitation(invitation),
-      inviteUrl: buildInviteUrl(token),
+      inviteUrl,
+      emailDelivery,
+    };
+  } catch (error) {
+    return throwInvitationWriteError(error);
+  }
+};
+
+export const resendInvitation = async (
+  id: string,
+  input: ResendInvitationInput,
+  actorId: string,
+  organizationId: string,
+): Promise<ResendInvitationResult> => {
+  await expirePendingInvitations({ organizationId });
+
+  const existingInvitation = await prisma.workspaceInvitation.findFirst({
+    where: {
+      id,
+      organizationId,
+    },
+    select: {
+      email: true,
+      status: true,
+    },
+  });
+
+  if (!existingInvitation) {
+    throw new AppError("Invitation not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (existingInvitation.status === InvitationStatus.ACCEPTED) {
+    throw new AppError(
+      "Accepted invitations cannot be resent.",
+      HTTP_STATUS.CONFLICT,
+    );
+  }
+
+  if (existingInvitation.status === InvitationStatus.REVOKED) {
+    throw new AppError(
+      "Revoked invitations cannot be resent.",
+      HTTP_STATUS.CONFLICT,
+    );
+  }
+
+  await assertNoExistingUserForEmail(existingInvitation.email);
+
+  const token = generateInvitationToken();
+  const tokenHash = hashInvitationToken(token);
+  const expiresAt = new Date(Date.now() + input.expiresInDays * DAY_IN_MS);
+
+  try {
+    const invitation = await prisma.$transaction(async (tx) => {
+      const updateResult = await tx.workspaceInvitation.updateMany({
+        where: {
+          id,
+          organizationId,
+          status: {
+            in: [InvitationStatus.PENDING, InvitationStatus.EXPIRED],
+          },
+        },
+        data: {
+          tokenHash,
+          status: InvitationStatus.PENDING,
+          expiresAt,
+          acceptedAt: null,
+          acceptedById: null,
+          revokedAt: null,
+        },
+      });
+
+      if (updateResult.count !== 1) {
+        throw new AppError(
+          "Only pending or expired invitations can be resent.",
+          HTTP_STATUS.CONFLICT,
+        );
+      }
+
+      const updated = await tx.workspaceInvitation.findFirst({
+        where: {
+          id,
+          organizationId,
+        },
+        select: safeInvitationSelect,
+      });
+
+      if (!updated) {
+        throw new AppError("Invitation not found.", HTTP_STATUS.NOT_FOUND);
+      }
+
+      return updated;
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        organizationId,
+        userId: actorId,
+        action: "INVITATION_RESENT",
+        entityType: "WorkspaceInvitation",
+        entityId: invitation.id,
+        description: "Workspace invitation link rotated for resend.",
+      },
+    });
+
+    const inviteUrl = buildInviteUrl(token);
+    const emailDelivery = await deliverInvitationEmail({
+      invitation,
+      inviteUrl,
+      shouldSendEmail: true,
+    });
+
+    await recordInvitationEmailActivity({
+      actorId,
+      emailDelivery,
+      invitationId: invitation.id,
+      organizationId,
+    });
+
+    return {
+      invitation: toSafeInvitation(invitation),
+      inviteUrl,
+      emailDelivery,
     };
   } catch (error) {
     return throwInvitationWriteError(error);
@@ -372,15 +631,39 @@ export const revokeInvitation = async (
   }
 
   try {
-    const revoked = await prisma.workspaceInvitation.update({
-      where: {
-        id,
-      },
-      data: {
-        status: InvitationStatus.REVOKED,
-        revokedAt: new Date(),
-      },
-      select: safeInvitationSelect,
+    const revoked = await prisma.$transaction(async (tx) => {
+      const updateResult = await tx.workspaceInvitation.updateMany({
+        where: {
+          id,
+          organizationId,
+          status: InvitationStatus.PENDING,
+        },
+        data: {
+          status: InvitationStatus.REVOKED,
+          revokedAt: new Date(),
+        },
+      });
+
+      if (updateResult.count !== 1) {
+        throw new AppError(
+          "Only pending invitations can be revoked.",
+          HTTP_STATUS.CONFLICT,
+        );
+      }
+
+      const updated = await tx.workspaceInvitation.findFirst({
+        where: {
+          id,
+          organizationId,
+        },
+        select: safeInvitationSelect,
+      });
+
+      if (!updated) {
+        throw new AppError("Invitation not found.", HTTP_STATUS.NOT_FOUND);
+      }
+
+      return updated;
     });
 
     await prisma.activityLog.create({

@@ -95,6 +95,11 @@ credentials.
 | `MAX_FILE_SIZE_MB` | `10` or another reviewed value from 1 to 50 | Must match the expected staging upload limit. |
 | `DEFAULT_ORGANIZATION_SLUG` | `advisora-demo` unless intentionally changed | Public consultation requests are assigned to this active workspace. |
 | `WORKSPACE_SIGNUP_ENABLED` | `false` by default; `true` only for controlled signup QA | Enables `POST /api/workspaces/signup`. Do not leave enabled for public long-lived staging without abuse protection and auth review. |
+| `APP_NAME` | `Advisora CRM` or reviewed app name | Used in invitation email templates. |
+| `EMAIL_PROVIDER` | `console` by default | Use `disabled`, `console`, or `resend`. Console mode is safest for staging smoke tests. |
+| `EMAIL_FROM` | Placeholder sender or verified sender for Resend | Do not use unverified production sender domains casually. |
+| `EMAIL_REPLY_TO` | Optional support inbox | Leave blank if not reviewed. |
+| `RESEND_API_KEY` | Only when `EMAIL_PROVIDER=resend` | Store only in provider secrets; never commit. |
 
 Backend rules:
 
@@ -408,6 +413,10 @@ Before real customer documents:
 - [ ] Manager and staff users cannot access Team Members directly.
 - [ ] Invitations page loads for admin users.
 - [ ] Manager and staff users cannot access Invitations directly.
+- [ ] Create invitation with email delivery enabled returns `emailDelivery`.
+- [ ] Create invitation with email delivery disabled still returns one-time
+  invite link for manual copy.
+- [ ] Resend rotates the invitation link and invalidates the old link.
 - [ ] Documents page loads.
 - [ ] Reports page loads.
 - [ ] Logout clears the client session.
@@ -432,6 +441,8 @@ Before real customer documents:
 - [ ] User create assigns the current workspace automatically; no frontend
   organization picker or submitted `organizationId` is used.
 - [ ] Invitation list/create/revoke responses do not include `tokenHash`.
+- [ ] Invitation email preview/resend logs redact raw tokens and mask recipient
+  emails.
 - [ ] Invitation accept creates the user in the invitation workspace with the
   invitation role only.
 - [ ] Revoked, expired, accepted, and invalid invite tokens cannot be reused.

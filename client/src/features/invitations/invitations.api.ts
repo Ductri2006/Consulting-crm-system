@@ -7,6 +7,8 @@ import type {
   InvitationListParams,
   InvitationListResponse,
   InvitationPreview,
+  ResendInvitationInput,
+  ResendInvitationResult,
   WorkspaceInvitation,
 } from './invitations.types'
 
@@ -56,6 +58,19 @@ export function createInvitation(
     {
       email: input.email.trim().toLowerCase(),
       role: input.role,
+      expiresInDays: input.expiresInDays,
+      sendEmail: input.sendEmail,
+    },
+  )
+}
+
+export function resendInvitation(
+  id: string,
+  input: ResendInvitationInput,
+): Promise<ResendInvitationResult> {
+  return apiClient.post<ResendInvitationResult, ResendInvitationInput>(
+    `/invitations/${id}/resend`,
+    {
       expiresInDays: input.expiresInDays,
     },
   )
