@@ -80,8 +80,17 @@ Customer Portal:
 - [ ] Duplicate portal email in the same workspace returns `409`.
 - [ ] `/portal/login` accepts workspace slug, email, and password.
 - [ ] `/portal/dashboard` loads outside `AdminLayout`.
-- [ ] Dashboard shows workspace, customer profile, portal account info, and
-  future-step placeholders.
+- [ ] Dashboard shows workspace, customer profile, portal account info, case
+  summary, recent cases, and next appointment if available.
+- [ ] `/portal/cases` lists only the authenticated portal customer's cases.
+- [ ] `/portal/cases/:id` shows safe case overview, timeline, appointments,
+  document metadata, and task summary for the portal customer's own case.
+- [ ] Another customer's case ID returns generic `404`.
+- [ ] A cross-workspace case ID returns generic `404`.
+- [ ] Portal case responses do not include internal notes, `fileUrl`,
+  `passwordHash`, `tokenHash`, raw upload paths, or document download links.
+- [ ] Portal case pages have no edit, upload, download, delete, assign, or
+  status-update controls.
 - [ ] Refreshing `/portal/dashboard` restores the portal session.
 - [ ] Portal password reset invalidates the old password and allows the new
   password.

@@ -256,6 +256,25 @@ STAFF users are blocked from portal-account management. Activity logs record
 create, password reset, deactivate, and activate actions without storing raw
 passwords.
 
+Step 28 adds read-only portal case tracking. These endpoints require a portal
+token and scope every query by the portal account's `organizationId` and
+`customerId`; the client cannot override either value.
+
+```http
+GET /api/portal/cases/summary
+GET /api/portal/cases?page=1&limit=10&status=PROCESSING&search=CASE
+GET /api/portal/cases/<case-uuid>
+Authorization: Bearer <portal-token>
+```
+
+Portal case detail returns safe case overview, customer summary, service
+summary, assigned staff summary, status timeline, appointment safe fields,
+document metadata, and task summary. It never returns `CaseProfile.note`,
+`CaseHistory.note`, staff email/phone, `Document.fileUrl`, password hashes, or
+token hashes. Cases outside the portal account's customer or workspace return a
+generic `404`. Portal case endpoints are read-only; document upload/download is
+reserved for a later step.
+
 ## Workspace signup
 
 Step 23 adds guarded public workspace onboarding:

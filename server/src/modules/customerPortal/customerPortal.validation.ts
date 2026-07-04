@@ -1,6 +1,12 @@
+import { CaseStatus } from "@prisma/client";
 import { z } from "zod";
 
+import { paginationQuerySchema } from "../../utils/pagination";
+
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const uuidSchema = (field: string) =>
+  z.uuid(`${field} must be a valid UUID.`);
 
 const emailSchema = z
   .string()
@@ -48,3 +54,15 @@ export const portalLoginSchema = z
     password: z.string().min(1, "Password is required."),
   })
   .strict();
+
+export const portalCaseListQuerySchema = paginationQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  search: z.string().trim().min(1).max(100).optional(),
+  status: z.enum(CaseStatus).optional(),
+}).strict();
+
+export const portalCaseSummaryQuerySchema = z.object({}).strict();
+
+export const portalCaseIdParamsSchema = z.object({
+  id: uuidSchema("Case id"),
+}).strict();

@@ -63,8 +63,8 @@ This project addresses that need with a centralized platform that connects publi
 - Appointment request validation flow
 - Admin document upload after a customer or case exists
 - Confirmation after a successful submission
-- Customer portal login and dashboard foundation
-- Request status tracking in a future portal case-tracking step
+- Customer portal login, dashboard, and read-only case tracking
+- Portal document metadata preview for existing customer cases
 
 ### CRM Management
 
@@ -149,12 +149,15 @@ Staff members work with assigned customers and case profiles. They can:
 
 ### Customer
 
-A customer account is planned for a future version. It may allow customers to:
+Customer portal accounts are separate from internal CRM users. They can:
 
-- View their personal profile
-- Track submitted requests and case progress
-- Upload required documents
-- View appointment schedules
+- Log in through `/portal/login`
+- View their safe profile and workspace summary
+- Track their own case progress in read-only mode
+- View related appointment details and document metadata
+
+Customer document upload/download and self-service profile updates remain
+future work.
 
 ## System Modules
 
@@ -172,6 +175,7 @@ The platform is divided into the following functional modules:
 | Document Management | Stores metadata and links files to customers and cases |
 | User Management | Maintains staff accounts, roles, and active status |
 | Organization Workspace | Scopes internal users and CRM business data by workspace |
+| Customer Portal | Lets existing customers view their own read-only case status, appointments, and document metadata |
 | Public Content Catalog | Uses typed local content for services, news, and project gallery pages |
 | Dashboard and Reporting | Summarizes workload, performance, appointments, and deadlines |
 | Activity Logging | Records important user actions for traceability |
@@ -329,7 +333,7 @@ The public consultation form maps new requests to the workspace configured by
 creates a new internal CRM workspace only when `WORKSPACE_SIGNUP_ENABLED=true`.
 Workspace invitations can add later internal users by email. Billing,
 workspace switching, workspace-specific public portals, customer self-registration,
-and detailed portal case/document workflows remain future roadmap scope.
+and portal document upload/download remain future roadmap scope.
 Administrators can edit the current workspace profile from `/admin/settings`;
 logo management is URL-based in this step.
 
@@ -442,6 +446,14 @@ Recommended admin demo flow:
 7. Create and revoke a fictional workspace invitation.
 8. Check tasks, appointments, documents, and reports.
 
+Recommended customer portal demo flow:
+
+1. Create portal access for an existing fictional customer.
+2. Login at `/portal/login`.
+3. Review `/portal/dashboard`.
+4. Open `/portal/cases` and a case detail page.
+5. Confirm case data is read-only and document data is metadata-only.
+
 See [Demo Walkthrough](docs/demo-walkthrough.md) for the full script.
 
 ## Screenshots
@@ -517,7 +529,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 
 ## Future Improvements
 
-- Customer portal case tracking, document upload, and self-service profile flows
+- Customer portal document upload and self-service profile flows
 - Email and SMS notifications
 - Cloud file storage
 - OCR-assisted document processing
@@ -544,7 +556,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
 | Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED`; admins can edit the current workspace profile |
 | Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens, console email preview, optional Resend delivery, and resend token rotation |
-| Customer portal foundation | Implemented with separate `CustomerPortalAccount` records, portal-purpose JWTs, `/portal/login`, `/portal/dashboard`, and internal admin/manager portal access controls for existing customers |
+| Customer portal | Implemented with separate `CustomerPortalAccount` records, portal-purpose JWTs, `/portal/login`, `/portal/dashboard`, `/portal/cases`, read-only portal case detail, and internal admin/manager portal access controls for existing customers |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
@@ -571,8 +583,9 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Invitation email delivery defaults to `EMAIL_PROVIDER=console`; real Resend
   sending requires provider secrets configured outside the repository.
 - The customer portal currently supports login, session restore, dashboard,
-  profile/account summary, and internal access controls only.
-- No portal case tracking, customer document upload, customer self-registration,
+  profile/account summary, internal access controls, and read-only case
+  tracking for the authenticated customer.
+- No customer document upload/download, customer self-registration,
   billing, OCR, malware scanning, cloud object storage, report exports,
   realtime updates, production-grade rate limiting, or centralized
   observability yet.
@@ -622,11 +635,12 @@ This project is designed to practice:
 - [x] Staging deployment
 - [x] Organization / Workspace tenant foundation
 - [x] Workspace settings / organization profile
+- [x] Customer portal case tracking
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Step 26 complete - Workspace Settings / Organization Profile
+**Current phase:** Step 28 complete - Customer Portal Case Tracking
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -700,3 +714,8 @@ separate `CustomerPortalAccount` model, portal JWTs carry
 rejects internal tokens, internal admins/managers can create/reset/activate
 portal access for existing customers, and `/portal/login` plus
 `/portal/dashboard` provide the first separate customer-facing portal UI.
+Step 28 adds read-only Customer Portal Case Tracking: portal customers can view
+only cases scoped to their portal account's `organizationId + customerId`,
+open safe case detail pages, see status timeline, appointments, document
+metadata, and task summary, while internal notes, document file URLs, secrets,
+and customer document upload/download remain excluded.

@@ -135,6 +135,9 @@ Production rules:
   must reject internal tokens.
 - Portal login, `/api/portal/auth/me`, and `/api/portal/me` must never return
   `passwordHash` or internal `User` data.
+- Portal case endpoints are read-only, must scope by portal-account
+  `organizationId + customerId`, and must not return internal notes, document
+  file URLs, staff contact details, password hashes, or token hashes.
 - The demo admin password must be changed or replaced before any real
   production use.
 - Do not publish high-privilege admin demo credentials for long-lived public
@@ -260,9 +263,9 @@ Recommended later upgrade:
   that environment value aligned with the intended default workspace.
 - Workspace logo management is URL-only in this step; there is no logo upload
   pipeline yet.
-- Customer portal supports login/dashboard/profile foundation only; no portal
-  case tracking, customer document upload, messages, billing, or
-  self-registration yet.
+- Customer portal supports login/dashboard/profile and read-only case tracking;
+  customer document upload/download, messages, billing, and self-registration
+  remain future work.
 - No billing, workspace switcher, or workspace-specific public intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production
   tenant onboarding flow.

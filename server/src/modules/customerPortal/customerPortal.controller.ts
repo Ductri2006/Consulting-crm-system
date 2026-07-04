@@ -9,13 +9,17 @@ import {
   activateCustomerPortalAccount,
   createCustomerPortalAccount,
   deactivateCustomerPortalAccount,
+  getPortalCaseById,
+  getPortalCaseSummary,
   getCustomerPortalAccount,
+  listPortalCases,
   loginCustomerPortal,
   resetCustomerPortalPassword,
   toPortalProfile,
 } from "./customerPortal.service";
 import type {
   CreatePortalAccountInput,
+  PortalCaseListQuery,
   PortalLoginInput,
   ResetPortalPasswordInput,
 } from "./customerPortal.types";
@@ -25,6 +29,16 @@ const getCustomerId = (params: Request["params"]): string => {
 
   if (typeof id !== "string") {
     throw new TypeError("Validated customer id is missing.");
+  }
+
+  return id;
+};
+
+const getCaseId = (params: Request["params"]): string => {
+  const { id } = params;
+
+  if (typeof id !== "string") {
+    throw new TypeError("Validated case id is missing.");
   }
 
   return id;
@@ -165,6 +179,47 @@ export const getPortalProfileController: RequestHandler = (
     .status(HTTP_STATUS.OK)
     .json(successResponse("Customer portal profile retrieved successfully.", toPortalProfile(session)));
 };
+
+export const listPortalCasesController = asyncHandler(
+  async (request, response): Promise<void> => {
+    const session = getPortalSession(request);
+    const result = await listPortalCases(
+      request.query as unknown as PortalCaseListQuery,
+      session,
+    );
+
+    response
+      .status(HTTP_STATUS.OK)
+      .json(successResponse("Portal cases retrieved successfully.", result));
+  },
+);
+
+export const getPortalCaseSummaryController = asyncHandler(
+  async (request, response): Promise<void> => {
+    const session = getPortalSession(request);
+    const summary = await getPortalCaseSummary(session);
+
+    response
+      .status(HTTP_STATUS.OK)
+      .json(successResponse("Portal case summary retrieved successfully.", summary));
+  },
+);
+
+export const getPortalCaseController = asyncHandler(
+  async (request, response): Promise<void> => {
+    const session = getPortalSession(request);
+    const caseProfile = await getPortalCaseById(
+      getCaseId(request.params),
+      session,
+    );
+
+    response.status(HTTP_STATUS.OK).json(
+      successResponse("Portal case retrieved successfully.", {
+        case: caseProfile,
+      }),
+    );
+  },
+);
 
 export const portalLogoutController: RequestHandler = (_request, response): void => {
   response

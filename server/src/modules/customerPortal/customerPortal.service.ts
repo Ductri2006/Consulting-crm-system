@@ -1,15 +1,30 @@
 import { randomBytes } from "node:crypto";
 
-import { Prisma } from "@prisma/client";
+import {
+  AppointmentStatus,
+  CaseStatus,
+  Prisma,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
+import { getServerCalendarDate } from "../../utils/dateRange";
 import { signCustomerPortalAccessToken } from "../../utils/jwt";
+import {
+  createPaginationMeta,
+  getPagination,
+} from "../../utils/pagination";
 import { isPrismaError } from "../../utils/prismaError";
 import {
   type CreatePortalAccountInput,
+  type PortalCaseDetail,
+  type PortalCaseListQuery,
+  type PortalCaseListResult,
+  type PortalCaseSummary,
+  type PortalCaseSummaryResult,
+  type PortalCaseTimelineItem,
   type PortalAccountMutationResult,
   type PortalLoginInput,
   type PortalLoginResult,
@@ -22,8 +37,8 @@ import {
 } from "./customerPortal.types";
 
 const INVALID_PORTAL_LOGIN_MESSAGE = "Invalid workspace, email, or password.";
-const CASE_TRACKING_PLACEHOLDER =
-  "Case tracking will be available in a future step.";
+const CASE_TRACKING_MESSAGE =
+  "Case tracking is ready. You can review your case status, appointments, and document metadata from My Cases.";
 
 export const safePortalAccountSelect = {
   id: true,
@@ -50,6 +65,121 @@ export const safePortalOrganizationSelect = {
   slug: true,
 } satisfies Prisma.OrganizationSelect;
 
+const safePortalStaffSelect = {
+  id: true,
+  fullName: true,
+  role: true,
+} satisfies Prisma.UserSelect;
+
+const safePortalServiceSelect = {
+  id: true,
+  name: true,
+  slug: true,
+} satisfies Prisma.ServiceSelect;
+
+const portalCaseRelatedCountsSelect = {
+  histories: true,
+  documents: true,
+  tasks: true,
+  appointments: true,
+} satisfies Prisma.CaseProfileCountOutputTypeSelect;
+
+const safePortalHistorySelect = {
+  id: true,
+  action: true,
+  oldStatus: true,
+  newStatus: true,
+  createdAt: true,
+  user: {
+    select: safePortalStaffSelect,
+  },
+} satisfies Prisma.CaseHistorySelect;
+
+const safePortalAppointmentSelect = {
+  id: true,
+  appointmentDate: true,
+  startTime: true,
+  endTime: true,
+  method: true,
+  status: true,
+  staff: {
+    select: safePortalStaffSelect,
+  },
+} satisfies Prisma.AppointmentSelect;
+
+const safePortalDocumentMetadataSelect = {
+  id: true,
+  fileName: true,
+  fileType: true,
+  mimeType: true,
+  size: true,
+  createdAt: true,
+} satisfies Prisma.DocumentSelect;
+
+const safePortalTaskSelect = {
+  id: true,
+  title: true,
+  status: true,
+  priority: true,
+  deadline: true,
+  updatedAt: true,
+} satisfies Prisma.TaskSelect;
+
+const safePortalCaseBaseSelect = {
+  id: true,
+  caseCode: true,
+  title: true,
+  status: true,
+  priority: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+  service: {
+    select: safePortalServiceSelect,
+  },
+  assignedTo: {
+    select: safePortalStaffSelect,
+  },
+  histories: {
+    take: 1,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: safePortalHistorySelect,
+  },
+  _count: {
+    select: portalCaseRelatedCountsSelect,
+  },
+} satisfies Prisma.CaseProfileSelect;
+
+const safePortalCaseDetailSelect = {
+  ...safePortalCaseBaseSelect,
+  description: true,
+  deadline: true,
+  customer: {
+    select: safePortalCustomerSelect,
+  },
+  histories: {
+    take: 50,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: safePortalHistorySelect,
+  },
+  appointments: {
+    orderBy: [
+      { appointmentDate: "asc" },
+      { startTime: "asc" },
+      { id: "asc" },
+    ],
+    select: safePortalAppointmentSelect,
+  },
+  documents: {
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: safePortalDocumentMetadataSelect,
+  },
+  tasks: {
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    select: safePortalTaskSelect,
+  },
+} satisfies Prisma.CaseProfileSelect;
+
 const portalSessionAccountSelect = {
   ...safePortalAccountSelect,
   passwordHash: true,
@@ -69,6 +199,18 @@ const portalSessionAccountSelect = {
 
 type PortalSessionAccount = Prisma.CustomerPortalAccountGetPayload<{
   select: typeof portalSessionAccountSelect;
+}>;
+
+type PortalCaseSummaryRecord = Prisma.CaseProfileGetPayload<{
+  select: typeof safePortalCaseBaseSelect;
+}>;
+
+type PortalCaseDetailRecord = Prisma.CaseProfileGetPayload<{
+  select: typeof safePortalCaseDetailSelect;
+}>;
+
+type PortalNextAppointmentRecord = Prisma.AppointmentGetPayload<{
+  select: typeof safePortalAppointmentSelect;
 }>;
 
 const generateTemporaryPassword = (): string =>
@@ -118,12 +260,318 @@ export const toPortalProfile = (
 ): PortalProfileResult => ({
   ...session,
   overview: {
-    message: CASE_TRACKING_PLACEHOLDER,
-    caseTrackingAvailable: false,
+    message: CASE_TRACKING_MESSAGE,
+    caseTrackingAvailable: true,
     documentUploadAvailable: false,
     messagingAvailable: false,
   },
 });
+
+const getPortalCaseScope = (
+  session: PortalSession,
+): Pick<SafeCustomerPortalAccount, "organizationId" | "customerId"> => ({
+  organizationId: session.portalAccount.organizationId,
+  customerId: session.portalAccount.customerId,
+});
+
+const formatPortalTimelineDescription = (
+  action: string,
+  oldStatus: CaseStatus | null,
+  newStatus: CaseStatus | null,
+): string => {
+  if (oldStatus && newStatus) {
+    return `Status changed from ${oldStatus} to ${newStatus}.`;
+  }
+
+  return action
+    .toLowerCase()
+    .split("_")
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .join(" ");
+};
+
+const toPortalTimelineItem = (
+  history: PortalCaseDetailRecord["histories"][number],
+): PortalCaseTimelineItem => ({
+  id: history.id,
+  action: history.action,
+  description: formatPortalTimelineDescription(
+    history.action,
+    history.oldStatus,
+    history.newStatus,
+  ),
+  oldStatus: history.oldStatus,
+  newStatus: history.newStatus,
+  createdAt: history.createdAt,
+  user: history.user,
+});
+
+const toPortalCaseSummary = (
+  caseProfile: PortalCaseSummaryRecord,
+  upcomingAppointmentCount = 0,
+): PortalCaseSummary => ({
+  id: caseProfile.id,
+  caseCode: caseProfile.caseCode,
+  title: caseProfile.title,
+  status: caseProfile.status,
+  priority: caseProfile.priority,
+  service: caseProfile.service,
+  assignedStaff: caseProfile.assignedTo,
+  createdAt: caseProfile.createdAt,
+  updatedAt: caseProfile.updatedAt,
+  completedAt: caseProfile.completedAt,
+  latestActivity: caseProfile.histories[0]
+    ? toPortalTimelineItem(caseProfile.histories[0])
+    : null,
+  upcomingAppointmentCount,
+  documentCount: caseProfile._count.documents,
+  taskCount: caseProfile._count.tasks,
+});
+
+const toSafePortalAppointment = (
+  appointment: PortalNextAppointmentRecord,
+) => ({
+  id: appointment.id,
+  appointmentDate: appointment.appointmentDate,
+  startTime: appointment.startTime,
+  endTime: appointment.endTime,
+  method: appointment.method,
+  status: appointment.status,
+  staff: appointment.staff,
+});
+
+const getUpcomingPortalAppointmentWhere = (
+  session: PortalSession,
+  caseProfileId?: string,
+): Prisma.AppointmentWhereInput => ({
+  organizationId: session.portalAccount.organizationId,
+  customerId: session.portalAccount.customerId,
+  appointmentDate: {
+    gte: getServerCalendarDate(),
+  },
+  status: {
+    not: AppointmentStatus.CANCELLED,
+  },
+  ...(caseProfileId && { caseProfileId }),
+});
+
+const getPortalCaseSearchFilter = (
+  search: string | undefined,
+): Prisma.CaseProfileWhereInput | undefined =>
+  search
+    ? {
+        OR: [
+          {
+            caseCode: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+          {
+            title: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+        ],
+      }
+    : undefined;
+
+const getUpcomingAppointmentCountByCase = async (
+  session: PortalSession,
+  caseIds: string[],
+): Promise<Map<string, number>> => {
+  if (caseIds.length === 0) {
+    return new Map();
+  }
+
+  const groups = await prisma.appointment.groupBy({
+    by: ["caseProfileId"],
+    where: {
+      ...getUpcomingPortalAppointmentWhere(session),
+      caseProfileId: {
+        in: caseIds,
+      },
+    },
+    _count: {
+      _all: true,
+    },
+  });
+  const counts = new Map<string, number>();
+
+  for (const group of groups) {
+    if (group.caseProfileId) {
+      counts.set(group.caseProfileId, group._count._all);
+    }
+  }
+
+  return counts;
+};
+
+export const listPortalCases = async (
+  query: PortalCaseListQuery,
+  session: PortalSession,
+): Promise<PortalCaseListResult> => {
+  const { page, limit, search, status } = query;
+  const searchFilter = getPortalCaseSearchFilter(search);
+  const where: Prisma.CaseProfileWhereInput = {
+    ...getPortalCaseScope(session),
+    ...(status && { status }),
+    ...searchFilter,
+  };
+  const pagination = getPagination(page, limit);
+  const [caseProfiles, total] = await prisma.$transaction([
+    prisma.caseProfile.findMany({
+      where,
+      ...pagination,
+      select: safePortalCaseBaseSelect,
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    }),
+    prisma.caseProfile.count({ where }),
+  ]);
+  const upcomingCounts = await getUpcomingAppointmentCountByCase(
+    session,
+    caseProfiles.map((caseProfile) => caseProfile.id),
+  );
+
+  return {
+    items: caseProfiles.map((caseProfile) =>
+      toPortalCaseSummary(
+        caseProfile,
+        upcomingCounts.get(caseProfile.id) ?? 0,
+      ),
+    ),
+    meta: createPaginationMeta(page, limit, total),
+  };
+};
+
+export const getPortalCaseSummary = async (
+  session: PortalSession,
+): Promise<PortalCaseSummaryResult> => {
+  const scope = getPortalCaseScope(session);
+  const [
+    groupedCases,
+    upcomingAppointments,
+    nextAppointment,
+    recentCases,
+  ] = await prisma.$transaction([
+    prisma.caseProfile.groupBy({
+      by: ["status"],
+      where: scope,
+      _count: {
+        _all: true,
+      },
+    }),
+    prisma.appointment.count({
+      where: getUpcomingPortalAppointmentWhere(session),
+    }),
+    prisma.appointment.findFirst({
+      where: getUpcomingPortalAppointmentWhere(session),
+      select: safePortalAppointmentSelect,
+      orderBy: [
+        { appointmentDate: "asc" },
+        { startTime: "asc" },
+        { id: "asc" },
+      ],
+    }),
+    prisma.caseProfile.findMany({
+      where: scope,
+      select: safePortalCaseBaseSelect,
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      take: 3,
+    }),
+  ]);
+  const countsByStatus = new Map(
+    groupedCases.map((group) => [group.status, group._count._all]),
+  );
+  const recentUpcomingCounts = await getUpcomingAppointmentCountByCase(
+    session,
+    recentCases.map((caseProfile) => caseProfile.id),
+  );
+  const completedCases = countsByStatus.get(CaseStatus.COMPLETED) ?? 0;
+  const cancelledCases = countsByStatus.get(CaseStatus.CANCELLED) ?? 0;
+  const totalCases = Object.values(CaseStatus).reduce(
+    (total, statusValue) => total + (countsByStatus.get(statusValue) ?? 0),
+    0,
+  );
+
+  return {
+    totalCases,
+    activeCases: totalCases - completedCases - cancelledCases,
+    completedCases,
+    cancelledCases,
+    upcomingAppointments,
+    nextAppointment: nextAppointment
+      ? toSafePortalAppointment(nextAppointment)
+      : null,
+    casesByStatus: Object.values(CaseStatus).map((statusValue) => ({
+      status: statusValue,
+      count: countsByStatus.get(statusValue) ?? 0,
+    })),
+    recentCases: recentCases.map((caseProfile) =>
+      toPortalCaseSummary(
+        caseProfile,
+        recentUpcomingCounts.get(caseProfile.id) ?? 0,
+      ),
+    ),
+  };
+};
+
+export const getPortalCaseById = async (
+  id: string,
+  session: PortalSession,
+): Promise<PortalCaseDetail> => {
+  const caseProfile = await prisma.caseProfile.findFirst({
+    where: {
+      id,
+      ...getPortalCaseScope(session),
+    },
+    select: safePortalCaseDetailSelect,
+  });
+
+  if (!caseProfile) {
+    throw new AppError("Case profile not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  const upcomingCounts = await getUpcomingAppointmentCountByCase(session, [
+    caseProfile.id,
+  ]);
+  const summary = toPortalCaseSummary(
+    caseProfile,
+    upcomingCounts.get(caseProfile.id) ?? 0,
+  );
+
+  return {
+    ...summary,
+    description: caseProfile.description,
+    customer: toSafePortalCustomer(caseProfile.customer),
+    deadline: caseProfile.deadline,
+    counts: {
+      histories: caseProfile._count.histories,
+      appointments: caseProfile._count.appointments,
+      documents: caseProfile._count.documents,
+      tasks: caseProfile._count.tasks,
+    },
+    timeline: caseProfile.histories.map(toPortalTimelineItem),
+    appointments: caseProfile.appointments.map(toSafePortalAppointment),
+    documents: caseProfile.documents.map((document) => ({
+      id: document.id,
+      fileName: document.fileName,
+      fileType: document.fileType,
+      mimeType: document.mimeType,
+      size: document.size,
+      createdAt: document.createdAt,
+    })),
+    tasks: caseProfile.tasks.map((task) => ({
+      id: task.id,
+      title: task.title,
+      status: task.status,
+      priority: task.priority,
+      deadline: task.deadline,
+      updatedAt: task.updatedAt,
+    })),
+  };
+};
 
 const throwPortalAccountWriteError = (error: unknown): never => {
   if (isPrismaError(error, "P2002")) {

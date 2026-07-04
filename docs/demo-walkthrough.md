@@ -428,7 +428,13 @@ Show:
 - Log in at `/portal/login` with workspace slug `advisora-demo`, portal email,
   and temporary password.
 - Confirm `/portal/dashboard` shows workspace, customer profile, portal account
-  info, and placeholders for case tracking, documents, and messages.
+  info, case summary, recent cases, and future placeholders for documents and
+  messages.
+- Open `/portal/cases`, search/filter the customer's cases, and open a case
+  detail page.
+- Confirm the portal case detail shows safe overview, timeline, appointments,
+  document metadata, and task summary without edit, upload, download, or delete
+  actions.
 - Return to Admin Customers and reset the portal password.
 - Confirm the old password no longer logs in and the new/generated password
   works.
@@ -444,8 +450,9 @@ Talk track:
 - Internal admin tokens are blocked from portal APIs.
 - Portal accounts are created only for existing customers in the same
   workspace.
-- Case tracking and customer document upload are intentionally future portal
-  steps.
+- Case tracking is read-only and scoped to the portal account's customer and
+  workspace.
+- Customer document upload/download remains a future portal step.
 
 ## Workspace Settings Demo
 
@@ -572,9 +579,9 @@ Talk track:
 - Public consultation requests map to one configured default workspace until
   workspace-specific public portals or custom-domain routing exists.
 - No request-to-customer conversion workflow yet.
-- Customer portal supports login/dashboard/profile foundation only; no portal
-  case tracking, customer document upload, messages, billing, or
-  self-registration yet.
+- Customer portal supports login/dashboard/profile and read-only case tracking;
+  customer document upload/download, messages, billing, and self-registration
+  remain future work.
 - No OCR, malware scanning, or private object storage yet.
 - No public CMS APIs for news/projects yet.
 - No report exports yet.

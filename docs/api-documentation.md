@@ -561,9 +561,93 @@ GET /api/portal/me
 Authorization: Bearer <portal-token>
 ```
 
-Returns the safe portal session plus an `overview` placeholder. Case tracking,
-customer document upload, messages, billing, and customer self-registration are
-not included in Step 27.
+Returns the safe portal session plus an `overview` object. Step 28 sets
+`caseTrackingAvailable=true`. Customer document upload/download, messages,
+billing, and customer self-registration remain outside this step.
+
+### Portal Case Summary
+
+```http
+GET /api/portal/cases/summary
+Authorization: Bearer <portal-token>
+```
+
+Returns aggregate case data for the authenticated portal account only:
+
+```json
+{
+  "totalCases": 3,
+  "activeCases": 2,
+  "completedCases": 1,
+  "cancelledCases": 0,
+  "upcomingAppointments": 1,
+  "nextAppointment": {
+    "id": "appointment_id",
+    "appointmentDate": "2026-07-10T00:00:00.000Z",
+    "startTime": "09:00",
+    "endTime": "10:00",
+    "method": "ONLINE",
+    "status": "CONFIRMED",
+    "staff": {
+      "id": "user_id",
+      "fullName": "Demo Consultant",
+      "role": "STAFF"
+    }
+  },
+  "casesByStatus": [],
+  "recentCases": []
+}
+```
+
+### Portal Case List
+
+```http
+GET /api/portal/cases?page=1&limit=10&status=PROCESSING&search=CASE
+Authorization: Bearer <portal-token>
+```
+
+Allowed query fields:
+
+- `page`
+- `limit` from 1 to 50
+- `status`
+- `search` by case code or title
+
+Clients cannot send `organizationId`, `customerId`, `assignedToId`, or staff
+filters. The backend always scopes by
+`request.customerPortal.portalAccount.organizationId` and `customerId`.
+
+Safe list items include case code, title, status, priority, service summary,
+assigned staff summary, timestamps, latest public activity, and safe counts.
+They do not include internal case notes, case-history notes, staff email/phone,
+document file URLs, token hashes, or password hashes.
+
+### Portal Case Detail
+
+```http
+GET /api/portal/cases/:id
+Authorization: Bearer <portal-token>
+```
+
+The detail lookup requires `id + organizationId + customerId`. A case from
+another customer or workspace returns a generic `404`.
+
+Safe detail data includes:
+
+- Case overview fields: `id`, `caseCode`, `title`, `description`, `status`,
+  `priority`, service summary, assigned staff summary, timestamps, and
+  deadline/completed dates.
+- Customer safe summary for the authenticated portal customer.
+- Timeline derived from case history action/status fields. Internal history
+  `note` values are not returned.
+- Appointment safe fields: date, time, method, status, and safe staff summary.
+- Document metadata only: file name, document type, MIME type, size, and
+  creation time. There is no portal download URL in Step 28.
+- Task safe summary: title, status, priority, deadline, and update time.
+
+Portal case endpoints are read-only. There are no portal routes for creating,
+editing, assigning, deleting, uploading, downloading, or status-updating cases,
+tasks, appointments, or documents in Step 28.
 
 ## 3. Customer API
 

@@ -226,6 +226,15 @@ Portal JWT payloads include `purpose: "customer_portal"`, `portalAccountId`,
 `organizationId`, and `customerId`. Internal `User` tokens and customer portal
 tokens are intentionally not interchangeable.
 
+Step 28 portal case tracking does not add new tables. It reads existing
+`CaseProfile`, `CaseHistory`, `Appointment`, `Task`, and `Document` records
+through the `CustomerPortalAccount` scope. Every portal case query must include
+both `organizationId` and `customerId` from the authenticated portal account.
+Portal responses are whitelist DTOs: internal case notes, case-history notes,
+document file URLs, password hashes, token hashes, and staff contact details are
+not exposed. Document data is metadata-only until portal file permissions are
+implemented in a later step.
+
 ### 5.3 Service
 
 Stores consulting services shown on the public website and used to categorize requests and cases.
@@ -564,6 +573,9 @@ PostgreSQL full-text search or trigram indexes can be added later for customer n
 - `passwordHash` and identity information must never appear in normal API responses.
 - `CustomerPortalAccount.passwordHash` must never appear in portal or internal
   customer-management responses.
+- Portal case tracking must scope by portal-account `organizationId` and
+  `customerId`, return generic `404` for out-of-scope case IDs, and expose only
+  safe case/timeline/appointment/document metadata fields.
 - Customer identity numbers and private documents should be encrypted or protected with provider-level encryption at rest.
 - File URLs should be private or signed when they contain customer information.
 - Role-based authorization must be enforced in backend services, not only in the frontend.

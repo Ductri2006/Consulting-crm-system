@@ -124,11 +124,15 @@ the admin token key or `AdminLayout`.
 
 - Login route: `/portal/login`
 - Dashboard route: `/portal/dashboard`
+- Case list route: `/portal/cases`
+- Case detail route: `/portal/cases/:id`
 - Backend auth: `/api/portal/auth/login`, `/api/portal/auth/me`
 - Backend profile: `/api/portal/me`
+- Backend cases: `/api/portal/cases/summary`, `/api/portal/cases`,
+  `/api/portal/cases/:id`
 - Token key: `advisora_portal_access_token`
 
-The dashboard currently shows workspace, customer profile, portal account
-status, and placeholders for future case tracking, document upload, and secure
-messages. Customer self-registration, billing, and portal document upload are
-not part of this step.
+The dashboard shows workspace, customer profile, portal account status, case
+summary, recent cases, and next appointment data. Portal cases are read-only and
+use the portal API client only. Customer document upload/download, billing,
+messages, and customer self-registration are not part of this step.

@@ -394,6 +394,16 @@ Before real customer documents:
 - [ ] Portal JWT payload includes `purpose: "customer_portal"`.
 - [ ] `GET /api/portal/auth/me` succeeds with a portal token.
 - [ ] `GET /api/portal/me` returns only the authenticated customer's safe data.
+- [ ] `GET /api/portal/cases/summary` returns only the authenticated portal
+  customer's case summary.
+- [ ] `GET /api/portal/cases` returns only cases for the portal account's
+  `organizationId + customerId`.
+- [ ] `GET /api/portal/cases/:id` succeeds for the portal customer's own case.
+- [ ] Another customer's case ID returns generic `404` for the portal account.
+- [ ] A case ID from another workspace returns generic `404` for the portal
+  account.
+- [ ] Portal case responses do not include internal notes, `fileUrl`,
+  `passwordHash`, `tokenHash`, raw upload paths, or document download links.
 - [ ] Portal account deactivate blocks login with the generic failure message.
 - [ ] Portal account activate allows login again.
 - [ ] Portal password reset invalidates the old password and allows the new
@@ -427,7 +437,11 @@ Before real customer documents:
 - [ ] Staff users cannot manage portal access controls.
 - [ ] `/portal/login` loads outside `AdminLayout`.
 - [ ] `/portal/dashboard` loads after portal login and shows workspace,
-  customer profile, portal account info, and future-step placeholders.
+  customer profile, portal account info, case summary, and recent cases.
+- [ ] `/portal/cases` loads after portal login.
+- [ ] `/portal/cases/:id` loads for the portal customer's own case.
+- [ ] Portal case pages have no edit, upload, download, delete, assign, or
+  status-update controls.
 - [ ] Refreshing `/portal/dashboard` restores the portal session.
 - [ ] Consultation requests page loads.
 - [ ] Cases page loads.
@@ -565,10 +579,9 @@ Known staging limitations to acknowledge:
   enabled only for controlled QA windows.
 - Workspace settings are available to admins; logo upload, custom domains,
   billing, workspace switching, and multi-membership remain future work.
-- Customer portal is foundation-only: login, dashboard, profile/account
-  summary, and internal access controls are available, but portal case
-  tracking, customer document upload, messages, billing, and self-registration
-  remain future work.
+- Customer portal supports login, dashboard, profile/account summary, internal
+  access controls, and read-only case tracking. Customer document
+  upload/download, messages, billing, and self-registration remain future work.
 - Public contact and appointment forms are validation/demo flows only.
 - No production-grade rate limiting, captcha, centralized monitoring, alerting,
   refresh-token revocation, malware scanning, report export, or automated E2E

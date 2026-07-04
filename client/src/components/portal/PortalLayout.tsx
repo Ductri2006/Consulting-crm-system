@@ -1,6 +1,25 @@
-import { LogOut, ShieldCheck } from 'lucide-react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import {
+  BriefcaseBusiness,
+  LayoutDashboard,
+  LogOut,
+  ShieldCheck,
+} from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { usePortalAuth } from '../../features/customerPortal'
+import { cn } from '../../utils/cn'
+
+const portalNavItems = [
+  {
+    href: '/portal/dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    href: '/portal/cases',
+    label: 'My Cases',
+    icon: BriefcaseBusiness,
+  },
+]
 
 export function PortalLayout() {
   const { logout, session } = usePortalAuth()
@@ -28,14 +47,39 @@ export function PortalLayout() {
               </p>
             </div>
           </div>
-          <button
-            className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 lg:self-auto"
-            onClick={() => void handleLogout()}
-            type="button"
-          >
-            <LogOut className="h-4 w-4" aria-hidden="true" />
-            Logout
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <nav className="flex flex-wrap items-center gap-1" aria-label="Portal">
+              {portalNavItems.map((item) => {
+                const Icon = item.icon
+
+                return (
+                  <NavLink
+                    className={({ isActive }) =>
+                      cn(
+                        'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-bold transition',
+                        isActive
+                          ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
+                          : 'text-slate-600 hover:bg-slate-50',
+                      )
+                    }
+                    key={item.href}
+                    to={item.href}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {item.label}
+                  </NavLink>
+                )
+              })}
+            </nav>
+            <button
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              onClick={() => void handleLogout()}
+              type="button"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Logout
+            </button>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
