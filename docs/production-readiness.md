@@ -104,6 +104,11 @@ Production rules:
 - Use `npm run seed:demo` only for fictional portfolio staging data. When
   `NODE_ENV=production`, the command requires `DEMO_SEED_ENABLED=true` so the
   operator must intentionally create demo accounts and data.
+- Use `npm run seed:second-workspace` only for tenant-isolation QA in local or
+  dedicated staging databases. When `NODE_ENV=production`, the command requires
+  `SECOND_WORKSPACE_SEED_ENABLED=true` for that command only. Run
+  `npm run verify:tenant-isolation` after seeding to confirm Advisora and
+  Northstar demo data remain separated.
 - Do not run `npm run seed` on staging or production unless the legacy local
   credential risk is explicitly accepted.
 
@@ -189,6 +194,9 @@ Recommended later upgrade:
 - [ ] User management and assignable-user endpoints return same-workspace users
   only.
 - [ ] Dashboard and report totals are scoped to the current workspace.
+- [ ] Optional second workspace QA seed has passed
+  `npm run verify:tenant-isolation` when staging tenant-isolation evidence is
+  required.
 - [ ] Public consultation requests map to `DEFAULT_ORGANIZATION_SLUG`.
 - [ ] Public forms have abuse protection or a plan for rate limiting.
 - [ ] Logs do not include passwords, tokens, connection strings, or document
@@ -226,6 +234,8 @@ Recommended later upgrade:
 - No password reset or account-management UI yet.
 - No public workspace signup, invitation system, billing, or workspace switcher
   yet.
+- Second workspace creation is manual QA seed data only; it is not a production
+  tenant onboarding flow.
 - No production rate limiting, captcha, or dedicated abuse-protection layer yet.
 - No centralized production logging, metrics, or alerting yet.
 - No automated end-to-end test suite yet.

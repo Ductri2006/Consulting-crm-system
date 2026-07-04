@@ -657,6 +657,43 @@ depend on the known `password123` credential. Because `npm run db:verify`
 checks the legacy local account, use it for local verification only and do not
 treat it as staging sign-off after running `seed:demo`.
 
+### Second workspace tenant-isolation seed
+
+Step 22.5 adds a manual second workspace seed for QA:
+
+```text
+Name: Northstar Legal Workspace
+Slug: northstar-legal
+```
+
+It creates fictional demo users, customers, consultation requests, cases,
+appointments, tasks, case history, and activity logs under `northstar-legal`.
+It does not create physical document files, reset the database, delete existing
+data, or add public workspace signup or invitations.
+
+Run it after migrations and the main demo seed:
+
+```bash
+SECOND_WORKSPACE_SEED_ENABLED=true npm run seed:second-workspace
+npm run verify:tenant-isolation
+```
+
+For local PowerShell:
+
+```powershell
+$env:SECOND_WORKSPACE_SEED_ENABLED = "true"
+npm run seed:second-workspace
+Remove-Item Env:SECOND_WORKSPACE_SEED_ENABLED
+npm run verify:tenant-isolation
+```
+
+When `NODE_ENV=production`, `seed:second-workspace` refuses to run unless
+`SECOND_WORKSPACE_SEED_ENABLED=true` is set for that command. Keep this flag
+out of permanent runtime configuration. The verification script checks that
+`advisora-demo` and `northstar-legal` have separate users, customers, cases,
+requests, appointments, tasks, case history, and activity logs, and that
+Northstar demo records are not assigned to Advisora.
+
 ## Implementation status
 
 Phase 17 records production readiness and final QA preparation. Phase 10.5
@@ -673,8 +710,9 @@ triage, protected case-profile workflows, appointment scheduling, internal
 task management, authenticated document management, and role-aware dashboard
 and reporting APIs. Step 22 adds the Organization / Workspace tenant foundation
 using a single default `Advisora Demo Workspace`; multi-company signup,
-invitations, billing, and customer portal access remain future work. The
-repository also includes production readiness,
+invitations, billing, and customer portal access remain future work. Step 22.5
+adds a `Northstar Legal Workspace` seed plus `verify:tenant-isolation` for
+staging tenant QA. The repository also includes production readiness,
 deployment, and final QA documentation. It does not include
 request-to-customer conversion, OCR, cloud object storage, report exports,
 realtime updates, or real production deployment.

@@ -114,6 +114,7 @@ One-time demo seed flag:
 | Variable | Required value | Rule |
 | --- | --- | --- |
 | `DEMO_SEED_ENABLED` | `true` | Use only for the one command that runs `npm run seed:demo` in `NODE_ENV=production`; do not keep it as a permanent runtime dependency. |
+| `SECOND_WORKSPACE_SEED_ENABLED` | `true` | Use only for the one command that runs `npm run seed:second-workspace` in `NODE_ENV=production`; do not keep it as a permanent runtime dependency. |
 
 ### Frontend
 
@@ -188,6 +189,10 @@ Frontend rules:
   reset commands.
 - [ ] If running `seed:demo` while `NODE_ENV=production`, set
   `DEMO_SEED_ENABLED=true` for that command only.
+- [ ] If tenant-isolation QA is planned, run `npm run seed:second-workspace`
+  only after `seed:demo` and set `SECOND_WORKSPACE_SEED_ENABLED=true` for that
+  command only when `NODE_ENV=production`.
+- [ ] Run `npm run verify:tenant-isolation` after seeding the second workspace.
 - [ ] Do not run `npm run seed` on staging unless intentionally creating the
   legacy local admin and documenting that risk.
 - [ ] Confirm the known local demo admin credential is disabled, replaced, or
@@ -234,6 +239,77 @@ Demo credentials are intentional portfolio credentials, not real secrets:
 
 Do not use these accounts with real customer data. Do not publish high-privilege
 admin access for long-lived public staging.
+
+## Second Workspace Tenant-Isolation Seed
+
+Step 22.5 adds an optional second workspace seed for QA:
+
+```text
+Name: Northstar Legal Workspace
+Slug: northstar-legal
+```
+
+Run after migrations and the main Advisora demo seed, only against the
+dedicated staging database:
+
+```bash
+cd server
+SECOND_WORKSPACE_SEED_ENABLED=true npm run seed:second-workspace
+npm run verify:tenant-isolation
+```
+
+For local PowerShell:
+
+```powershell
+cd server
+$env:SECOND_WORKSPACE_SEED_ENABLED = "true"
+npm run seed:second-workspace
+Remove-Item Env:SECOND_WORKSPACE_SEED_ENABLED
+npm run verify:tenant-isolation
+```
+
+Expected behavior:
+
+- Creates or updates fictional Northstar admin, manager, and staff demo users.
+- Creates or updates three fictional customers: Aurora Legal Group, Pacific
+  Compliance Studio, and Meridian Contract Partners.
+- Creates or updates Northstar consultation requests, cases, appointments,
+  tasks, case history, and activity logs.
+- Assigns every Northstar CRM record to `northstar-legal`.
+- Uses fixed IDs and upserts so repeated runs do not duplicate the demo set.
+- Does not reset the database.
+- Does not delete or mutate Advisora demo data.
+- Does not seed physical document files.
+- Does not add public workspace signup, invitations, customer portal access, or
+  a workspace switcher.
+
+Northstar demo credentials are fictional portfolio credentials:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin.demo@northstar.test` | `Northstar-Demo-Admin-2026!` |
+| Manager | `manager.demo@northstar.test` | `Northstar-Demo-Manager-2026!` |
+| Staff | `staff.demo@northstar.test` | `Northstar-Demo-Staff-2026!` |
+
+Manual tenant-isolation checklist:
+
+- [ ] Login as `admin.demo@advisora.test`.
+- [ ] Dashboard shows Advisora data only.
+- [ ] Team Members does not show Northstar users.
+- [ ] Customers does not show Northstar customers.
+- [ ] Consultation Requests, Cases, Appointments, Tasks, and Reports show
+  Advisora-scoped data only.
+- [ ] Logout.
+- [ ] Login as `admin.demo@northstar.test`.
+- [ ] Topbar shows `Northstar Legal Workspace`.
+- [ ] Dashboard shows Northstar data only.
+- [ ] Team Members does not show Advisora users.
+- [ ] Customers does not show Advisora customers.
+- [ ] Consultation Requests, Cases, Appointments, Tasks, and Reports show
+  Northstar-scoped data only.
+- [ ] Public consultation form still creates requests under
+  `DEFAULT_ORGANIZATION_SLUG`, which defaults to `advisora-demo`.
+- [ ] No passwords, tokens, database URLs, or uploaded files are staged in Git.
 
 ## CORS Checklist
 
@@ -294,6 +370,9 @@ Before real customer documents:
 - [ ] `GET /api/auth/me` returns a sanitized user with workspace info.
 - [ ] `GET /api/dashboard/overview` returns data.
 - [ ] Dashboard overview reflects current-workspace data only.
+- [ ] `npm run verify:tenant-isolation` prints
+  `Tenant isolation verification: PASS` after the optional second workspace
+  seed is run.
 - [ ] At least one database-backed API call succeeds, such as
   `GET /api/customers` or `GET /api/public/services`.
 

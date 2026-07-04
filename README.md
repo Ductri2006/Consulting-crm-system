@@ -315,6 +315,13 @@ Name: Advisora Demo Workspace
 Slug: advisora-demo
 ```
 
+Second tenant-isolation QA workspace:
+
+```text
+Name: Northstar Legal Workspace
+Slug: northstar-legal
+```
+
 The public consultation form maps new requests to the workspace configured by
 `DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. Public workspace
 signup, invitations, billing, and customer portal access remain future roadmap
@@ -365,6 +372,32 @@ requests, cases, appointments, tasks, case history, and activity records. It
 also upserts the `Advisora Demo Workspace` and assigns all demo CRM data to
 that workspace. It does not reset the database and does not seed physical
 document files.
+
+Step 22.5 adds an optional second workspace seed for tenant-isolation QA. It
+does not add public workspace signup or a workspace switcher. Run it only
+against a local or dedicated staging database after the main demo seed:
+
+```bash
+cd server
+SECOND_WORKSPACE_SEED_ENABLED=true npm run seed:second-workspace
+npm run verify:tenant-isolation
+```
+
+For local PowerShell runs, use:
+
+```powershell
+cd server
+$env:SECOND_WORKSPACE_SEED_ENABLED = "true"
+npm run seed:second-workspace
+Remove-Item Env:SECOND_WORKSPACE_SEED_ENABLED
+npm run verify:tenant-isolation
+```
+
+The second workspace seed creates fictional Northstar users, customers, cases,
+consultation requests, appointments, tasks, case history, and activity logs. It
+is idempotent, does not reset the database, does not delete Advisora demo data,
+and does not seed physical document files. Public consultation requests still
+map to `DEFAULT_ORGANIZATION_SLUG`.
 
 Use only fictional demo data. Do not paste real customer data, real database
 URLs, access tokens, or production credentials into the app, docs, commits, or
@@ -603,3 +636,5 @@ Workspace, auth responses include safe workspace info, public consultation
 requests map to `DEFAULT_ORGANIZATION_SLUG`, and CRM APIs scope internal users,
 customers, requests, cases, appointments, tasks, documents, dashboard, and
 reports by `organizationId`. Production deployment remains a future phase.
+Step 22.5 adds an optional Northstar Legal Workspace seed and a Prisma-based
+tenant-isolation verification script for staging QA.

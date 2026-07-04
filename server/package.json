@@ -16,7 +16,9 @@
     "prisma:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
     "seed:demo": "tsx prisma/seedDemo.ts",
-    "db:verify": "tsx src/scripts/verifyDatabase.ts"
+    "seed:second-workspace": "tsx prisma/seedSecondWorkspace.ts",
+    "db:verify": "tsx src/scripts/verifyDatabase.ts",
+    "verify:tenant-isolation": "tsx src/scripts/verifyTenantIsolation.ts"
   },
   "engines": {
     "node": ">=20"

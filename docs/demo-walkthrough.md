@@ -119,6 +119,65 @@ Do not run destructive reset commands against staging. The demo seed upserts
 fixed fictional records into `Advisora Demo Workspace` and does not seed
 physical document files.
 
+## Tenant Isolation QA
+
+Step 22.5 adds a second manually seeded workspace for tenant-isolation checks:
+
+```text
+Name: Northstar Legal Workspace
+Slug: northstar-legal
+```
+
+This is not public workspace signup and does not add invitations, billing,
+customer portal access, or a workspace switcher. It is a QA seed only.
+
+Run after the main demo seed:
+
+```bash
+cd server
+SECOND_WORKSPACE_SEED_ENABLED=true npm run seed:second-workspace
+npm run verify:tenant-isolation
+```
+
+For local PowerShell:
+
+```powershell
+cd server
+$env:SECOND_WORKSPACE_SEED_ENABLED = "true"
+npm run seed:second-workspace
+Remove-Item Env:SECOND_WORKSPACE_SEED_ENABLED
+npm run verify:tenant-isolation
+```
+
+Northstar fictional demo accounts:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin.demo@northstar.test` | `Northstar-Demo-Admin-2026!` |
+| Manager | `manager.demo@northstar.test` | `Northstar-Demo-Manager-2026!` |
+| Staff | `staff.demo@northstar.test` | `Northstar-Demo-Staff-2026!` |
+
+Manual isolation checklist:
+
+- Login as `admin.demo@advisora.test`.
+- Confirm the topbar shows `Advisora Demo Workspace`.
+- Confirm Dashboard, Team Members, Customers, Consultation Requests, Cases,
+  Appointments, Tasks, and Reports show Advisora data only.
+- Confirm Northstar users and customers do not appear.
+- Logout.
+- Login as `admin.demo@northstar.test`.
+- Confirm the topbar shows `Northstar Legal Workspace`.
+- Confirm Dashboard, Team Members, Customers, Consultation Requests, Cases,
+  Appointments, Tasks, and Reports show Northstar data only.
+- Confirm Advisora users and customers do not appear.
+- Logout.
+- Submit a public consultation request and confirm it still lands in
+  `DEFAULT_ORGANIZATION_SLUG`, which defaults to `advisora-demo`.
+
+The second workspace seed is idempotent and does not seed physical document
+files. Upload tiny fictional files manually only if document smoke testing is
+needed, then delete them and confirm they are not staged in Git.
+
 ## Recommended Demo Order
 
 1. README overview.
