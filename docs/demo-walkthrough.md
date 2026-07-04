@@ -15,6 +15,8 @@ consulting brand, Advisora. It combines:
 - Prisma with PostgreSQL.
 - Admin workflows for customers, consultation requests, cases, appointments,
   tasks, documents, dashboards, and reports.
+- An Organization / Workspace tenant foundation. The demo uses one workspace:
+  `Advisora Demo Workspace`.
 
 Demo rule: use local/demo data only. Do not use real customer information,
 database connection strings, access tokens, production credentials, or
@@ -61,6 +63,17 @@ Local URLs:
 Public visitors do not need an account. Admin, manager, and staff users are
 internal CRM users. A customer portal is planned for a future phase.
 
+Default demo workspace:
+
+```text
+Name: Advisora Demo Workspace
+Slug: advisora-demo
+```
+
+The public consultation form creates requests under the workspace configured by
+`DEFAULT_ORGANIZATION_SLUG`, which defaults to `advisora-demo`. Public
+workspace signup and invitations are not part of this step.
+
 Intentional portfolio staging demo accounts:
 
 | Role | Email | Password |
@@ -103,7 +116,8 @@ npm run seed:demo
 ```
 
 Do not run destructive reset commands against staging. The demo seed upserts
-fixed fictional records and does not seed physical document files.
+fixed fictional records into `Advisora Demo Workspace` and does not seed
+physical document files.
 
 ## Recommended Demo Order
 
@@ -142,6 +156,8 @@ Talk track:
 - The public website introduces the fictional consulting brand.
 - Services, projects, and news are typed local content in this phase.
 - The consultation form submits to the backend public consultation API.
+- Submitted consultation requests are assigned to the default demo workspace
+  by the backend.
 - The contact and appointment forms currently demonstrate validation and UI
   states only; backend intake for those public forms remains future work.
 - The layout should be checked at mobile, tablet, and desktop widths before a
@@ -287,9 +303,11 @@ Show:
 Talk track:
 
 - User management is for internal `ADMIN`, `MANAGER`, and `STAFF` accounts
-  only.
+  only, and team members belong to the current workspace.
 - Public visitors do not need accounts.
 - Customer accounts and a customer portal remain future roadmap scope.
+- Multi-company workspace signup and invitation flows remain future roadmap
+  scope.
 - Deactivation is used instead of hard delete so historical assignments remain
   intact.
 
@@ -355,6 +373,8 @@ Talk track:
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create
   backend records yet.
+- Public consultation requests map to one configured default workspace until
+  workspace signup or custom-domain routing exists.
 - No request-to-customer conversion workflow yet.
 - No customer portal yet.
 - No OCR, malware scanning, or private object storage yet.

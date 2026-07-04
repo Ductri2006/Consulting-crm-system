@@ -36,7 +36,7 @@ const paginatedQueryWithoutSearch = paginationQuerySchema.pick({
 
 export const caseIdParamsSchema = z.object({
   id: uuidSchema("Case id"),
-});
+}).strict();
 
 export const caseListQuerySchema = paginationQuerySchema.extend({
   status: z.enum(CaseStatus).optional(),
@@ -44,14 +44,14 @@ export const caseListQuerySchema = paginationQuerySchema.extend({
   serviceId: uuidSchema("Service id").optional(),
   customerId: uuidSchema("Customer id").optional(),
   assignedToId: uuidSchema("Assigned user id").optional(),
-});
+}).strict();
 
 export const overdueCaseQuerySchema =
   paginatedQueryWithoutSearch.extend({
     assignedToId: uuidSchema("Assigned user id").optional(),
-  });
+  }).strict();
 
-export const caseHistoryQuerySchema = paginatedQueryWithoutSearch;
+export const caseHistoryQuerySchema = paginatedQueryWithoutSearch.strict();
 
 export const createCaseSchema = z.object({
   customerId: uuidSchema("Customer id"),
@@ -62,7 +62,7 @@ export const createCaseSchema = z.object({
   note: noteSchema.optional(),
   priority: z.enum(Priority).optional(),
   deadline: deadlineSchema.optional(),
-});
+}).strict();
 
 export const updateCaseSchema = z
   .object({
@@ -72,6 +72,7 @@ export const updateCaseSchema = z
     priority: z.enum(Priority).optional(),
     deadline: deadlineSchema.nullable().optional(),
   })
+  .strict()
   .refine((input) => Object.keys(input).length > 0, {
     message: "At least one case field must be provided.",
   });
@@ -79,8 +80,8 @@ export const updateCaseSchema = z
 export const updateCaseStatusSchema = z.object({
   status: z.enum(CaseStatus),
   note: noteSchema.optional(),
-});
+}).strict();
 
 export const assignCaseSchema = z.object({
   assignedToId: uuidSchema("Assigned user id"),
-});
+}).strict();

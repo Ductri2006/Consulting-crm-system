@@ -16,6 +16,7 @@ function initials(name: string) {
 
 export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
   const { user, logout } = useAuth()
+  const workspaceName = user?.organization?.name?.trim() || 'CRM workspace'
 
   return (
     <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur md:px-6 lg:px-8">
@@ -29,7 +30,9 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
           <Menu className="h-5 w-5" />
         </button>
         <div className="hidden sm:block">
-          <p className="text-sm font-semibold text-slate-900">CRM workspace</p>
+          <p className="max-w-56 truncate text-sm font-semibold text-slate-900">
+            {workspaceName}
+          </p>
           <p className="text-xs text-slate-400">Your operations at a glance</p>
         </div>
       </div>

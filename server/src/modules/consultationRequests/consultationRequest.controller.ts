@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { AppError } from "../../utils/AppError";
 import { successResponse } from "../../utils/apiResponse";
+import type { SafeUser } from "../../utils/sanitizeUser";
 import type {
   ConsultationRequestListQuery,
   CreateConsultationRequestInput,
@@ -28,6 +29,17 @@ const getRequestId = (request: Request): string => {
   return id;
 };
 
+const getActor = (request: Request): SafeUser => {
+  if (!request.user) {
+    throw new AppError(
+      "Authentication is required.",
+      HTTP_STATUS.UNAUTHORIZED,
+    );
+  }
+
+  return request.user;
+};
+
 export const submitConsultationRequest = async (
   request: Request,
   response: Response,
@@ -49,6 +61,7 @@ export const getConsultationRequests = async (
 ): Promise<void> => {
   const result = await findConsultationRequests(
     request.query as unknown as ConsultationRequestListQuery,
+    getActor(request).organizationId,
   );
 
   response
@@ -64,6 +77,7 @@ export const getConsultationRequest = async (
 ): Promise<void> => {
   const consultationRequest = await findConsultationRequestById(
     getRequestId(request),
+    getActor(request).organizationId,
   );
 
   response.status(HTTP_STATUS.OK).json(
@@ -80,6 +94,7 @@ export const patchConsultationRequestStatus = async (
   const consultationRequest = await updateConsultationRequestStatus(
     getRequestId(request),
     request.body as UpdateConsultationRequestStatusInput,
+    getActor(request).organizationId,
   );
 
   response.status(HTTP_STATUS.OK).json(

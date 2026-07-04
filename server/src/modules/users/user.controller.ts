@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { AppError } from "../../utils/AppError";
 import { successResponse } from "../../utils/apiResponse";
+import type { SafeUser } from "../../utils/sanitizeUser";
 import {
   createUser,
   findAssignableUsers,
@@ -18,11 +19,26 @@ import type {
   UserListQuery,
 } from "./user.types";
 
+const getActor = (request: Request): SafeUser => {
+  if (!request.user) {
+    throw new AppError(
+      "Authentication is required.",
+      HTTP_STATUS.UNAUTHORIZED,
+    );
+  }
+
+  return request.user;
+};
+
 export const getUsers = async (
   request: Request,
   response: Response,
 ): Promise<void> => {
-  const result = await findUsers(request.query as unknown as UserListQuery);
+  const actor = getActor(request);
+  const result = await findUsers(
+    request.query as unknown as UserListQuery,
+    actor.organizationId,
+  );
 
   response
     .status(HTTP_STATUS.OK)
@@ -30,10 +46,10 @@ export const getUsers = async (
 };
 
 export const getAssignableUsers = async (
-  _request: Request,
+  request: Request,
   response: Response,
 ): Promise<void> => {
-  const users = await findAssignableUsers();
+  const users = await findAssignableUsers(getActor(request).organizationId);
 
   response
     .status(HTTP_STATUS.OK)
@@ -55,7 +71,7 @@ export const getUser = async (
     );
   }
 
-  const user = await findUserById(id);
+  const user = await findUserById(id, getActor(request).organizationId);
 
   response
     .status(HTTP_STATUS.OK)
@@ -66,7 +82,10 @@ export const createUserController = async (
   request: Request,
   response: Response,
 ): Promise<void> => {
-  const user = await createUser(request.body as CreateUserInput);
+  const user = await createUser(
+    request.body as CreateUserInput,
+    getActor(request).organizationId,
+  );
 
   response
     .status(HTTP_STATUS.CREATED)
@@ -86,7 +105,11 @@ export const updateUserController = async (
     );
   }
 
-  const user = await updateUser(id, request.body as UpdateUserInput);
+  const user = await updateUser(
+    id,
+    request.body as UpdateUserInput,
+    getActor(request).organizationId,
+  );
 
   response
     .status(HTTP_STATUS.OK)
@@ -109,6 +132,7 @@ export const resetUserPasswordController = async (
   const user = await resetUserPassword(
     id,
     request.body as ResetUserPasswordInput,
+    getActor(request).organizationId,
   );
 
   response

@@ -1,6 +1,9 @@
 # API Documentation
 
-This document defines the initial REST API contract planned for the Consulting CRM System. It is a design reference for future frontend and backend implementation; no API is implemented in the foundation phase.
+This document defines the REST API contract for the Consulting CRM System. It
+started as a design reference and now tracks the implemented portfolio API for
+auth, CRM workflows, internal users, documents, dashboard, reports, and the
+Organization / Workspace tenant foundation.
 
 ## Base URL and Conventions
 
@@ -15,6 +18,12 @@ This document defines the initial REST API contract planned for the Consulting C
 - Collection endpoints use `page` and `limit` for pagination.
 - Public endpoints are grouped under `/api/public`.
 - Path parameters such as `:id` represent UUID values unless noted otherwise.
+- Protected CRM endpoints are scoped to `request.user.organizationId`.
+- The UI may call this concept Workspace; the backend data model calls it
+  `Organization`.
+- Clients must not send `organizationId` in body or query payloads. Unknown
+  fields are rejected by validation.
+- Services remain a global catalog in this step.
 
 ## 1. Authentication API
 
@@ -40,6 +49,12 @@ Response data:
   "accessToken": "jwt_token",
   "user": {
     "id": "user_id",
+    "organizationId": "organization_id",
+    "organization": {
+      "id": "organization_id",
+      "name": "Advisora Demo Workspace",
+      "slug": "advisora-demo"
+    },
     "fullName": "Admin User",
     "email": "admin@example.com",
     "role": "ADMIN"
@@ -73,6 +88,8 @@ All user-management endpoints are protected. Internal user management is
 restricted to administrators and covers only CRM users: `ADMIN`, `MANAGER`, and
 `STAFF`. Public visitors do not have accounts yet; the customer portal remains
 future roadmap scope.
+Administrators manage only users in their current workspace. New users are
+assigned to the current workspace by the server.
 
 ### Get Users
 
@@ -165,14 +182,17 @@ Rules:
 - The API prevents the last active administrator from being deactivated or
   demoted.
 - User responses never include `passwordHash`.
+- User responses belong to the current workspace only.
 - `/api/users/assignable` remains available to `ADMIN` and `MANAGER` for
-  assignment dropdowns and returns only active internal users.
+  assignment dropdowns and returns only active internal users in the same
+  workspace.
 
 Deletion should be rejected when retaining the user is necessary for related cases, tasks, documents, news, or activity logs. Disabling is the preferred operation in that situation.
 
 ## 3. Customer API
 
 Customer endpoints are protected and available according to role and assignment rules.
+All customer operations are scoped to the authenticated user's workspace.
 
 ### Get Customers
 
@@ -303,7 +323,9 @@ Request body:
 }
 ```
 
-New requests receive the default status `NEW`.
+New requests receive the default status `NEW` and are assigned to the active
+workspace configured by `DEFAULT_ORGANIZATION_SLUG`, with `advisora-demo` as
+the fallback. Public clients cannot select another workspace.
 
 ### Get Consultation Requests
 
@@ -357,7 +379,9 @@ Creates or links the customer before creating a case profile. The operation shou
 
 ## 6. Case Profile API
 
-All case endpoints are protected. Staff access is limited to assigned cases unless elevated by role.
+All case endpoints are protected and scoped to the authenticated user's
+workspace. Staff access is further limited to assigned cases unless elevated by
+role.
 
 ### Get Case Profiles
 
@@ -893,6 +917,13 @@ Recommended HTTP status codes:
 - Administrators can access all modules and manage users.
 - Managers can monitor operations, assign work, and access reports and activity logs.
 - Staff can access customers, cases, appointments, tasks, and documents permitted by assignment rules.
+- Organization / Workspace isolation is enforced by `organizationId` on
+  internal users and CRM business records. Dashboard and report aggregates are
+  scoped by the current workspace.
+- The current demo/staging deployment uses one default workspace:
+  `Advisora Demo Workspace` (`advisora-demo`). Multi-company signup,
+  invitations, billing, and customer portal accounts remain future roadmap
+  scope.
 - A customer portal and customer-authenticated endpoints are deferred to a future version.
 - Authorization must be enforced by the backend; hiding UI actions is not a security control.
 - Sensitive fields, including `passwordHash`, must never be returned by the API.

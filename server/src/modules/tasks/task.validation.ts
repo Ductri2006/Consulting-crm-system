@@ -31,7 +31,7 @@ const paginatedQueryWithoutSearch = paginationQuerySchema.pick({
 
 export const taskIdParamsSchema = z.object({
   id: uuidSchema("Task id"),
-});
+}).strict();
 
 export const taskListQuerySchema = paginationQuerySchema.extend({
   status: z.enum(TaskStatus).optional(),
@@ -39,12 +39,12 @@ export const taskListQuerySchema = paginationQuerySchema.extend({
   assignedToId: uuidSchema("Assigned user id").optional(),
   createdById: uuidSchema("Creator id").optional(),
   caseProfileId: uuidSchema("Case profile id").optional(),
-});
+}).strict();
 
 export const overdueTaskQuerySchema =
   paginatedQueryWithoutSearch.extend({
     assignedToId: uuidSchema("Assigned user id").optional(),
-  });
+  }).strict();
 
 export const createTaskSchema = z.object({
   caseProfileId: uuidSchema("Case profile id").optional(),
@@ -53,7 +53,7 @@ export const createTaskSchema = z.object({
   assignedToId: uuidSchema("Assigned user id").optional(),
   priority: z.enum(Priority).optional(),
   deadline: deadlineSchema.optional(),
-});
+}).strict();
 
 export const updateTaskSchema = z
   .object({
@@ -63,10 +63,11 @@ export const updateTaskSchema = z
     priority: z.enum(Priority).optional(),
     deadline: deadlineSchema.nullable().optional(),
   })
+  .strict()
   .refine((input) => Object.keys(input).length > 0, {
     message: "At least one task field must be provided.",
   });
 
 export const updateTaskStatusSchema = z.object({
   status: z.enum(TaskStatus),
-});
+}).strict();

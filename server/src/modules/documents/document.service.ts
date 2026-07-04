@@ -30,6 +30,7 @@ import type {
 
 const safeUserSelect = {
   id: true,
+  organizationId: true,
   fullName: true,
   email: true,
   phone: true,
@@ -227,6 +228,7 @@ export const listDocuments = async (
   }
 
   const where: Prisma.DocumentWhereInput = {
+    organizationId: actor.organizationId,
     ...(fileType && { fileType }),
     ...(customerId && { customerId }),
     ...(caseProfileId && { caseProfileId }),
@@ -254,8 +256,11 @@ export const findDocumentById = async (
   id: string,
   actor: SafeUser,
 ) => {
-  const document = await prisma.document.findUnique({
-    where: { id },
+  const document = await prisma.document.findFirst({
+    where: {
+      id,
+      organizationId: actor.organizationId,
+    },
     include: documentInclude,
   });
 
@@ -282,14 +287,20 @@ export const uploadDocument = async (
 
   const [customer, caseProfile] = await Promise.all([
     input.customerId
-      ? prisma.customer.findUnique({
-          where: { id: input.customerId },
+      ? prisma.customer.findFirst({
+          where: {
+            id: input.customerId,
+            organizationId: actor.organizationId,
+          },
           select: { id: true },
         })
       : Promise.resolve(null),
     input.caseProfileId
-      ? prisma.caseProfile.findUnique({
-          where: { id: input.caseProfileId },
+      ? prisma.caseProfile.findFirst({
+          where: {
+            id: input.caseProfileId,
+            organizationId: actor.organizationId,
+          },
           select: {
             id: true,
             customerId: true,
@@ -357,6 +368,7 @@ export const uploadDocument = async (
   try {
     return await prisma.document.create({
       data: {
+        organizationId: actor.organizationId,
         customerId,
         caseProfileId: input.caseProfileId,
         uploadedById: actor.id,
@@ -381,8 +393,11 @@ export const deleteDocument = async (
   try {
     const deletedDocument = await prisma.$transaction(
       async (transaction) => {
-        const document = await transaction.document.findUnique({
-          where: { id },
+        const document = await transaction.document.findFirst({
+          where: {
+            id,
+            organizationId: actor.organizationId,
+          },
           include: documentInclude,
         });
 

@@ -3,6 +3,8 @@
 The `client` directory contains the responsive public website and the admin
 workspace for the Consulting CRM System portfolio project. Advisora is a
 fictional consulting brand used for the demonstration interface.
+The UI uses the word Workspace for the backend Organization tenant model; the
+current demo/staging workspace is `Advisora Demo Workspace`.
 
 ## Stack
 
@@ -48,6 +50,9 @@ The production build output is `dist`. For deployment, set
 Do not hard-code the production API URL in source files. The public
 consultation form uses this API base URL; contact and appointment forms are
 validation/demo flows until their public backend intake endpoints are added.
+Public consultation submissions are mapped by the backend to the workspace
+configured with `DEFAULT_ORGANIZATION_SLUG`; the frontend never sends an
+`organizationId`.
 
 ## Admin Dashboard
 
@@ -81,7 +86,8 @@ creation, editing, status transitions, staff assignment, history, and deletion
 subject to role and backend workflow rules. Appointment and task management add
 schedule filters, today appointments, overdue tasks, creation, editing, status
 updates, and role-aware deletion. Team member management lets administrators
-create, edit, activate/deactivate, and reset passwords for internal CRM users.
+create, edit, activate/deactivate, and reset passwords for internal CRM users
+in the current workspace; there is no workspace picker in this step.
 Document management adds search, filters,
 multipart upload, protected download, detail review, and role-aware deletion.
 Reports use the dashboard/reporting APIs for operational insight, with staff

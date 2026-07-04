@@ -9,6 +9,12 @@ export interface PaginationMeta {
 
 export interface TeamMember {
   id: string
+  organizationId?: string | null
+  organization?: {
+    id: string
+    name: string
+    slug: string
+  } | null
   fullName: string
   email: string
   phone: string | null

@@ -55,7 +55,7 @@ const hasValidTimeRange = ({
 
 export const appointmentIdParamsSchema = z.object({
   id: uuidSchema("Appointment id"),
-});
+}).strict();
 
 export const appointmentListQuerySchema = paginationQuerySchema
   .extend({
@@ -68,6 +68,7 @@ export const appointmentListQuerySchema = paginationQuerySchema
     fromDate: calendarDateSchema.optional(),
     toDate: calendarDateSchema.optional(),
   })
+  .strict()
   .superRefine((query, context) => {
     if (query.fromDate && query.toDate && query.fromDate > query.toDate) {
       context.addIssue({
@@ -80,7 +81,7 @@ export const appointmentListQuerySchema = paginationQuerySchema
 
 export const todayAppointmentQuerySchema = z.object({
   staffId: uuidSchema("Staff id").optional(),
-});
+}).strict();
 
 export const createAppointmentSchema = z
   .object({
@@ -93,6 +94,7 @@ export const createAppointmentSchema = z
     method: z.enum(AppointmentMethod).optional(),
     note: noteSchema.optional(),
   })
+  .strict()
   .refine(hasValidTimeRange, {
     path: ["endTime"],
     message: "End time must be later than start time.",
@@ -108,6 +110,7 @@ export const updateAppointmentSchema = z
     staffId: uuidSchema("Staff id").nullable().optional(),
     caseProfileId: uuidSchema("Case profile id").nullable().optional(),
   })
+  .strict()
   .refine((input) => Object.keys(input).length > 0, {
     message: "At least one appointment field must be provided.",
   })
@@ -118,4 +121,4 @@ export const updateAppointmentSchema = z
 
 export const updateAppointmentStatusSchema = z.object({
   status: z.enum(AppointmentStatus),
-});
+}).strict();

@@ -70,6 +70,15 @@ const envSchema = z.object({
     .min(1, "MAX_FILE_SIZE_MB must be between 1 and 50.")
     .max(50, "MAX_FILE_SIZE_MB must be between 1 and 50.")
     .default(10),
+  DEFAULT_ORGANIZATION_SLUG: z
+    .string()
+    .trim()
+    .min(1, "DEFAULT_ORGANIZATION_SLUG cannot be empty.")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "DEFAULT_ORGANIZATION_SLUG must be a lowercase URL-safe slug.",
+    )
+    .default("advisora-demo"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

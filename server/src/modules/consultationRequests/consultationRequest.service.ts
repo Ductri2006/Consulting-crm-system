@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 
+import { env } from "../../config/env";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
@@ -44,6 +45,23 @@ const publicConsultationRequestSelect = {
 export const createConsultationRequest = async (
   input: CreateConsultationRequestInput,
 ) => {
+  const organization = await prisma.organization.findFirst({
+    where: {
+      slug: env.DEFAULT_ORGANIZATION_SLUG,
+      isActive: true,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!organization) {
+    throw new AppError(
+      "Default workspace is not configured or is inactive.",
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    );
+  }
+
   if (input.serviceId) {
     const service = await prisma.service.findFirst({
       where: {
@@ -65,7 +83,10 @@ export const createConsultationRequest = async (
 
   try {
     return await prisma.consultationRequest.create({
-      data: input,
+      data: {
+        ...input,
+        organizationId: organization.id,
+      },
       select: publicConsultationRequestSelect,
     });
   } catch (error) {
@@ -82,9 +103,11 @@ export const createConsultationRequest = async (
 
 export const findConsultationRequests = async (
   query: ConsultationRequestListQuery,
+  organizationId: string,
 ) => {
   const { page, limit, search, status, serviceId } = query;
   const where: Prisma.ConsultationRequestWhereInput = {
+    organizationId,
     ...(status && { status }),
     ...(serviceId && { serviceId }),
     ...(search && {
@@ -135,9 +158,15 @@ export const findConsultationRequests = async (
   };
 };
 
-export const findConsultationRequestById = async (id: string) => {
-  const request = await prisma.consultationRequest.findUnique({
-    where: { id },
+export const findConsultationRequestById = async (
+  id: string,
+  organizationId: string,
+) => {
+  const request = await prisma.consultationRequest.findFirst({
+    where: {
+      id,
+      organizationId,
+    },
     include: consultationRequestWithService,
   });
 
@@ -154,8 +183,9 @@ export const findConsultationRequestById = async (id: string) => {
 export const updateConsultationRequestStatus = async (
   id: string,
   input: UpdateConsultationRequestStatusInput,
+  organizationId: string,
 ) => {
-  await findConsultationRequestById(id);
+  await findConsultationRequestById(id, organizationId);
 
   try {
     return await prisma.consultationRequest.update({

@@ -39,24 +39,26 @@ const throwCustomerWriteError = (error: unknown): never => {
 
 export const getCustomers = async (
   query: CustomerListQuery,
+  organizationId: string,
 ): Promise<CustomerListResult> => {
   const { page, limit, search } = query;
   const { skip, take } = getPagination(page, limit);
-  const where: Prisma.CustomerWhereInput = search
-    ? {
-        OR: [
-          { fullName: { contains: search, mode: "insensitive" } },
-          { phone: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-          {
-            identityNumber: {
-              contains: search,
-              mode: "insensitive",
-            },
+  const where: Prisma.CustomerWhereInput = {
+    organizationId,
+    ...(search && {
+      OR: [
+        { fullName: { contains: search, mode: "insensitive" } },
+        { phone: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        {
+          identityNumber: {
+            contains: search,
+            mode: "insensitive",
           },
-        ],
-      }
-    : {};
+        },
+      ],
+    }),
+  };
 
   const [items, total] = await prisma.$transaction([
     prisma.customer.findMany({
@@ -76,9 +78,13 @@ export const getCustomers = async (
 
 export const getCustomerById = async (
   customerId: string,
+  organizationId: string,
 ): Promise<CustomerDetail> => {
-  const customer = await prisma.customer.findUnique({
-    where: { id: customerId },
+  const customer = await prisma.customer.findFirst({
+    where: {
+      id: customerId,
+      organizationId,
+    },
     include: {
       _count: {
         select: customerRelatedCountSelection,
@@ -100,10 +106,14 @@ export const getCustomerById = async (
 
 export const createCustomer = async (
   input: CreateCustomerInput,
+  organizationId: string,
 ): Promise<Customer> => {
   try {
     return await prisma.customer.create({
-      data: input,
+      data: {
+        ...input,
+        organizationId,
+      },
     });
   } catch (error) {
     return throwCustomerWriteError(error);
@@ -113,8 +123,11 @@ export const createCustomer = async (
 export const updateCustomer = async (
   customerId: string,
   input: UpdateCustomerInput,
+  organizationId: string,
 ): Promise<Customer> => {
   try {
+    await getCustomerById(customerId, organizationId);
+
     return await prisma.customer.update({
       where: { id: customerId },
       data: input,
@@ -126,11 +139,15 @@ export const updateCustomer = async (
 
 export const deleteCustomer = async (
   customerId: string,
+  organizationId: string,
 ): Promise<Customer> => {
   try {
     return await prisma.$transaction(async (transaction) => {
-      const customer = await transaction.customer.findUnique({
-        where: { id: customerId },
+      const customer = await transaction.customer.findFirst({
+        where: {
+          id: customerId,
+          organizationId,
+        },
         include: {
           _count: {
             select: customerRelatedCountSelection,

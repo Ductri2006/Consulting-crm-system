@@ -46,14 +46,15 @@ const customerFields = {
 
 export const customerIdParamsSchema = z.object({
   id: z.uuid("Customer id must be a valid UUID."),
-});
+}).strict();
 
 export const customerListQuerySchema = paginationQuerySchema;
 
-export const createCustomerSchema = z.object(customerFields);
+export const createCustomerSchema = z.object(customerFields).strict();
 
 export const updateCustomerSchema = z
   .object(customerFields)
+  .strict()
   .partial()
   .refine((input) => Object.keys(input).length > 0, {
     message: "At least one customer field must be provided.",

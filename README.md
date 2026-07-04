@@ -8,6 +8,8 @@ Consulting CRM System is a fullstack portfolio application for consulting
 business operations. It combines a public-facing consulting website with a
 protected internal CRM dashboard for managing customers, consultation requests,
 case profiles, appointments, tasks, documents, users, dashboards, and reports.
+The backend now includes an Organization model used as the internal Workspace
+tenant boundary; the current staging/demo path uses a single default workspace.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -167,6 +169,7 @@ The platform is divided into the following functional modules:
 | Task Management | Assigns operational work and tracks progress and deadlines |
 | Document Management | Stores metadata and links files to customers and cases |
 | User Management | Maintains staff accounts, roles, and active status |
+| Organization Workspace | Scopes internal users and CRM business data by workspace |
 | Public Content Catalog | Uses typed local content for services, news, and project gallery pages |
 | Dashboard and Reporting | Summarizes workload, performance, appointments, and deadlines |
 | Activity Logging | Records important user actions for traceability |
@@ -305,6 +308,18 @@ Public visitors do not need an account. Admin, manager, and staff accounts are
 internal CRM users for the protected workspace. A customer portal is future
 roadmap scope.
 
+Current staging/demo workspace:
+
+```text
+Name: Advisora Demo Workspace
+Slug: advisora-demo
+```
+
+The public consultation form maps new requests to the workspace configured by
+`DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. Public workspace
+signup, invitations, billing, and customer portal access remain future roadmap
+scope.
+
 Intentional portfolio demo accounts created by `npm run seed:demo`:
 
 | Role | Email | Password |
@@ -347,7 +362,9 @@ npm run seed:demo
 
 The demo seed is idempotent and upserts fictional customers, consultation
 requests, cases, appointments, tasks, case history, and activity records. It
-does not reset the database and does not seed physical document files.
+also upserts the `Advisora Demo Workspace` and assigns all demo CRM data to
+that workspace. It does not reset the database and does not seed physical
+document files.
 
 Use only fictional demo data. Do not paste real customer data, real database
 URLs, access tokens, or production credentials into the app, docs, commits, or
@@ -464,7 +481,8 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Public contact and appointment forms | Validation/demo flows only; backend intake remains future work |
 | Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, internal users, documents, and reports |
 | Backend API | Implemented for auth, CRM workflows, internal user management, documents, dashboard, and reports |
-| Database | Prisma schema, migration, seed, and Neon verification completed |
+| Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
+| Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; multi-company signup is future work |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
@@ -482,7 +500,9 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Access tokens are stored in browser local storage for the portfolio demo.
 - Contact and appointment public forms validate locally but do not create backend records yet.
 - Internal user management is for CRM team members only; public visitors and customers do not have accounts yet.
-- No customer portal, OCR, malware scanning, cloud object storage, report exports, realtime updates, production rate limiting, or centralized observability yet.
+- No public workspace signup, invitation system, customer portal, billing, OCR,
+  malware scanning, cloud object storage, report exports, realtime updates,
+  production rate limiting, or centralized observability yet.
 
 ## Learning Goals
 
@@ -527,11 +547,12 @@ This project is designed to practice:
 - [x] Staging demo data and safer demo accounts
 - [x] Internal user management
 - [x] Staging deployment
+- [x] Organization / Workspace tenant foundation
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Phase 21 complete - internal user management
+**Current phase:** Phase 22 complete - Organization / Workspace tenant foundation
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -576,5 +597,9 @@ staging runbook plus Vercel SPA rewrite support for route refreshes. Phase 20
 adds an idempotent staging demo seed with fictional CRM data, safer demo
 accounts for admin/manager/staff review, Render JWT rotation notes, and
 portfolio demo guidance. Phase 21 adds internal Team Members management for
-administrator-only CRM user administration. Production deployment remains a
-future phase.
+administrator-only CRM user administration. Phase 22 adds the Organization /
+Workspace tenant foundation: existing data is backfilled to Advisora Demo
+Workspace, auth responses include safe workspace info, public consultation
+requests map to `DEFAULT_ORGANIZATION_SLUG`, and CRM APIs scope internal users,
+customers, requests, cases, appointments, tasks, documents, dashboard, and
+reports by `organizationId`. Production deployment remains a future phase.

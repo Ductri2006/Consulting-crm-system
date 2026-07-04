@@ -34,6 +34,7 @@ const crmRoles: UserRole[] = [
 
 const performanceUserSelect = {
   id: true,
+  organizationId: true,
   fullName: true,
   email: true,
   role: true,
@@ -42,6 +43,7 @@ const performanceUserSelect = {
 
 const activityUserSelect = {
   id: true,
+  organizationId: true,
   fullName: true,
   email: true,
   phone: true,
@@ -83,24 +85,29 @@ const getCaseScope = (
   actor: SafeUser,
 ): Prisma.CaseProfileWhereInput =>
   actor.role === UserRole.STAFF
-    ? { assignedToId: actor.id }
-    : {};
+    ? {
+        organizationId: actor.organizationId,
+        assignedToId: actor.id,
+      }
+    : { organizationId: actor.organizationId };
 
 const getTaskScope = (actor: SafeUser): Prisma.TaskWhereInput =>
   actor.role === UserRole.STAFF
     ? {
+        organizationId: actor.organizationId,
         OR: [
           { assignedToId: actor.id },
           { createdById: actor.id },
         ],
       }
-    : {};
+    : { organizationId: actor.organizationId };
 
 const getDocumentScope = (
   actor: SafeUser,
 ): Prisma.DocumentWhereInput =>
   actor.role === UserRole.STAFF
     ? {
+        organizationId: actor.organizationId,
         OR: [
           { uploadedById: actor.id },
           {
@@ -112,7 +119,7 @@ const getDocumentScope = (
           },
         ],
       }
-    : {};
+    : { organizationId: actor.organizationId };
 
 export const getDashboardOverview = async (actor: SafeUser) => {
   assertDashboardActor(actor);
@@ -125,10 +132,12 @@ export const getDashboardOverview = async (actor: SafeUser) => {
   const customerScope: Prisma.CustomerWhereInput =
     actor.role === UserRole.STAFF
       ? {
+          organizationId: actor.organizationId,
           OR: [
             {
               cases: {
                 some: {
+                  organizationId: actor.organizationId,
                   assignedToId: actor.id,
                 },
               },
@@ -136,23 +145,30 @@ export const getDashboardOverview = async (actor: SafeUser) => {
             {
               appointments: {
                 some: {
+                  organizationId: actor.organizationId,
                   staffId: actor.id,
                 },
               },
             },
           ],
         }
-      : {};
+      : { organizationId: actor.organizationId };
   const appointmentScope: Prisma.AppointmentWhereInput =
-    actor.role === UserRole.STAFF ? { staffId: actor.id } : {};
+    actor.role === UserRole.STAFF
+      ? {
+          organizationId: actor.organizationId,
+          staffId: actor.id,
+        }
+      : { organizationId: actor.organizationId };
   const consultationScope: Prisma.ConsultationRequestWhereInput =
     actor.role === UserRole.STAFF
       ? {
+          organizationId: actor.organizationId,
           id: {
             in: [],
           },
         }
-      : {};
+      : { organizationId: actor.organizationId };
 
   const [
     totalCustomers,
@@ -358,7 +374,12 @@ export const getUpcomingDeadlines = async (
   const caseScope = getCaseScope(actor);
   const taskScope = getTaskScope(actor);
   const appointmentScope: Prisma.AppointmentWhereInput =
-    actor.role === UserRole.STAFF ? { staffId: actor.id } : {};
+    actor.role === UserRole.STAFF
+      ? {
+          organizationId: actor.organizationId,
+          staffId: actor.id,
+        }
+      : { organizationId: actor.organizationId };
   const [cases, tasks, appointments] = await prisma.$transaction([
     prisma.caseProfile.findMany({
       where: {
@@ -509,6 +530,7 @@ export const getStaffPerformance = async (
   ] = await prisma.$transaction([
     prisma.user.findMany({
       where: {
+        organizationId: actor.organizationId,
         isActive: true,
         role: {
           in: crmRoles,
@@ -519,6 +541,7 @@ export const getStaffPerformance = async (
     prisma.caseProfile.groupBy({
       by: ["assignedToId"],
       where: {
+        organizationId: actor.organizationId,
         assignedToId: {
           not: null,
         },
@@ -531,6 +554,7 @@ export const getStaffPerformance = async (
     prisma.caseProfile.groupBy({
       by: ["assignedToId"],
       where: {
+        organizationId: actor.organizationId,
         assignedToId: {
           not: null,
         },
@@ -544,6 +568,7 @@ export const getStaffPerformance = async (
     prisma.task.groupBy({
       by: ["assignedToId"],
       where: {
+        organizationId: actor.organizationId,
         assignedToId: {
           not: null,
         },
@@ -557,6 +582,7 @@ export const getStaffPerformance = async (
     prisma.appointment.groupBy({
       by: ["staffId"],
       where: {
+        organizationId: actor.organizationId,
         staffId: {
           not: null,
         },
@@ -645,11 +671,12 @@ export const getRecentActivities = async (
     where:
       actor.role === UserRole.STAFF
         ? {
+            organizationId: actor.organizationId,
             caseProfile: {
               assignedToId: actor.id,
             },
           }
-        : {},
+        : { organizationId: actor.organizationId },
     include: {
       user: {
         select: activityUserSelect,

@@ -46,19 +46,20 @@ const validateDateOrder = (
   }
 };
 
-export const emptyDashboardQuerySchema = z.object({});
+export const emptyDashboardQuerySchema = z.object({}).strict();
 
 export const casesByMonthQuerySchema = z
   .object({
     fromDate: calendarDateSchema.optional(),
     toDate: calendarDateSchema.optional(),
   })
+  .strict()
   .superRefine(validateDateOrder);
 
 export const upcomingDeadlinesQuerySchema = z.object({
   days: z.coerce.number().int().min(1).max(30).default(7),
   limit: limitSchema,
-});
+}).strict();
 
 export const staffPerformanceQuerySchema = z
   .object({
@@ -66,8 +67,9 @@ export const staffPerformanceQuerySchema = z
     toDate: calendarDateSchema.optional(),
     limit: limitSchema,
   })
+  .strict()
   .superRefine(validateDateOrder);
 
 export const recentActivitiesQuerySchema = z.object({
   limit: limitSchema,
-});
+}).strict();

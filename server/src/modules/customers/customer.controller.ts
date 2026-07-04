@@ -1,8 +1,10 @@
 import type { Request } from "express";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
+import { AppError } from "../../utils/AppError";
 import { successResponse } from "../../utils/apiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
+import type { SafeUser } from "../../utils/sanitizeUser";
 import {
   createCustomer,
   deleteCustomer,
@@ -26,10 +28,22 @@ const getCustomerId = (params: Request["params"]): string => {
   return id;
 };
 
+const getActor = (request: Request): SafeUser => {
+  if (!request.user) {
+    throw new AppError(
+      "Authentication is required.",
+      HTTP_STATUS.UNAUTHORIZED,
+    );
+  }
+
+  return request.user;
+};
+
 export const listCustomersController = asyncHandler(
   async (request, response): Promise<void> => {
     const result = await getCustomers(
       request.query as unknown as CustomerListQuery,
+      getActor(request).organizationId,
     );
 
     response
@@ -40,7 +54,10 @@ export const listCustomersController = asyncHandler(
 
 export const getCustomerController = asyncHandler(
   async (request, response): Promise<void> => {
-    const customer = await getCustomerById(getCustomerId(request.params));
+    const customer = await getCustomerById(
+      getCustomerId(request.params),
+      getActor(request).organizationId,
+    );
 
     response
       .status(HTTP_STATUS.OK)
@@ -54,6 +71,7 @@ export const createCustomerController = asyncHandler(
   async (request, response): Promise<void> => {
     const customer = await createCustomer(
       request.body as CreateCustomerInput,
+      getActor(request).organizationId,
     );
 
     response
@@ -67,6 +85,7 @@ export const updateCustomerController = asyncHandler(
     const customer = await updateCustomer(
       getCustomerId(request.params),
       request.body as UpdateCustomerInput,
+      getActor(request).organizationId,
     );
 
     response
@@ -77,7 +96,10 @@ export const updateCustomerController = asyncHandler(
 
 export const deleteCustomerController = asyncHandler(
   async (request, response): Promise<void> => {
-    const customer = await deleteCustomer(getCustomerId(request.params));
+    const customer = await deleteCustomer(
+      getCustomerId(request.params),
+      getActor(request).organizationId,
+    );
 
     response
       .status(HTTP_STATUS.OK)

@@ -33,6 +33,7 @@ const assignableRoles = [
 
 const safeUserSelect = {
   id: true,
+  organizationId: true,
   fullName: true,
   email: true,
   phone: true,
@@ -117,10 +118,12 @@ const getStaffFilter = (
 const findAssignableUser = async (
   transaction: Prisma.TransactionClient,
   id: string,
+  organizationId: string,
 ) => {
   const user = await transaction.user.findFirst({
     where: {
       id,
+      organizationId,
       isActive: true,
       role: {
         in: assignableRoles,
@@ -145,9 +148,13 @@ const findCaseForCustomer = async (
   transaction: Prisma.TransactionClient,
   caseProfileId: string,
   customerId: string,
+  organizationId: string,
 ): Promise<void> => {
-  const caseProfile = await transaction.caseProfile.findUnique({
-    where: { id: caseProfileId },
+  const caseProfile = await transaction.caseProfile.findFirst({
+    where: {
+      id: caseProfileId,
+      organizationId,
+    },
     select: {
       id: true,
       customerId: true,
@@ -230,6 +237,7 @@ export const listAppointments = async (
         }
       : undefined;
   const where: Prisma.AppointmentWhereInput = {
+    organizationId: actor.organizationId,
     ...(status && { status }),
     ...(method && { method }),
     ...(customerId && { customerId }),
@@ -295,6 +303,7 @@ export const listTodayAppointments = async (
   );
   const items = await prisma.appointment.findMany({
     where: {
+      organizationId: actor.organizationId,
       appointmentDate: today,
       status: {
         not: AppointmentStatus.CANCELLED,
@@ -312,8 +321,11 @@ export const findAppointmentById = async (
   id: string,
   actor: SafeUser,
 ) => {
-  const appointment = await prisma.appointment.findUnique({
-    where: { id },
+  const appointment = await prisma.appointment.findFirst({
+    where: {
+      id,
+      organizationId: actor.organizationId,
+    },
     include: appointmentInclude,
   });
 
@@ -352,8 +364,11 @@ export const createAppointment = async (
 
   try {
     return await prisma.$transaction(async (transaction) => {
-      const customer = await transaction.customer.findUnique({
-        where: { id: input.customerId },
+      const customer = await transaction.customer.findFirst({
+        where: {
+          id: input.customerId,
+          organizationId: actor.organizationId,
+        },
         select: { id: true },
       });
 
@@ -369,15 +384,21 @@ export const createAppointment = async (
           transaction,
           input.caseProfileId,
           input.customerId,
+          actor.organizationId,
         );
       }
 
       if (effectiveStaffId) {
-        await findAssignableUser(transaction, effectiveStaffId);
+        await findAssignableUser(
+          transaction,
+          effectiveStaffId,
+          actor.organizationId,
+        );
       }
 
       return transaction.appointment.create({
         data: {
+          organizationId: actor.organizationId,
           customerId: input.customerId,
           caseProfileId: input.caseProfileId,
           staffId: effectiveStaffId,
@@ -410,8 +431,11 @@ export const updateAppointment = async (
   try {
     return await prisma.$transaction(async (transaction) => {
       const currentAppointment =
-        await transaction.appointment.findUnique({
-          where: { id },
+        await transaction.appointment.findFirst({
+          where: {
+            id,
+            organizationId: actor.organizationId,
+          },
           select: {
             customerId: true,
             staffId: true,
@@ -441,7 +465,11 @@ export const updateAppointment = async (
       }
 
       if (input.staffId) {
-        await findAssignableUser(transaction, input.staffId);
+        await findAssignableUser(
+          transaction,
+          input.staffId,
+          actor.organizationId,
+        );
       }
 
       if (input.caseProfileId) {
@@ -449,6 +477,7 @@ export const updateAppointment = async (
           transaction,
           input.caseProfileId,
           currentAppointment.customerId,
+          actor.organizationId,
         );
       }
 
@@ -479,8 +508,11 @@ export const updateAppointmentStatus = async (
   try {
     return await prisma.$transaction(async (transaction) => {
       const currentAppointment =
-        await transaction.appointment.findUnique({
-          where: { id },
+        await transaction.appointment.findFirst({
+          where: {
+            id,
+            organizationId: actor.organizationId,
+          },
           select: {
             staffId: true,
             status: true,
@@ -541,8 +573,11 @@ export const deleteAppointment = async (
 ) => {
   try {
     return await prisma.$transaction(async (transaction) => {
-      const appointment = await transaction.appointment.findUnique({
-        where: { id },
+      const appointment = await transaction.appointment.findFirst({
+        where: {
+          id,
+          organizationId: actor.organizationId,
+        },
         select: {
           staffId: true,
           status: true,

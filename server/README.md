@@ -48,6 +48,7 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `JWT_EXPIRES_IN` | Yes | Access-token lifetime, for example `7d` |
 | `UPLOAD_DIR` | No | Local-development upload directory, defaults to `uploads` |
 | `MAX_FILE_SIZE_MB` | No | Per-file upload limit from 1 to 50 MB, defaults to `10` |
+| `DEFAULT_ORGANIZATION_SLUG` | No | Workspace slug used by public consultation requests, defaults to `advisora-demo` |
 
 Example:
 
@@ -60,6 +61,7 @@ JWT_SECRET="<strong-private-secret-at-least-32-characters>"
 JWT_EXPIRES_IN="7d"
 UPLOAD_DIR="uploads"
 MAX_FILE_SIZE_MB=10
+DEFAULT_ORGANIZATION_SLUG="advisora-demo"
 ```
 
 `CLIENT_URL` can be a single origin such as `http://localhost:5173` or a
@@ -158,7 +160,10 @@ Content-Type: application/json
 }
 ```
 
-A successful response contains `data.accessToken` and a sanitized `data.user`. Use the access token as a Bearer token for protected requests.
+A successful response contains `data.accessToken` and a sanitized `data.user`.
+The user payload includes `organizationId` and safe workspace info as
+`organization: { id, name, slug }`. Use the access token as a Bearer token for
+protected requests.
 
 ### Get the current user
 
@@ -176,6 +181,12 @@ Authorization: Bearer <token>
 
 Logout acknowledges the client request. Tokens are stateless in this phase, so the client must remove its stored access token.
 
+Authentication reloads the user and organization from the database on each
+protected request. Inactive users or inactive workspaces are denied. Tokens
+created before the workspace foundation do not crash the app; if they still
+verify, the middleware derives the user's current organization from the
+database.
+
 ### Assignable users
 
 ```http
@@ -185,8 +196,8 @@ Authorization: Bearer <token>
 
 This endpoint is available to active `ADMIN` and `MANAGER` users for case
 assignment. It returns only active CRM users with the `ADMIN`, `MANAGER`, or
-`STAFF` role and exposes only safe profile fields; it never includes
-`passwordHash`.
+`STAFF` role in the current workspace and exposes only safe profile fields; it
+never includes `passwordHash`.
 
 ### Admin-only users
 
@@ -218,6 +229,9 @@ Authorization: Bearer <token>
 These endpoints require an active authenticated user with the `ADMIN` role.
 They manage internal CRM users only: `ADMIN`, `MANAGER`, and `STAFF`. Public
 visitors and future customer-portal users are outside this module.
+Administrators can manage only users in their own workspace. User creation
+assigns the current workspace on the server; clients cannot submit
+`organizationId`.
 
 The user list supports `page`, `limit`, `search`, `role`, and `isActive` query
 parameters. User create accepts `fullName`, unique `email`, optional `phone`,
@@ -240,6 +254,13 @@ Public routes do not require an access token. Protected routes require:
 ```http
 Authorization: Bearer <token>
 ```
+
+Step 22 adds the Organization / Workspace tenant foundation. Protected CRM
+routes scope customers, consultation requests, cases, appointments, tasks,
+documents, dashboard data, reports, and internal users by
+`request.user.organizationId`. Requests that include unknown fields such as a
+client-supplied `organizationId` fail validation instead of selecting a tenant
+from the browser. Services remain a global catalog in this step.
 
 ### Customers
 
@@ -287,7 +308,12 @@ Example public submission:
 }
 ```
 
-`serviceId` is optional, but it must identify an active service when supplied. The internal list supports `search`, `status`, `serviceId`, `page`, and `limit`. Status updates accept `NEW`, `CONTACTED`, or `CLOSED`; `CONVERTED` is reserved for the future transactional conversion workflow.
+`serviceId` is optional, but it must identify an active service when supplied.
+Public submissions are assigned to the active organization configured by
+`DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. The internal list
+supports `search`, `status`, `serviceId`, `page`, and `limit`. Status updates
+accept `NEW`, `CONTACTED`, or `CLOSED`; `CONVERTED` is reserved for the future
+transactional conversion workflow.
 
 List responses use a consistent pagination envelope:
 
@@ -510,7 +536,7 @@ Authorization: Bearer <token>
 | `GET` | `/api/dashboard/staff-performance` | `ADMIN`, `MANAGER` |
 | `GET` | `/api/dashboard/recent-activities` | `ADMIN`, `MANAGER`, scoped `STAFF` |
 
-Administrators and managers receive global dashboard data. Staff receive only
+Administrators and managers receive dashboard data for their workspace. Staff receive only
 metrics and records related to their assigned cases and appointments, tasks
 they created or that are assigned to them, and documents they uploaded or that
 belong to an assigned case. Staff cannot access the staff-performance report.
@@ -612,10 +638,11 @@ $env:DEMO_SEED_ENABLED = "true"
 npm run seed:demo
 ```
 
-The demo seed is idempotent. It upserts fictional demo users, customers,
-consultation requests, cases, appointments, tasks, case history, and activity
-logs. It does not reset the database, does not delete non-demo data, and does
-not seed physical document files.
+The demo seed is idempotent. It upserts the `Advisora Demo Workspace` and
+fictional demo users, customers, consultation requests, cases, appointments,
+tasks, case history, and activity logs assigned to that workspace. It does not
+reset the database, does not delete non-demo data, and does not seed physical
+document files.
 
 Intentional portfolio demo accounts:
 
@@ -644,7 +671,10 @@ result is available in the
 The backend includes customer and service management, consultation-request
 triage, protected case-profile workflows, appointment scheduling, internal
 task management, authenticated document management, and role-aware dashboard
-and reporting APIs. The repository also includes production readiness,
+and reporting APIs. Step 22 adds the Organization / Workspace tenant foundation
+using a single default `Advisora Demo Workspace`; multi-company signup,
+invitations, billing, and customer portal access remain future work. The
+repository also includes production readiness,
 deployment, and final QA documentation. It does not include
 request-to-customer conversion, OCR, cloud object storage, report exports,
 realtime updates, or real production deployment.

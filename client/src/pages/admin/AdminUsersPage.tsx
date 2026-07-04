@@ -965,6 +965,8 @@ export function AdminUsersPage() {
   }
 
   const hasFilters = Boolean(search || role || status)
+  const workspaceName = currentUser?.organization?.name?.trim()
+  const workspaceLabel = workspaceName || 'the current workspace'
 
   const columns: readonly DataTableColumn<TeamMember>[] = [
     {
@@ -1072,6 +1074,9 @@ export function AdminUsersPage() {
           </h1>
           <p className="mt-2 text-sm text-slate-500">
             Manage internal CRM users, roles, activation and password resets.
+          </p>
+          <p className="mt-1 text-sm text-slate-500">
+            Team members belong to {workspaceLabel}.
           </p>
         </div>
         <button

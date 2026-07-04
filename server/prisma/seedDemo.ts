@@ -16,6 +16,14 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const LEGACY_LOCAL_ADMIN_EMAIL = "admin@advisora.demo";
 const DEMO_SEED_CONFIRMATION_VALUE = "true";
 
+const defaultOrganization = {
+  id: "00000000-0000-4000-8000-000000000001",
+  name: "Advisora Demo Workspace",
+  slug: "advisora-demo",
+  industry: "Consulting",
+  email: "workspace@advisora.test",
+} as const;
+
 const demoPasswords = {
   admin: "Advisora-Demo-Admin-2026!",
   manager: "Advisora-Demo-Manager-2026!",
@@ -125,6 +133,18 @@ const monthOffset = (months: number): Date => {
   return date;
 };
 
+const upsertDefaultOrganization = async () =>
+  prisma.organization.upsert({
+    where: { slug: defaultOrganization.slug },
+    update: {
+      name: defaultOrganization.name,
+      industry: defaultOrganization.industry,
+      email: defaultOrganization.email,
+      isActive: true,
+    },
+    create: defaultOrganization,
+  });
+
 const upsertDemoUsers = async () => {
   const [adminPasswordHash, managerPasswordHash, staffPasswordHash] =
     await Promise.all([
@@ -137,6 +157,7 @@ const upsertDemoUsers = async () => {
     prisma.user.upsert({
       where: { email: "admin.demo@advisora.test" },
       update: {
+        organizationId: defaultOrganization.id,
         fullName: "Advisora Demo Admin",
         passwordHash: adminPasswordHash,
         role: UserRole.ADMIN,
@@ -144,6 +165,7 @@ const upsertDemoUsers = async () => {
       },
       create: {
         id: demoIds.users.admin,
+        organizationId: defaultOrganization.id,
         fullName: "Advisora Demo Admin",
         email: "admin.demo@advisora.test",
         passwordHash: adminPasswordHash,
@@ -153,6 +175,7 @@ const upsertDemoUsers = async () => {
     prisma.user.upsert({
       where: { email: "manager.demo@advisora.test" },
       update: {
+        organizationId: defaultOrganization.id,
         fullName: "Maya Operations Manager",
         passwordHash: managerPasswordHash,
         role: UserRole.MANAGER,
@@ -160,6 +183,7 @@ const upsertDemoUsers = async () => {
       },
       create: {
         id: demoIds.users.manager,
+        organizationId: defaultOrganization.id,
         fullName: "Maya Operations Manager",
         email: "manager.demo@advisora.test",
         passwordHash: managerPasswordHash,
@@ -169,6 +193,7 @@ const upsertDemoUsers = async () => {
     prisma.user.upsert({
       where: { email: "staff.demo@advisora.test" },
       update: {
+        organizationId: defaultOrganization.id,
         fullName: "Sam Case Specialist",
         passwordHash: staffPasswordHash,
         role: UserRole.STAFF,
@@ -176,6 +201,7 @@ const upsertDemoUsers = async () => {
       },
       create: {
         id: demoIds.users.staff,
+        organizationId: defaultOrganization.id,
         fullName: "Sam Case Specialist",
         email: "staff.demo@advisora.test",
         passwordHash: staffPasswordHash,
@@ -193,6 +219,7 @@ const upsertDemoUsers = async () => {
     await prisma.user.update({
       where: { id: legacyAdmin.id },
       data: {
+        organizationId: defaultOrganization.id,
         fullName: "Advisora Legacy Local Admin",
         isActive: false,
       },
@@ -285,6 +312,7 @@ const upsertCustomers = async () => {
       prisma.customer.upsert({
         where: { id: customer.id },
         update: {
+          organizationId: defaultOrganization.id,
           fullName: customer.fullName,
           phone: customer.phone,
           email: customer.email,
@@ -292,7 +320,10 @@ const upsertCustomers = async () => {
           source: customer.source,
           note: customer.note,
         },
-        create: customer,
+        create: {
+          ...customer,
+          organizationId: defaultOrganization.id,
+        },
       }),
     ),
   );
@@ -410,6 +441,7 @@ const upsertCases = async (
       prisma.caseProfile.upsert({
         where: { id: caseProfile.id },
         update: {
+          organizationId: defaultOrganization.id,
           caseCode: caseProfile.caseCode,
           customerId: caseProfile.customerId,
           serviceId: caseProfile.serviceId,
@@ -423,7 +455,10 @@ const upsertCases = async (
           completedAt: caseProfile.completedAt,
           createdAt: caseProfile.createdAt,
         },
-        create: caseProfile,
+        create: {
+          ...caseProfile,
+          organizationId: defaultOrganization.id,
+        },
       }),
     ),
   );
@@ -521,6 +556,7 @@ const upsertConsultationRequests = async (
       prisma.consultationRequest.upsert({
         where: { id: request.id },
         update: {
+          organizationId: defaultOrganization.id,
           fullName: request.fullName,
           phone: request.phone,
           email: request.email,
@@ -532,7 +568,10 @@ const upsertConsultationRequests = async (
           convertedAt: request.convertedAt,
           createdAt: request.createdAt,
         },
-        create: request,
+        create: {
+          ...request,
+          organizationId: defaultOrganization.id,
+        },
       }),
     ),
   );
@@ -614,6 +653,7 @@ const upsertAppointments = async (
       prisma.appointment.upsert({
         where: { id: appointment.id },
         update: {
+          organizationId: defaultOrganization.id,
           customerId: appointment.customerId,
           caseProfileId: appointment.caseProfileId,
           staffId: appointment.staffId,
@@ -624,7 +664,10 @@ const upsertAppointments = async (
           status: appointment.status,
           note: appointment.note,
         },
-        create: appointment,
+        create: {
+          ...appointment,
+          organizationId: defaultOrganization.id,
+        },
       }),
     ),
   );
@@ -723,6 +766,7 @@ const upsertTasks = async (
       prisma.task.upsert({
         where: { id: task.id },
         update: {
+          organizationId: defaultOrganization.id,
           caseProfileId: task.caseProfileId,
           title: task.title,
           description: task.description,
@@ -732,7 +776,10 @@ const upsertTasks = async (
           priority: task.priority,
           deadline: task.deadline,
         },
-        create: task,
+        create: {
+          ...task,
+          organizationId: defaultOrganization.id,
+        },
       }),
     ),
   );
@@ -814,6 +861,7 @@ const upsertCaseHistories = async (
       prisma.caseHistory.upsert({
         where: { id: history.id },
         update: {
+          organizationId: defaultOrganization.id,
           caseProfileId: history.caseProfileId,
           userId: history.userId,
           action: history.action,
@@ -822,7 +870,10 @@ const upsertCaseHistories = async (
           note: history.note,
           createdAt: history.createdAt,
         },
-        create: history,
+        create: {
+          ...history,
+          organizationId: defaultOrganization.id,
+        },
       }),
     ),
   );
@@ -874,6 +925,7 @@ const upsertActivityLogs = async (
       prisma.activityLog.upsert({
         where: { id: activity.id },
         update: {
+          organizationId: defaultOrganization.id,
           userId: activity.userId,
           action: activity.action,
           entityType: activity.entityType,
@@ -882,7 +934,10 @@ const upsertActivityLogs = async (
           ipAddress: activity.ipAddress,
           createdAt: activity.createdAt,
         },
-        create: activity,
+        create: {
+          ...activity,
+          organizationId: defaultOrganization.id,
+        },
       }),
     ),
   );
@@ -891,6 +946,7 @@ const upsertActivityLogs = async (
 async function main(): Promise<void> {
   assertDemoSeedAllowed();
 
+  await upsertDefaultOrganization();
   const users = await upsertDemoUsers();
   const serviceRecords = await upsertServices();
   const serviceIds = Object.fromEntries(

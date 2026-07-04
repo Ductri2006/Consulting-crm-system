@@ -2,8 +2,16 @@ import type { ReactNode } from 'react'
 
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF'
 
+export interface UserOrganization {
+  id: string
+  name: string
+  slug: string
+}
+
 export interface User {
   id: string
+  organizationId?: string | null
+  organization?: UserOrganization | null
   fullName: string
   email: string
   phone?: string | null

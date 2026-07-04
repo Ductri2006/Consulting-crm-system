@@ -11,8 +11,10 @@ const ACCESS_TOKEN_ALGORITHM: SignOptions["algorithm"] = "HS256";
 
 const accessTokenPayloadSchema = z.object({
   sub: z.uuid(),
+  userId: z.uuid().optional(),
   role: z.enum(UserRole),
   email: z.email(),
+  organizationId: z.uuid().optional(),
 });
 
 export type AccessTokenPayload = z.infer<typeof accessTokenPayloadSchema>;

@@ -8,14 +8,14 @@ const uuidSchema = (field: string) =>
 
 export const documentIdParamsSchema = z.object({
   id: uuidSchema("Document id"),
-});
+}).strict();
 
 export const documentListQuerySchema = paginationQuerySchema.extend({
   fileType: z.enum(DocumentType).optional(),
   customerId: uuidSchema("Customer id").optional(),
   caseProfileId: uuidSchema("Case profile id").optional(),
   uploadedById: uuidSchema("Uploader id").optional(),
-});
+}).strict();
 
 export const uploadDocumentMetadataSchema = z
   .object({
@@ -23,6 +23,7 @@ export const uploadDocumentMetadataSchema = z
     caseProfileId: uuidSchema("Case profile id").optional(),
     fileType: z.enum(DocumentType).default(DocumentType.OTHER),
   })
+  .strict()
   .refine(
     (input) =>
       input.customerId !== undefined ||

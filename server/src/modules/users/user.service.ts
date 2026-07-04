@@ -21,6 +21,7 @@ import type {
 export type AssignableUser = Pick<
   User,
   | "id"
+  | "organizationId"
   | "fullName"
   | "email"
   | "phone"
@@ -35,7 +36,7 @@ const internalUserRoles = [
   UserRole.STAFF,
 ];
 
-const internalUserWhere = {
+const internalUserRoleWhere = {
   role: {
     in: internalUserRoles,
   },
@@ -58,8 +59,10 @@ const throwUserWriteError = (error: unknown): never => {
 
 const getInternalUserWhere = (
   query: UserListQuery,
+  organizationId: string,
 ): Prisma.UserWhereInput => {
   const where: Prisma.UserWhereInput = {
+    organizationId,
     role: query.role
       ? query.role
       : {
@@ -85,11 +88,13 @@ const getInternalUserWhere = (
 const assertAdminWouldRemain = async (
   userId: string,
   input: UpdateUserInput,
+  organizationId: string,
 ): Promise<void> => {
   const target = await prisma.user.findFirst({
     where: {
       id: userId,
-      ...internalUserWhere,
+      organizationId,
+      ...internalUserRoleWhere,
     },
     select: {
       id: true,
@@ -119,6 +124,7 @@ const assertAdminWouldRemain = async (
       id: {
         not: userId,
       },
+      organizationId,
       isActive: true,
       role: UserRole.ADMIN,
     },
@@ -134,10 +140,11 @@ const assertAdminWouldRemain = async (
 
 export const findUsers = async (
   query: UserListQuery,
+  organizationId: string,
 ): Promise<UserListResult> => {
   const { page, limit } = query;
   const { skip, take } = getPagination(page, limit);
-  const where = getInternalUserWhere(query);
+  const where = getInternalUserWhere(query, organizationId);
 
   const [users, total] = await prisma.$transaction([
     prisma.user.findMany({
@@ -155,14 +162,18 @@ export const findUsers = async (
   };
 };
 
-export const findAssignableUsers = async (): Promise<AssignableUser[]> =>
+export const findAssignableUsers = async (
+  organizationId: string,
+): Promise<AssignableUser[]> =>
   prisma.user.findMany({
     where: {
+      organizationId,
       isActive: true,
-      ...internalUserWhere,
+      ...internalUserRoleWhere,
     },
     select: {
       id: true,
+      organizationId: true,
       fullName: true,
       email: true,
       phone: true,
@@ -175,11 +186,15 @@ export const findAssignableUsers = async (): Promise<AssignableUser[]> =>
     },
   });
 
-export const findUserById = async (id: string): Promise<SafeUser> => {
+export const findUserById = async (
+  id: string,
+  organizationId: string,
+): Promise<SafeUser> => {
   const user = await prisma.user.findFirst({
     where: {
       id,
-      ...internalUserWhere,
+      organizationId,
+      ...internalUserRoleWhere,
     },
   });
 
@@ -192,6 +207,7 @@ export const findUserById = async (id: string): Promise<SafeUser> => {
 
 export const createUser = async (
   input: CreateUserInput,
+  organizationId: string,
 ): Promise<SafeUser> => {
   if (!input.password) {
     throw new AppError(
@@ -206,6 +222,7 @@ export const createUser = async (
     const user = await prisma.user.create({
       data: {
         fullName: input.fullName,
+        organizationId,
         email: input.email,
         phone: input.phone,
         avatarUrl: input.avatarUrl,
@@ -224,8 +241,9 @@ export const createUser = async (
 export const updateUser = async (
   id: string,
   input: UpdateUserInput,
+  organizationId: string,
 ): Promise<SafeUser> => {
-  await assertAdminWouldRemain(id, input);
+  await assertAdminWouldRemain(id, input, organizationId);
 
   try {
     const user = await prisma.user.update({
@@ -242,11 +260,13 @@ export const updateUser = async (
 export const resetUserPassword = async (
   id: string,
   input: ResetUserPasswordInput,
+  organizationId: string,
 ): Promise<SafeUser> => {
   const target = await prisma.user.findFirst({
     where: {
       id,
-      ...internalUserWhere,
+      organizationId,
+      ...internalUserRoleWhere,
     },
     select: {
       id: true,

@@ -1,7 +1,8 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System through Phase 20. It documents staging demo hardening and production
+System through Phase 22. It documents staging demo hardening, the workspace
+tenant foundation, and production
 gaps while keeping real provider URLs, credentials, and secrets out of the
 repository.
 
@@ -20,6 +21,9 @@ accepted.
 - Frontend build and lint have passed in recent verification.
 - Backend build, lint, Prisma generate, and Prisma validation must pass before
   every deployment candidate.
+- Step 22 Organization / Workspace foundation is implemented for internal users
+  and CRM business data. Current staging/demo uses one default workspace:
+  `Advisora Demo Workspace` (`advisora-demo`).
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -37,6 +41,8 @@ Backend API:
 - Authentication and role authorization.
 - Customers, services, consultation requests, cases, appointments, tasks,
   internal users, documents, dashboard, and reporting APIs.
+- Organization / Workspace model, default workspace backfill migration, and
+  tenant-scoped business APIs.
 - Prisma migration, seed, database verification command, and health route.
 
 Admin CRM modules:
@@ -65,6 +71,7 @@ Server:
 | `JWT_EXPIRES_IN` | Access-token lifetime, for example `7d`. |
 | `UPLOAD_DIR` | Local upload directory used by the current document module. |
 | `MAX_FILE_SIZE_MB` | Per-file upload limit from 1 to 50 MB. |
+| `DEFAULT_ORGANIZATION_SLUG` | Workspace slug used by public consultation requests, defaults to `advisora-demo`. |
 
 Client:
 
@@ -78,6 +85,8 @@ Production rules:
 - `JWT_SECRET` must be generated securely, kept private, and rotated if exposed.
 - `CLIENT_URL` must match the deployed frontend origin.
 - `VITE_API_BASE_URL` must match the deployed backend API URL.
+- `DEFAULT_ORGANIZATION_SLUG` must point to an active workspace. In current
+  staging, use `advisora-demo`.
 - Do not commit `.env`, tokens, local upload files, or generated secrets.
 
 ## Database Readiness
@@ -87,6 +96,9 @@ Production rules:
 - Use `npm run prisma:deploy` for shared, staging, and production databases.
 - Use `npm run prisma:generate` before building the backend.
 - Use `npx prisma validate` before deployment to catch schema issues.
+- The workspace migration creates `Organization`, backfills existing internal
+  users and CRM records to `Advisora Demo Workspace`, and sets
+  `organizationId` as required without resetting data.
 - Run seed data carefully. The current demo administrator is for local portfolio
   development and must not be used as a real production credential.
 - Use `npm run seed:demo` only for fictional portfolio staging data. When
@@ -99,6 +111,8 @@ Production rules:
 
 - Passwords are hashed with bcryptjs.
 - Login and current-user responses use sanitized user projections.
+- Login and `/api/auth/me` include safe workspace info:
+  `organizationId` and `organization: { id, name, slug }`.
 - JWT signing and verification are pinned to `HS256`.
 - `passwordHash` must not be returned by login, `/auth/me`, user list/detail, or
   assignable-user endpoints.
@@ -170,6 +184,12 @@ Recommended later upgrade:
   storage.
 - [ ] CORS allowlist matches the deployed frontend origin.
 - [ ] `passwordHash` is not returned by auth or user endpoints.
+- [ ] Auth responses include the expected current workspace and no other
+  workspace data.
+- [ ] User management and assignable-user endpoints return same-workspace users
+  only.
+- [ ] Dashboard and report totals are scoped to the current workspace.
+- [ ] Public consultation requests map to `DEFAULT_ORGANIZATION_SLUG`.
 - [ ] Public forms have abuse protection or a plan for rate limiting.
 - [ ] Logs do not include passwords, tokens, connection strings, or document
   contents.
@@ -204,6 +224,8 @@ Recommended later upgrade:
 - Current frontend token storage uses local storage, not HttpOnly cookies.
 - Public contact and appointment forms are validation/demo flows only.
 - No password reset or account-management UI yet.
+- No public workspace signup, invitation system, billing, or workspace switcher
+  yet.
 - No production rate limiting, captcha, or dedicated abuse-protection layer yet.
 - No centralized production logging, metrics, or alerting yet.
 - No automated end-to-end test suite yet.

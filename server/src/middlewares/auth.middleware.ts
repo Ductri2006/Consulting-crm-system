@@ -5,7 +5,10 @@ import { prisma } from "../lib/prisma";
 import { AppError } from "../utils/AppError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { verifyAccessToken } from "../utils/jwt";
-import { sanitizeUser } from "../utils/sanitizeUser";
+import {
+  safeOrganizationSelect,
+  sanitizeUser,
+} from "../utils/sanitizeUser";
 
 const bearerTokenPattern = /^Bearer\s+(\S+)$/i;
 
@@ -29,10 +32,10 @@ export const authenticate: RequestHandler = asyncHandler(
       );
     }
 
-    let userId: string;
+    let tokenPayload: ReturnType<typeof verifyAccessToken>;
 
     try {
-      userId = verifyAccessToken(match[1]).sub;
+      tokenPayload = verifyAccessToken(match[1]);
     } catch {
       throw new AppError(
         "Invalid or expired access token.",
@@ -41,7 +44,15 @@ export const authenticate: RequestHandler = asyncHandler(
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: tokenPayload.sub },
+      include: {
+        organization: {
+          select: {
+            ...safeOrganizationSelect,
+            isActive: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -53,6 +64,23 @@ export const authenticate: RequestHandler = asyncHandler(
 
     if (!user.isActive) {
       throw new AppError("This account is inactive.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (
+      tokenPayload.organizationId &&
+      tokenPayload.organizationId !== user.organizationId
+    ) {
+      throw new AppError(
+        "Invalid or expired access token.",
+        HTTP_STATUS.UNAUTHORIZED,
+      );
+    }
+
+    if (!user.organization?.id || !user.organization.isActive) {
+      throw new AppError(
+        "This workspace is inactive or unavailable.",
+        HTTP_STATUS.FORBIDDEN,
+      );
     }
 
     request.user = sanitizeUser(user);

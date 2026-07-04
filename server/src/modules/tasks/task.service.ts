@@ -33,6 +33,7 @@ const assignableRoles = [
 
 const safeUserSelect = {
   id: true,
+  organizationId: true,
   fullName: true,
   email: true,
   phone: true,
@@ -137,9 +138,13 @@ const assertTaskDeleteAccess = (
 const findTaskAccessRecord = async (
   transaction: Prisma.TransactionClient,
   id: string,
+  organizationId: string,
 ): Promise<TaskAccessRecord> => {
-  const task = await transaction.task.findUnique({
-    where: { id },
+  const task = await transaction.task.findFirst({
+    where: {
+      id,
+      organizationId,
+    },
     select: {
       assignedToId: true,
       createdById: true,
@@ -157,10 +162,12 @@ const findTaskAccessRecord = async (
 const findAssignableUser = async (
   transaction: Prisma.TransactionClient,
   id: string,
+  organizationId: string,
 ) => {
   const user = await transaction.user.findFirst({
     where: {
       id,
+      organizationId,
       isActive: true,
       role: {
         in: assignableRoles,
@@ -267,6 +274,7 @@ export const listTasks = async (
   }
 
   const where: Prisma.TaskWhereInput = {
+    organizationId: actor.organizationId,
     ...(status && { status }),
     ...(priority && { priority }),
     ...(assignedToId && { assignedToId }),
@@ -305,6 +313,7 @@ export const listOverdueTasks = async (
       ? actor.id
       : requestedAssignedToId;
   const where: Prisma.TaskWhereInput = {
+    organizationId: actor.organizationId,
     deadline: {
       lt: new Date(),
     },
@@ -334,8 +343,11 @@ export const findTaskById = async (
   id: string,
   actor: SafeUser,
 ) => {
-  const task = await prisma.task.findUnique({
-    where: { id },
+  const task = await prisma.task.findFirst({
+    where: {
+      id,
+      organizationId: actor.organizationId,
+    },
     include: taskInclude,
   });
 
@@ -371,8 +383,11 @@ export const createTask = async (
   try {
     return await prisma.$transaction(async (transaction) => {
       if (input.caseProfileId) {
-        const caseProfile = await transaction.caseProfile.findUnique({
-          where: { id: input.caseProfileId },
+        const caseProfile = await transaction.caseProfile.findFirst({
+          where: {
+            id: input.caseProfileId,
+            organizationId: actor.organizationId,
+          },
           select: {
             id: true,
             assignedToId: true,
@@ -398,11 +413,16 @@ export const createTask = async (
       }
 
       if (effectiveAssignedToId) {
-        await findAssignableUser(transaction, effectiveAssignedToId);
+        await findAssignableUser(
+          transaction,
+          effectiveAssignedToId,
+          actor.organizationId,
+        );
       }
 
       return transaction.task.create({
         data: {
+          organizationId: actor.organizationId,
           caseProfileId: input.caseProfileId,
           title: input.title,
           description: input.description,
@@ -433,7 +453,11 @@ export const updateTask = async (
 
   try {
     return await prisma.$transaction(async (transaction) => {
-      const currentTask = await findTaskAccessRecord(transaction, id);
+      const currentTask = await findTaskAccessRecord(
+        transaction,
+        id,
+        actor.organizationId,
+      );
       assertTaskUpdateAccess(currentTask, actor);
 
       if (
@@ -447,7 +471,11 @@ export const updateTask = async (
       }
 
       if (typeof input.assignedToId === "string") {
-        await findAssignableUser(transaction, input.assignedToId);
+        await findAssignableUser(
+          transaction,
+          input.assignedToId,
+          actor.organizationId,
+        );
       }
 
       return transaction.task.update({
@@ -476,7 +504,11 @@ export const updateTaskStatus = async (
 ) => {
   try {
     return await prisma.$transaction(async (transaction) => {
-      const currentTask = await findTaskAccessRecord(transaction, id);
+      const currentTask = await findTaskAccessRecord(
+        transaction,
+        id,
+        actor.organizationId,
+      );
       assertTaskUpdateAccess(currentTask, actor);
 
       if (currentTask.status === input.status) {
@@ -519,7 +551,11 @@ export const deleteTask = async (
 ) => {
   try {
     return await prisma.$transaction(async (transaction) => {
-      const currentTask = await findTaskAccessRecord(transaction, id);
+      const currentTask = await findTaskAccessRecord(
+        transaction,
+        id,
+        actor.organizationId,
+      );
       assertTaskDeleteAccess(currentTask, actor);
 
       if (currentTask.status === TaskStatus.DONE) {

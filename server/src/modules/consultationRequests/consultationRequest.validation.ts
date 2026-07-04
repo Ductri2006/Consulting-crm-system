@@ -29,17 +29,17 @@ export const createConsultationRequestSchema = z.object({
     .min(10, "Message must be at least 10 characters long.")
     .max(2_000, "Message must not exceed 2000 characters.")
     .optional(),
-});
+}).strict();
 
 export const consultationRequestIdParamsSchema = z.object({
   id: uuidSchema,
-});
+}).strict();
 
 export const consultationRequestListQuerySchema =
   paginationQuerySchema.extend({
     status: z.nativeEnum(RequestStatus).optional(),
     serviceId: uuidSchema.optional(),
-  });
+  }).strict();
 
 export const updateConsultationRequestStatusSchema = z.object({
   status: z.nativeEnum(RequestStatus).refine(
@@ -49,4 +49,4 @@ export const updateConsultationRequestStatusSchema = z.object({
         "Status CONVERTED requires the conversion workflow and is not available in this phase.",
     },
   ),
-});
+}).strict();

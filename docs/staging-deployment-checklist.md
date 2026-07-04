@@ -93,6 +93,7 @@ credentials.
 | `JWT_EXPIRES_IN` | `7d` or another reviewed value | Keep explicit and documented. |
 | `UPLOAD_DIR` | `uploads` or provider writable path | Local disk is only for limited staging smoke tests. |
 | `MAX_FILE_SIZE_MB` | `10` or another reviewed value from 1 to 50 | Must match the expected staging upload limit. |
+| `DEFAULT_ORGANIZATION_SLUG` | `advisora-demo` unless intentionally changed | Public consultation requests are assigned to this active workspace. |
 
 Backend rules:
 
@@ -103,6 +104,9 @@ Backend rules:
   origins are intentionally allowed.
 - `DATABASE_URL` must be the staging database, not local or production.
 - `JWT_SECRET` must be unique for staging and at least 32 characters.
+- `DEFAULT_ORGANIZATION_SLUG` must resolve to an active `Organization`. The
+  current staging/demo workspace is `Advisora Demo Workspace`
+  (`advisora-demo`).
 - Do not reuse local demo secrets.
 
 One-time demo seed flag:
@@ -134,6 +138,8 @@ Frontend rules:
 - [ ] Confirm `DATABASE_URL` points to the staging database.
 - [ ] Confirm `CLIENT_URL` exactly matches the staging frontend origin.
 - [ ] Confirm `JWT_SECRET` is unique for staging.
+- [ ] Confirm `DEFAULT_ORGANIZATION_SLUG=advisora-demo` or document the
+  intentional replacement workspace.
 - [ ] Confirm `UPLOAD_DIR` is writable if document smoke testing is planned.
 - [ ] Install dependencies with `npm install`.
 - [ ] Generate Prisma Client with `npm run prisma:generate`.
@@ -169,6 +175,11 @@ Frontend rules:
   variables.
 - [ ] Run `npx prisma validate` before applying migrations.
 - [ ] Run `npm run prisma:deploy` to apply committed migrations.
+- [ ] Confirm the Organization / Workspace migration is included.
+- [ ] Confirm existing users, customers, consultation requests, cases,
+  appointments, tasks, documents, case histories, and activity logs are
+  backfilled to `Advisora Demo Workspace`.
+- [ ] Confirm `organizationId` is required after backfill.
 - [ ] Do not run `npm run prisma:migrate` against staging.
 - [ ] Do not run `npm run prisma:reset` against staging unless the database is
   disposable and the reset is intentional.
@@ -201,8 +212,10 @@ DEMO_SEED_ENABLED=true npm run seed:demo
 Expected behavior:
 
 - Creates or updates fictional admin, manager, and staff demo users.
+- Creates or updates `Advisora Demo Workspace`.
 - Creates or updates fictional customers, consultation requests, case profiles,
   appointments, tasks, case history, and activity logs.
+- Assigns all demo CRM records to `Advisora Demo Workspace`.
 - Uses fixed IDs and upserts so repeated runs do not duplicate the demo set.
 - Does not reset the database.
 - Does not delete non-demo data.
@@ -276,8 +289,11 @@ Before real customer documents:
 - [ ] Invalid admin login returns a generic failure.
 - [ ] Valid admin login succeeds with a staging-safe account.
 - [ ] Login response does not include `passwordHash`.
-- [ ] `GET /api/auth/me` returns a sanitized user.
+- [ ] Login response includes `organizationId` and
+  `organization: { id, name, slug }` for the current workspace.
+- [ ] `GET /api/auth/me` returns a sanitized user with workspace info.
 - [ ] `GET /api/dashboard/overview` returns data.
+- [ ] Dashboard overview reflects current-workspace data only.
 - [ ] At least one database-backed API call succeeds, such as
   `GET /api/customers` or `GET /api/public/services`.
 
@@ -287,6 +303,7 @@ Before real customer documents:
 - [ ] Public services page loads.
 - [ ] Public consultation form validates required fields.
 - [ ] Public consultation form submits to the staging backend.
+- [ ] Public consultation request appears under `Advisora Demo Workspace`.
 - [ ] Admin login page loads.
 - [ ] Admin login succeeds with a staging-safe account.
 - [ ] Refreshing a protected deep link preserves or restores the session.
@@ -319,6 +336,12 @@ Before real customer documents:
   endpoints.
 - [ ] User create, edit, password reset, activate, and deactivate responses do
   not include `passwordHash`.
+- [ ] User create assigns the current workspace automatically; no frontend
+  organization picker or submitted `organizationId` is used.
+- [ ] `/api/users` and `/api/users/assignable` return current-workspace users
+  only.
+- [ ] Customers, consultation requests, cases, appointments, tasks, documents,
+  dashboard, and reports are scoped to the current workspace.
 - [ ] Deactivated users cannot log in.
 - [ ] The last active admin cannot be deactivated or demoted.
 - [ ] CORS allows only the staging frontend origin or intentional preview

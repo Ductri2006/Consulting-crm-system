@@ -41,6 +41,7 @@ const assignableRoles = [
 
 const safeUserSelect = {
   id: true,
+  organizationId: true,
   fullName: true,
   email: true,
   phone: true,
@@ -168,9 +169,13 @@ const getAssignedToFilter = (
 const findCaseAccessRecord = async (
   transaction: Prisma.TransactionClient,
   id: string,
+  organizationId: string,
 ): Promise<CaseAccessRecord> => {
-  const caseProfile = await transaction.caseProfile.findUnique({
-    where: { id },
+  const caseProfile = await transaction.caseProfile.findFirst({
+    where: {
+      id,
+      organizationId,
+    },
     select: {
       assignedToId: true,
     },
@@ -186,10 +191,12 @@ const findCaseAccessRecord = async (
 const findAssignableUser = async (
   transaction: Prisma.TransactionClient,
   id: string,
+  organizationId: string,
 ) => {
   const user = await transaction.user.findFirst({
     where: {
       id,
+      organizationId,
       isActive: true,
       role: {
         in: assignableRoles,
@@ -249,6 +256,7 @@ export const listCases = async (
     requestedAssignedToId,
   );
   const where: Prisma.CaseProfileWhereInput = {
+    organizationId: actor.organizationId,
     ...(status && { status }),
     ...(priority && { priority }),
     ...(serviceId && { serviceId }),
@@ -322,6 +330,7 @@ export const listOverdueCases = async (
     requestedAssignedToId,
   );
   const where: Prisma.CaseProfileWhereInput = {
+    organizationId: actor.organizationId,
     deadline: {
       lt: new Date(),
     },
@@ -351,8 +360,11 @@ export const findCaseById = async (
   id: string,
   actor: SafeUser,
 ) => {
-  const caseProfile = await prisma.caseProfile.findUnique({
-    where: { id },
+  const caseProfile = await prisma.caseProfile.findFirst({
+    where: {
+      id,
+      organizationId: actor.organizationId,
+    },
     include: caseDetailInclude,
   });
 
@@ -391,7 +403,7 @@ export const createCase = async (
         const [customer, service] = await Promise.all([
           transaction.customer.findUnique({
             where: { id: input.customerId },
-            select: { id: true },
+            select: { id: true, organizationId: true },
           }),
           transaction.service.findFirst({
             where: {
@@ -409,6 +421,13 @@ export const createCase = async (
           );
         }
 
+        if (customer.organizationId !== actor.organizationId) {
+          throw new AppError(
+            "Customer not found.",
+            HTTP_STATUS.NOT_FOUND,
+          );
+        }
+
         if (!service) {
           throw new AppError(
             "Selected service is not available.",
@@ -420,6 +439,7 @@ export const createCase = async (
           ? await findAssignableUser(
               transaction,
               effectiveAssignedToId,
+              actor.organizationId,
             )
           : null;
         const now = new Date();
@@ -438,6 +458,7 @@ export const createCase = async (
         );
         const caseProfile = await transaction.caseProfile.create({
           data: {
+            organizationId: actor.organizationId,
             customerId: input.customerId,
             serviceId: input.serviceId,
             assignedToId: effectiveAssignedToId,
@@ -455,6 +476,7 @@ export const createCase = async (
 
         await transaction.caseHistory.create({
           data: {
+            organizationId: actor.organizationId,
             caseProfileId: caseProfile.id,
             userId: actor.id,
             action: "CASE_CREATED",
@@ -466,6 +488,7 @@ export const createCase = async (
         if (assignedUser) {
           await transaction.caseHistory.create({
             data: {
+              organizationId: actor.organizationId,
               caseProfileId: caseProfile.id,
               userId: actor.id,
               action: "CASE_ASSIGNED",
@@ -515,7 +538,11 @@ export const updateCase = async (
 
   try {
     return await prisma.$transaction(async (transaction) => {
-      const currentCase = await findCaseAccessRecord(transaction, id);
+      const currentCase = await findCaseAccessRecord(
+        transaction,
+        id,
+        actor.organizationId,
+      );
       assertCaseAccess(currentCase, actor);
 
       const updatedCase = await transaction.caseProfile.update({
@@ -526,6 +553,7 @@ export const updateCase = async (
 
       await transaction.caseHistory.create({
         data: {
+          organizationId: actor.organizationId,
           caseProfileId: id,
           userId: actor.id,
           action: "CASE_UPDATED",
@@ -547,8 +575,11 @@ export const updateCaseStatus = async (
 ) => {
   try {
     return await prisma.$transaction(async (transaction) => {
-      const currentCase = await transaction.caseProfile.findUnique({
-        where: { id },
+      const currentCase = await transaction.caseProfile.findFirst({
+        where: {
+          id,
+          organizationId: actor.organizationId,
+        },
         select: {
           assignedToId: true,
           status: true,
@@ -597,6 +628,7 @@ export const updateCaseStatus = async (
 
       await transaction.caseHistory.create({
         data: {
+          organizationId: actor.organizationId,
           caseProfileId: id,
           userId: actor.id,
           action: "CASE_STATUS_CHANGED",
@@ -622,8 +654,11 @@ export const assignCase = async (
 
   try {
     return await prisma.$transaction(async (transaction) => {
-      const currentCase = await transaction.caseProfile.findUnique({
-        where: { id },
+      const currentCase = await transaction.caseProfile.findFirst({
+        where: {
+          id,
+          organizationId: actor.organizationId,
+        },
         select: {
           assignedToId: true,
         },
@@ -639,6 +674,7 @@ export const assignCase = async (
       const assignedUser = await findAssignableUser(
         transaction,
         input.assignedToId,
+        actor.organizationId,
       );
 
       if (currentCase.assignedToId === assignedUser.id) {
@@ -658,6 +694,7 @@ export const assignCase = async (
 
       await transaction.caseHistory.create({
         data: {
+          organizationId: actor.organizationId,
           caseProfileId: id,
           userId: actor.id,
           action: "CASE_ASSIGNED",
@@ -677,8 +714,11 @@ export const listCaseHistory = async (
   query: CaseHistoryQuery,
   actor: SafeUser,
 ) => {
-  const caseProfile = await prisma.caseProfile.findUnique({
-    where: { id },
+  const caseProfile = await prisma.caseProfile.findFirst({
+    where: {
+      id,
+      organizationId: actor.organizationId,
+    },
     select: {
       assignedToId: true,
     },
@@ -693,6 +733,7 @@ export const listCaseHistory = async (
   const { page, limit } = query;
   const pagination = getPagination(page, limit);
   const where: Prisma.CaseHistoryWhereInput = {
+    organizationId: actor.organizationId,
     caseProfileId: id,
   };
   const [items, total] = await prisma.$transaction([
@@ -719,8 +760,11 @@ export const deleteCase = async (
 
   try {
     return await prisma.$transaction(async (transaction) => {
-      const caseProfile = await transaction.caseProfile.findUnique({
-        where: { id },
+      const caseProfile = await transaction.caseProfile.findFirst({
+        where: {
+          id,
+          organizationId: actor.organizationId,
+        },
         include: {
           _count: {
             select: {
@@ -752,6 +796,7 @@ export const deleteCase = async (
 
       await transaction.caseHistory.deleteMany({
         where: {
+          organizationId: actor.organizationId,
           caseProfileId: id,
         },
       });

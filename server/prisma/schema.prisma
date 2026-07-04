@@ -72,18 +72,47 @@ enum PublishStatus {
   ARCHIVED
 }
 
-model User {
-  id           String   @id @default(uuid())
-  fullName     String
-  email        String   @unique
-  passwordHash String
-  phone        String?
-  role         UserRole @default(STAFF)
-  avatarUrl    String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  industry  String?
+  website   String?
+  phone     String?
+  email     String?
+  address   String?
+  logoUrl   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  users                User[]
+  customers            Customer[]
+  consultationRequests ConsultationRequest[]
+  cases                CaseProfile[]
+  appointments         Appointment[]
+  tasks                Task[]
+  documents            Document[]
+  caseHistories        CaseHistory[]
+  activityLogs         ActivityLog[]
+
+  @@index([isActive])
+}
+
+model User {
+  id             String   @id @default(uuid())
+  organizationId String
+  fullName       String
+  email          String   @unique
+  passwordHash   String
+  phone          String?
+  role           UserRole @default(STAFF)
+  avatarUrl      String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization        Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   assignedCases       CaseProfile[] @relation("AssignedCases")
   caseHistories       CaseHistory[]
   managedAppointments Appointment[] @relation("AppointmentStaff")
@@ -94,10 +123,12 @@ model User {
   activityLogs        ActivityLog[]
 
   @@index([role, isActive])
+  @@index([organizationId, role, isActive])
 }
 
 model Customer {
   id             String    @id @default(uuid())
+  organizationId String
   fullName       String
   phone          String
   email          String?
@@ -109,6 +140,7 @@ model Customer {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   cases          CaseProfile[]
   appointments   Appointment[]
   documents      Document[]
@@ -117,6 +149,9 @@ model Customer {
   @@index([phone])
   @@index([email])
   @@index([createdAt])
+  @@index([organizationId, phone])
+  @@index([organizationId, email])
+  @@index([organizationId, createdAt])
 }
 
 model Service {
@@ -137,6 +172,7 @@ model Service {
 
 model ConsultationRequest {
   id                     String        @id @default(uuid())
+  organizationId         String
   fullName               String
   phone                  String
   email                  String?
@@ -149,6 +185,7 @@ model ConsultationRequest {
   createdAt              DateTime      @default(now())
   updatedAt              DateTime      @updatedAt
 
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   service              Service?     @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   convertedCustomer    Customer?    @relation("ConvertedCustomer", fields: [convertedCustomerId], references: [id], onDelete: SetNull)
   convertedCaseProfile CaseProfile? @relation("ConvertedCase", fields: [convertedCaseProfileId], references: [id], onDelete: SetNull)
@@ -158,24 +195,30 @@ model ConsultationRequest {
   @@index([phone])
   @@index([email])
   @@index([convertedCustomerId])
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, serviceId, status])
+  @@index([organizationId, phone])
+  @@index([organizationId, email])
 }
 
 model CaseProfile {
-  id           String     @id @default(uuid())
-  caseCode     String     @unique
-  customerId   String
-  serviceId    String
-  assignedToId String?
-  title        String
-  description  String?
-  note         String?
-  status       CaseStatus @default(RECEIVED)
-  priority     Priority   @default(MEDIUM)
-  deadline     DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id             String     @id @default(uuid())
+  organizationId String
+  caseCode       String     @unique
+  customerId     String
+  serviceId      String
+  assignedToId   String?
+  title          String
+  description    String?
+  note           String?
+  status         CaseStatus @default(RECEIVED)
+  priority       Priority   @default(MEDIUM)
+  deadline       DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
+  organization  Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   customer      Customer             @relation(fields: [customerId], references: [id], onDelete: Restrict)
   service       Service              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   assignedTo    User?                @relation("AssignedCases", fields: [assignedToId], references: [id], onDelete: SetNull)
@@ -191,27 +234,37 @@ model CaseProfile {
   @@index([status, priority])
   @@index([status, deadline])
   @@index([createdAt])
+  @@index([organizationId, customerId, createdAt])
+  @@index([organizationId, serviceId, status])
+  @@index([organizationId, assignedToId, status])
+  @@index([organizationId, status, deadline])
+  @@index([organizationId, createdAt])
 }
 
 model CaseHistory {
-  id            String      @id @default(uuid())
-  caseProfileId String
-  userId        String?
-  action        String
-  oldStatus     CaseStatus?
-  newStatus     CaseStatus?
-  note          String?
-  createdAt     DateTime    @default(now())
+  id             String      @id @default(uuid())
+  organizationId String
+  caseProfileId  String
+  userId         String?
+  action         String
+  oldStatus      CaseStatus?
+  newStatus      CaseStatus?
+  note           String?
+  createdAt      DateTime    @default(now())
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   caseProfile CaseProfile @relation(fields: [caseProfileId], references: [id], onDelete: Restrict)
   user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([caseProfileId, createdAt])
   @@index([userId, createdAt])
+  @@index([organizationId, caseProfileId, createdAt])
+  @@index([organizationId, userId, createdAt])
 }
 
 model Appointment {
   id              String            @id @default(uuid())
+  organizationId  String
   customerId      String
   caseProfileId   String?
   staffId         String?
@@ -224,6 +277,7 @@ model Appointment {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
   caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
   staff       User?        @relation("AppointmentStaff", fields: [staffId], references: [id], onDelete: SetNull)
@@ -232,21 +286,27 @@ model Appointment {
   @@index([staffId, appointmentDate])
   @@index([customerId, appointmentDate])
   @@index([caseProfileId])
+  @@index([organizationId, appointmentDate, status])
+  @@index([organizationId, staffId, appointmentDate])
+  @@index([organizationId, customerId, appointmentDate])
+  @@index([organizationId, caseProfileId])
 }
 
 model Task {
-  id            String     @id @default(uuid())
-  caseProfileId String?
-  title         String
-  description   String?
-  assignedToId  String?
-  createdById   String?
-  status        TaskStatus @default(TODO)
-  priority      Priority   @default(MEDIUM)
-  deadline      DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id             String     @id @default(uuid())
+  organizationId String
+  caseProfileId  String?
+  title          String
+  description    String?
+  assignedToId   String?
+  createdById    String?
+  status         TaskStatus @default(TODO)
+  priority       Priority   @default(MEDIUM)
+  deadline       DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
   assignedTo  User?        @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
   createdBy   User?        @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: SetNull)
@@ -255,20 +315,26 @@ model Task {
   @@index([caseProfileId, status])
   @@index([status, deadline])
   @@index([createdById])
+  @@index([organizationId, assignedToId, status])
+  @@index([organizationId, caseProfileId, status])
+  @@index([organizationId, status, deadline])
+  @@index([organizationId, createdById])
 }
 
 model Document {
-  id            String       @id @default(uuid())
-  caseProfileId String?
-  customerId    String?
-  uploadedById  String?
-  fileName      String
-  fileUrl       String
-  fileType      DocumentType @default(OTHER)
-  mimeType      String?
-  size          Int?
-  createdAt     DateTime     @default(now())
+  id             String       @id @default(uuid())
+  organizationId String
+  caseProfileId  String?
+  customerId     String?
+  uploadedById   String?
+  fileName       String
+  fileUrl        String
+  fileType       DocumentType @default(OTHER)
+  mimeType       String?
+  size           Int?
+  createdAt      DateTime     @default(now())
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   caseProfile CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
   customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   uploadedBy  User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
@@ -277,6 +343,10 @@ model Document {
   @@index([customerId, createdAt])
   @@index([uploadedById])
   @@index([fileType])
+  @@index([organizationId, caseProfileId, createdAt])
+  @@index([organizationId, customerId, createdAt])
+  @@index([organizationId, uploadedById])
+  @@index([organizationId, fileType])
 }
 
 model News {
@@ -312,19 +382,25 @@ model Project {
 }
 
 model ActivityLog {
-  id          String   @id @default(uuid())
-  userId      String?
-  action      String
-  entityType  String?
-  entityId    String?
-  description String?
-  ipAddress   String?
-  createdAt   DateTime @default(now())
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String?
+  action         String
+  entityType     String?
+  entityId       String?
+  description    String?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
   @@index([entityType, entityId])
   @@index([createdAt])
+  @@index([organizationId, userId, createdAt])
+  @@index([organizationId, action, createdAt])
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, createdAt])
 }

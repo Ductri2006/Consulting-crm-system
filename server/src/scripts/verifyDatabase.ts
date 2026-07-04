@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 
 const demoAdminEmail = "admin@advisora.demo";
 const demoAdminPassword = "password123";
+const defaultOrganizationSlug = "advisora-demo";
 const requiredServiceSlugs = [
   "real-estate-consulting",
   "legal-consulting",
@@ -18,9 +19,22 @@ const requiredServiceSlugs = [
 const verifyDatabase = async (): Promise<boolean> => {
   await prisma.$connect();
 
-  const [userCount, serviceCount, admin, seededServices] = await Promise.all([
+  const [
+    userCount,
+    serviceCount,
+    defaultOrganization,
+    admin,
+    seededServices,
+  ] = await Promise.all([
     prisma.user.count(),
     prisma.service.count(),
+    prisma.organization.findUnique({
+      where: { slug: defaultOrganizationSlug },
+      select: {
+        name: true,
+        isActive: true,
+      },
+    }),
     prisma.user.findUnique({
       where: { email: demoAdminEmail },
       select: {
@@ -53,9 +67,14 @@ const verifyDatabase = async (): Promise<boolean> => {
     (slug) => !activeServiceSlugs.has(slug),
   );
   const servicesAreReady = missingServiceSlugs.length === 0;
+  const organizationIsReady =
+    defaultOrganization !== null && defaultOrganization.isActive;
 
   console.log(`Users found: ${userCount}`);
   console.log(`Services found: ${serviceCount}`);
+  console.log(
+    `Default workspace: ${organizationIsReady ? "OK" : "FAILED"}`,
+  );
   console.log(`Seeded administrator: ${adminIsReady ? "OK" : "FAILED"}`);
   console.log(
     `Required active services: ${servicesAreReady ? "OK" : "FAILED"} (${seededServices.length}/${requiredServiceSlugs.length})`,
@@ -65,7 +84,7 @@ const verifyDatabase = async (): Promise<boolean> => {
     console.error(`Missing service slugs: ${missingServiceSlugs.join(", ")}`);
   }
 
-  return adminIsReady && servicesAreReady;
+  return organizationIsReady && adminIsReady && servicesAreReady;
 };
 
 const main = async (): Promise<void> => {
