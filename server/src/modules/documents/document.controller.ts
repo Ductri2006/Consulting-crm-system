@@ -13,9 +13,11 @@ import {
   findDocumentById,
   getDocumentDownload,
   listDocuments,
+  setDocumentPortalVisibility,
   uploadDocument,
 } from "./document.service";
 import type {
+  DocumentPortalVisibilityInput,
   DocumentListQuery,
   UploadDocumentInput,
 } from "./document.types";
@@ -164,5 +166,22 @@ export const downloadDocumentController = async (
         ),
       );
     },
+  );
+};
+
+export const setDocumentPortalVisibilityController = async (
+  request: Request,
+  response: Response,
+): Promise<void> => {
+  const document = await setDocumentPortalVisibility(
+    getDocumentId(request),
+    request.body as DocumentPortalVisibilityInput,
+    getActor(request),
+  );
+
+  response.status(HTTP_STATUS.OK).json(
+    successResponse("Document portal visibility updated successfully.", {
+      document,
+    }),
   );
 };

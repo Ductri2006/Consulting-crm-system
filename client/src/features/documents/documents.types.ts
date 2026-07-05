@@ -9,6 +9,17 @@ export const documentTypes = [
 
 export type DocumentType = (typeof documentTypes)[number]
 
+export const documentSources = ['INTERNAL', 'CUSTOMER_PORTAL'] as const
+
+export type DocumentSource = (typeof documentSources)[number]
+
+export const documentVisibilities = [
+  'INTERNAL_ONLY',
+  'CUSTOMER_VISIBLE',
+] as const
+
+export type DocumentVisibility = (typeof documentVisibilities)[number]
+
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CUSTOMER'
 
 export interface PaginationMeta {
@@ -52,16 +63,27 @@ export interface DocumentRecord {
   caseProfileId: string | null
   customerId: string | null
   uploadedById: string | null
+  uploadedByPortalAccountId: string | null
+  portalVisibilityUpdatedById: string | null
   fileName: string
   fileUrl: string
   fileType: DocumentType
+  source: DocumentSource
+  visibility: DocumentVisibility
   mimeType: string | null
   size: number | null
+  portalVisibilityUpdatedAt: string | null
   createdAt: string
   updatedAt?: string
   caseProfile: CaseOption | null
   customer: CustomerOption | null
   uploadedBy: UserOption | null
+  uploadedByPortalAccount: {
+    id: string
+    email: string
+    customer: CustomerOption
+  } | null
+  portalVisibilityUpdatedBy: UserOption | null
 }
 
 export type DocumentDetail = DocumentRecord
@@ -93,6 +115,10 @@ export interface DocumentUploadInput {
   customerId?: string
   caseProfileId?: string
   fileType: DocumentType
+}
+
+export interface DocumentPortalVisibilityInput {
+  visibility: DocumentVisibility
 }
 
 export interface CustomerOptionListResponse {

@@ -1,20 +1,28 @@
 import { Router } from "express";
 
 import { validate } from "../../middlewares/validate.middleware";
+import { asyncHandler } from "../../utils/asyncHandler";
 import {
+  downloadPortalDocumentController,
   getCurrentPortalSessionController,
   getPortalCaseController,
   getPortalCaseSummaryController,
   getPortalProfileController,
+  listPortalDocumentsController,
   listPortalCasesController,
   portalLoginController,
   portalLogoutController,
+  uploadPortalDocumentController,
 } from "./customerPortal.controller";
+import { uploadDocumentFile } from "../../middlewares/upload.middleware";
 import { authenticateCustomerPortal } from "./customerPortal.middleware";
 import {
   portalCaseIdParamsSchema,
   portalCaseListQuerySchema,
   portalCaseSummaryQuerySchema,
+  portalDocumentIdParamsSchema,
+  portalDocumentListQuerySchema,
+  portalDocumentUploadSchema,
   portalLoginSchema,
 } from "./customerPortal.validation";
 
@@ -26,6 +34,22 @@ customerPortalRouter.post(
   portalLoginController,
 );
 customerPortalRouter.use(authenticateCustomerPortal);
+customerPortalRouter.get(
+  "/documents",
+  validate({ query: portalDocumentListQuerySchema }),
+  listPortalDocumentsController,
+);
+customerPortalRouter.post(
+  "/documents",
+  uploadDocumentFile,
+  validate({ body: portalDocumentUploadSchema }),
+  uploadPortalDocumentController,
+);
+customerPortalRouter.get(
+  "/documents/:id/download",
+  validate({ params: portalDocumentIdParamsSchema }),
+  asyncHandler(downloadPortalDocumentController),
+);
 customerPortalRouter.get(
   "/cases/summary",
   validate({ query: portalCaseSummaryQuerySchema }),

@@ -11,9 +11,11 @@ import {
   downloadDocumentController,
   getDocumentController,
   listDocumentsController,
+  setDocumentPortalVisibilityController,
   uploadDocumentController,
 } from "./document.controller";
 import {
+  documentPortalVisibilitySchema,
   documentIdParamsSchema,
   documentListQuerySchema,
   uploadDocumentMetadataSchema,
@@ -46,6 +48,15 @@ documentRouter.get(
   "/:id/download",
   validate({ params: documentIdParamsSchema }),
   asyncHandler(downloadDocumentController),
+);
+documentRouter.patch(
+  "/:id/portal-visibility",
+  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
+  validate({
+    params: documentIdParamsSchema,
+    body: documentPortalVisibilitySchema,
+  }),
+  asyncHandler(setDocumentPortalVisibilityController),
 );
 documentRouter.get(
   "/:id",

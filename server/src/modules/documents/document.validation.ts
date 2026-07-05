@@ -1,4 +1,4 @@
-import { DocumentType } from "@prisma/client";
+import { DocumentType, DocumentVisibility } from "@prisma/client";
 import { z } from "zod";
 
 import { paginationQuerySchema } from "../../utils/pagination";
@@ -33,3 +33,9 @@ export const uploadDocumentMetadataSchema = z
         "At least one customer id or case profile id must be provided.",
     },
   );
+
+export const documentPortalVisibilitySchema = z
+  .object({
+    visibility: z.enum(DocumentVisibility),
+  })
+  .strict();

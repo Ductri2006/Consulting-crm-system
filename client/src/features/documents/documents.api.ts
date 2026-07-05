@@ -12,6 +12,7 @@ import type {
   DocumentDetail,
   DocumentListParams,
   DocumentListResponse,
+  DocumentPortalVisibilityInput,
   DocumentRecord,
   DocumentUploadInput,
   UserOptionListResponse,
@@ -217,6 +218,17 @@ export const deleteDocument = async (
 ): Promise<DocumentRecord> => {
   const response = await apiClient.delete<DocumentResponse>(
     `/documents/${id}`,
+  )
+  return response.document
+}
+
+export const updateDocumentPortalVisibility = async (
+  id: string,
+  input: DocumentPortalVisibilityInput,
+): Promise<DocumentRecord> => {
+  const response = await apiClient.patch<DocumentResponse>(
+    `/documents/${id}/portal-visibility`,
+    input,
   )
   return response.document
 }

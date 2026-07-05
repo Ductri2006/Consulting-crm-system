@@ -48,6 +48,7 @@ const validationMessageKeys: Record<string, string> = {
   'Please select a service.': 'validation.serviceRequired',
   'Please tell us a little more about how we can help.':
     'validation.contactMessageMin',
+  'Search must not exceed 100 characters.': 'validation.searchMax100',
   'Time must use HH:mm format.': 'validation.timeFormat',
   'Select a customer or case profile.': 'validation.customerOrCaseRequired',
   'Service is required.': 'validation.serviceRequired',

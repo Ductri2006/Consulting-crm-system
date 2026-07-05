@@ -90,6 +90,11 @@ const CustomerPortalCasesPage = lazy(() =>
     default: module.CustomerPortalCasesPage,
   })),
 )
+const CustomerPortalDocumentsPage = lazy(() =>
+  import('../pages/portal/CustomerPortalDocumentsPage').then((module) => ({
+    default: module.CustomerPortalDocumentsPage,
+  })),
+)
 const CustomerPortalLoginPage = lazy(() =>
   import('../pages/portal/CustomerPortalLoginPage').then((module) => ({
     default: module.CustomerPortalLoginPage,
@@ -293,6 +298,10 @@ export function AppRoutes() {
           <Route
             path="cases/:id"
             element={routeElement(<CustomerPortalCaseDetailPage />)}
+          />
+          <Route
+            path="documents"
+            element={routeElement(<CustomerPortalDocumentsPage />)}
           />
         </Route>
       </Route>

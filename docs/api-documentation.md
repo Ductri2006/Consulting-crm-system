@@ -562,8 +562,9 @@ Authorization: Bearer <portal-token>
 ```
 
 Returns the safe portal session plus an `overview` object. Step 28 sets
-`caseTrackingAvailable=true`. Customer document upload/download, messages,
-billing, and customer self-registration remain outside this step.
+`caseTrackingAvailable=true`; Step 29 adds customer portal document
+upload/download through separate portal routes. Messages, billing, and customer
+self-registration remain outside this step.
 
 ### Portal Case Summary
 
@@ -641,13 +642,95 @@ Safe detail data includes:
 - Timeline derived from case history action/status fields. Internal history
   `note` values are not returned.
 - Appointment safe fields: date, time, method, status, and safe staff summary.
-- Document metadata only: file name, document type, MIME type, size, and
-  creation time. There is no portal download URL in Step 28.
+- Portal-visible document metadata only: file name, document type, MIME type,
+  size, source, visibility, and creation time. Raw file paths and
+  `Document.fileUrl` are never returned.
 - Task safe summary: title, status, priority, deadline, and update time.
 
 Portal case endpoints are read-only. There are no portal routes for creating,
-editing, assigning, deleting, uploading, downloading, or status-updating cases,
-tasks, appointments, or documents in Step 28.
+editing, assigning, deleting, or status-updating cases, tasks, or appointments.
+Documents are handled by the dedicated portal document endpoints below.
+
+### Portal Documents
+
+All portal document endpoints require a customer portal token. Internal CRM
+tokens are rejected by portal auth, and portal tokens are rejected by internal
+document routes.
+
+```http
+GET /api/portal/documents?page=1&limit=10&search=passport
+Authorization: Bearer <portal-token>
+```
+
+Allowed query fields:
+
+- `page`
+- `limit` from 1 to 50
+- `search` by file name, case code, or case title
+- `caseId`
+- `fileType`
+- `source`: `INTERNAL` or `CUSTOMER_PORTAL`
+
+The backend always scopes by the portal account's `organizationId` and
+`customerId`. If a document is linked to a case, that case must also belong to
+the same organization and customer. Returned documents must have
+`visibility=CUSTOMER_VISIBLE`. Portal uploads are created with
+`source=CUSTOMER_PORTAL` and `visibility=CUSTOMER_VISIBLE` by default, but an
+Admin or Manager can hide them later by changing visibility back to
+`INTERNAL_ONLY`.
+
+Safe response items include:
+
+```json
+{
+  "id": "document_id",
+  "fileName": "passport.pdf",
+  "fileType": "IDENTITY_DOCUMENT",
+  "mimeType": "application/pdf",
+  "size": 245760,
+  "source": "CUSTOMER_PORTAL",
+  "visibility": "CUSTOMER_VISIBLE",
+  "caseProfile": {
+    "id": "case_id",
+    "caseCode": "CASE-2026-001",
+    "title": "Property transfer",
+    "status": "PROCESSING"
+  },
+  "uploadedByLabel": "Customer",
+  "downloadAvailable": true,
+  "createdAt": "2026-07-05T00:00:00.000Z"
+}
+```
+
+Portal responses do not include `fileUrl`, raw upload paths, `passwordHash`,
+`tokenHash`, staff email, or internal-only documents.
+
+```http
+POST /api/portal/documents
+Authorization: Bearer <portal-token>
+Content-Type: multipart/form-data
+```
+
+Form data:
+
+- `file` (required)
+- `caseProfileId` (optional; must belong to the portal customer and workspace)
+- `fileType` (optional; defaults to `OTHER`)
+
+The customer and organization are taken only from the portal session. Successful
+uploads are stored as `source=CUSTOMER_PORTAL`,
+`visibility=CUSTOMER_VISIBLE`, and `uploadedByPortalAccountId=<portal account>`.
+The backend writes `CUSTOMER_PORTAL_DOCUMENT_UPLOADED`.
+
+```http
+GET /api/portal/documents/:id/download
+Authorization: Bearer <portal-token>
+```
+
+The portal download route is separate from `/api/documents/:id/download`. It
+queries the database with organization, customer, visibility, and case-ownership
+predicates before resolving the local file. Unauthorized, hidden,
+cross-customer, cross-workspace, or missing documents return a generic `404`.
 
 ## 3. Customer API
 
@@ -1184,6 +1267,7 @@ Form data:
 - `fileType`: `IDENTITY_DOCUMENT`, `REAL_ESTATE_DOCUMENT`, `CONTRACT`, `LEGAL_DOCUMENT`, `CONSTRUCTION_DOCUMENT`, or `OTHER`
 
 At least one of `customerId` or `caseProfileId` should be supplied. File type, MIME type, and size must be validated before storage.
+Internal uploads default to `source=INTERNAL` and `visibility=INTERNAL_ONLY`.
 
 ### Get Documents
 
@@ -1204,6 +1288,35 @@ Query parameters:
 ```http
 GET /api/documents/:id
 ```
+
+### Download Document
+
+```http
+GET /api/documents/:id/download
+```
+
+This route uses internal CRM auth only. Customer portal downloads must use
+`/api/portal/documents/:id/download`.
+
+### Update Portal Visibility
+
+```http
+PATCH /api/documents/:id/portal-visibility
+```
+
+Requires `ADMIN` or `MANAGER`.
+
+Request body:
+
+```json
+{
+  "visibility": "CUSTOMER_VISIBLE"
+}
+```
+
+Allowed values are `INTERNAL_ONLY` and `CUSTOMER_VISIBLE`. The endpoint never
+changes the stored file, customer, case, or organization. Visibility changes
+write `DOCUMENT_PORTAL_VISIBILITY_UPDATED`.
 
 ### Delete Document
 

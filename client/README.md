@@ -20,7 +20,9 @@ current demo/staging workspace is `Advisora Demo Workspace`.
 
 ## Bilingual UI
 
-Step 28.5 adds bilingual English/Vietnamese UI support.
+Step 28.5 adds bilingual English/Vietnamese UI support, and Step 29 keeps the
+Customer Portal Documents screens covered by the same English/Vietnamese
+translation resources.
 
 - Supported locales: `en`, `vi`.
 - Locale preference is stored in local storage as `advisora_locale`.
@@ -89,6 +91,7 @@ configured with `DEFAULT_ORGANIZATION_SLUG`; the frontend never sends an
 - Public invite accept: `/invite/:token`
 - Customer portal login: `/portal/login`
 - Customer portal dashboard: `/portal/dashboard`
+- Customer portal documents: `/portal/documents`
 - Demo accounts: see `../docs/demo-walkthrough.md`
 - Legacy local account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
@@ -130,8 +133,9 @@ CRM workspace. It does not add billing, workspace switching,
 workspace-specific public intake forms, custom domains, or logo upload.
 Admin and Manager users can manage basic portal access from `/admin/customers`
 for an existing customer: create, reset password, deactivate, and activate.
-Document management adds search, filters,
-multipart upload, protected download, detail review, and role-aware deletion.
+Document management adds search, filters, multipart upload, protected download,
+detail review, role-aware deletion, source/visibility badges, and an
+Admin/Manager customer-visible toggle for portal access.
 Reports use the dashboard/reporting APIs for operational insight, with staff
 performance available to administrators and managers only. Admin and public page
 routes are lazy-loaded to keep the initial bundle smaller.
@@ -145,13 +149,19 @@ the admin token key or `AdminLayout`.
 - Dashboard route: `/portal/dashboard`
 - Case list route: `/portal/cases`
 - Case detail route: `/portal/cases/:id`
+- Documents route: `/portal/documents`
 - Backend auth: `/api/portal/auth/login`, `/api/portal/auth/me`
 - Backend profile: `/api/portal/me`
 - Backend cases: `/api/portal/cases/summary`, `/api/portal/cases`,
   `/api/portal/cases/:id`
+- Backend documents: `/api/portal/documents`,
+  `/api/portal/documents/:id/download`
 - Token key: `advisora_portal_access_token`
 
 The dashboard shows workspace, customer profile, portal account status, case
 summary, recent cases, and next appointment data. Portal cases are read-only and
-use the portal API client only. Customer document upload/download, billing,
-messages, and customer self-registration are not part of this step.
+use the portal API client only. Portal documents also use the portal API client
+only, including FormData upload and blob download helpers that attach the
+portal token rather than the internal admin token. Portal document responses do
+not expose `fileUrl`, file paths, or internal-only documents. Billing, messages,
+and customer self-registration are not part of this step.

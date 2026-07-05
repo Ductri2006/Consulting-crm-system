@@ -256,9 +256,10 @@ STAFF users are blocked from portal-account management. Activity logs record
 create, password reset, deactivate, and activate actions without storing raw
 passwords.
 
-Step 28 adds read-only portal case tracking. These endpoints require a portal
-token and scope every query by the portal account's `organizationId` and
-`customerId`; the client cannot override either value.
+Step 28 adds read-only portal case tracking. Step 29 adds customer portal
+documents. These endpoints require a portal token and scope every query by the
+portal account's `organizationId` and `customerId`; the client cannot override
+either value.
 
 ```http
 GET /api/portal/cases/summary
@@ -269,11 +270,20 @@ Authorization: Bearer <portal-token>
 
 Portal case detail returns safe case overview, customer summary, service
 summary, assigned staff summary, status timeline, appointment safe fields,
-document metadata, and task summary. It never returns `CaseProfile.note`,
-`CaseHistory.note`, staff email/phone, `Document.fileUrl`, password hashes, or
-token hashes. Cases outside the portal account's customer or workspace return a
-generic `404`. Portal case endpoints are read-only; document upload/download is
-reserved for a later step.
+portal-visible document metadata, and task summary. It never returns
+`CaseProfile.note`, `CaseHistory.note`, staff email/phone, `Document.fileUrl`,
+raw storage paths, password hashes, or token hashes. Cases outside the portal
+account's customer or workspace return a generic `404`.
+
+Portal documents use separate `/api/portal/documents` routes and never reuse the
+internal `/api/documents/:id/download` route. Existing internal documents
+default to `source=INTERNAL` and `visibility=INTERNAL_ONLY`; an Admin or Manager
+must mark them `CUSTOMER_VISIBLE` before a portal account can list or download
+them. Customer portal uploads are stored as `source=CUSTOMER_PORTAL` and
+`visibility=CUSTOMER_VISIBLE`, scoped to the authenticated portal account's
+organization and customer. Portal download checks database ownership and
+visibility before streaming the local file and returns a generic `404` for
+out-of-scope documents.
 
 ## Workspace signup
 
@@ -731,6 +741,7 @@ Authorization: Bearer <token>
 | `GET` | `/api/documents/:id` | `ADMIN`, `MANAGER`, authorized `STAFF` |
 | `GET` | `/api/documents/:id/download` | `ADMIN`, `MANAGER`, authorized `STAFF` |
 | `POST` | `/api/documents/upload` | `ADMIN`, `MANAGER`, scoped `STAFF` |
+| `PATCH` | `/api/documents/:id/portal-visibility` | `ADMIN`, `MANAGER` |
 | `DELETE` | `/api/documents/:id` | `ADMIN`, `MANAGER`, eligible uploader `STAFF` |
 
 The upload endpoint accepts `multipart/form-data` with these fields:
@@ -745,6 +756,7 @@ The upload endpoint accepts `multipart/form-data` with these fields:
 When only `caseProfileId` is supplied, the document automatically receives the
 case's `customerId`. When both relation IDs are supplied, the customer must
 match the case's customer. The authenticated user is recorded as the uploader.
+Internal uploads default to `source=INTERNAL` and `visibility=INTERNAL_ONLY`.
 
 Administrators and managers can list, view, upload, and delete documents across
 the CRM. Staff can view documents they uploaded or documents attached to cases
@@ -755,10 +767,58 @@ documents, and cannot delete one attached to another staff member's case.
 The document list supports `search`, `fileType`, `customerId`,
 `caseProfileId`, `uploadedById`, `page`, and `limit`. Staff queries remain
 scoped to documents they are authorized to access. Responses include basic
-customer and case-profile data and sanitized uploader data; they never include
-`passwordHash` or an absolute filesystem path. The protected download endpoint
-applies the same access rules and returns `404` when the metadata or physical
-file is missing.
+customer and case-profile data, sanitized uploader data, `source`, and
+`visibility`; they never include `passwordHash` or an absolute filesystem path.
+The protected internal download endpoint applies the same access rules and
+returns `404` when the metadata or physical file is missing.
+
+The portal visibility endpoint accepts:
+
+```json
+{
+  "visibility": "CUSTOMER_VISIBLE"
+}
+```
+
+Allowed values are `INTERNAL_ONLY` and `CUSTOMER_VISIBLE`. It does not change
+customer, case, organization, or file metadata. Visibility changes are audited
+with `DOCUMENT_PORTAL_VISIBILITY_UPDATED`.
+
+### Customer portal documents
+
+Portal document routes require a customer portal JWT whose payload has
+`purpose: "customer_portal"`:
+
+```http
+Authorization: Bearer <portal-token>
+```
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/portal/documents` | Authenticated portal account |
+| `POST` | `/api/portal/documents` | Authenticated portal account |
+| `GET` | `/api/portal/documents/:id/download` | Authenticated portal account |
+
+`GET /api/portal/documents` supports `page`, `limit`, `search`, `caseId`,
+`fileType`, and `source`. Every result must match the portal
+account's `organizationId` and `customerId`, and case-linked documents are
+included only when the case belongs to the same customer and organization.
+Results must have `visibility=CUSTOMER_VISIBLE` and include safe metadata,
+source/visibility labels, related case summary, upload label, and
+`downloadAvailable`; they do not include `fileUrl`, raw paths, staff email, or
+internal-only documents.
+
+`POST /api/portal/documents` accepts `multipart/form-data` with required `file`
+and optional `caseProfileId` and `fileType`. The customer and organization come
+only from the portal session. Uploads are saved with
+`source=CUSTOMER_PORTAL`, `visibility=CUSTOMER_VISIBLE`, and
+`uploadedByPortalAccountId`, then audited with
+`CUSTOMER_PORTAL_DOCUMENT_UPLOADED`.
+
+`GET /api/portal/documents/:id/download` queries the database with the portal
+scope and visibility predicates before resolving the local file. Unauthorized,
+cross-customer, cross-workspace, hidden, or missing files return a generic
+`404`; the response streams the file without exposing the storage path.
 
 #### Local file storage and security
 
@@ -768,7 +828,8 @@ directory and maximum file size are configured with `UPLOAD_DIR` and
 process working directory. Uploaded files are ignored by Git and must not be
 committed.
 
-The upload pipeline checks both the extension and declared MIME type, rejects
+The upload pipeline checks the extension, declared MIME type, size, and basic
+magic bytes for supported PDFs, images, Word, and Excel files. It rejects
 executable and script formats, generates a randomized physical filename, and
 does not log file contents or expose local absolute paths. If metadata
 validation or database persistence fails, the already-written local file is
@@ -777,7 +838,8 @@ removed.
 Local disk is intended for development only. Production deployments should use
 private persistent object storage, together with authenticated or short-lived
 signed access. Local upload folders are not safe for ephemeral or multi-instance
-hosting. OCR and cloud storage integration are outside this phase.
+hosting. OCR, cloud storage integration, and production-grade malware scanning
+are future hardening.
 
 ### Dashboard and reporting
 
@@ -981,16 +1043,17 @@ rotation. Step 26 adds current-workspace profile reads and administrator-only
 workspace settings updates with slug uniqueness checks and `WORKSPACE_UPDATED`
 activity logs. Step 27 adds separate customer portal accounts, portal-purpose
 JWTs, portal login/session/profile endpoints, and admin/manager portal access
-controls for existing customers. The repository also includes production readiness,
-deployment, and final QA documentation. It does not include
-request-to-customer conversion, portal case tracking, customer document upload,
-OCR, cloud object storage, report exports, realtime updates, or real
-production deployment.
+controls for existing customers. Step 28 adds portal case tracking, Step 28.5
+adds bilingual UI support, and Step 29 adds customer portal document listing,
+upload, protected download, and admin-controlled customer visibility. The
+repository also includes production readiness, deployment, and final QA
+documentation. It does not include request-to-customer conversion, OCR, cloud
+object storage, report exports, realtime updates, or real production deployment.
 
 ## Future phases
 
 - Refresh tokens, token revocation, password recovery, and account management
-- Portal case tracking, customer document upload, and customer self-service profile updates
+- Customer self-service profile updates
 - Consultation-request conversion
 - Cloud object storage, signed file delivery, malware scanning, and OCR
 - Extended activity auditing and case-history retention policies

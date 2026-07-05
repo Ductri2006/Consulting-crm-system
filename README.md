@@ -10,8 +10,10 @@ protected internal CRM dashboard for managing customers, consultation requests,
 case profiles, appointments, tasks, documents, users, dashboards, and reports.
 The backend now includes an Organization model used as the internal Workspace
 tenant boundary; the current staging/demo path uses a single default workspace.
-Step 28.5 adds bilingual English/Vietnamese UI support across the public site,
-internal admin CRM shell, and customer portal case-tracking surfaces.
+Step 29 adds Customer Portal Documents: portal customers can list, upload, and
+download their allowed documents through portal-authenticated routes, while
+internal documents stay hidden until an Admin or Manager marks them customer
+visible.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -66,8 +68,8 @@ This project addresses that need with a centralized platform that connects publi
 - Appointment request validation flow
 - Admin document upload after a customer or case exists
 - Confirmation after a successful submission
-- Customer portal login, dashboard, and read-only case tracking
-- Portal document metadata preview for existing customer cases
+- Customer portal login, dashboard, case tracking, and document upload/download
+- Portal document metadata and protected download for allowed customer files
 
 ### CRM Management
 
@@ -157,10 +159,11 @@ Customer portal accounts are separate from internal CRM users. They can:
 - Log in through `/portal/login`
 - View their safe profile and workspace summary
 - Track their own case progress in read-only mode
-- View related appointment details and document metadata
+- View related appointment details and allowed document metadata
+- Upload supporting documents for their own customer record or cases
+- Download customer-visible documents through the portal download route
 
-Customer document upload/download and self-service profile updates remain
-future work.
+Self-service profile updates remain future work.
 
 ## System Modules
 
@@ -341,8 +344,8 @@ The public consultation form maps new requests to the workspace configured by
 `DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. Workspace signup
 creates a new internal CRM workspace only when `WORKSPACE_SIGNUP_ENABLED=true`.
 Workspace invitations can add later internal users by email. Billing,
-workspace switching, workspace-specific public portals, customer self-registration,
-and portal document upload/download remain future roadmap scope.
+workspace switching, workspace-specific public portals, and customer
+self-registration remain future roadmap scope.
 Administrators can edit the current workspace profile from `/admin/settings`;
 logo management is URL-based in this step.
 
@@ -538,9 +541,10 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 
 ## Future Improvements
 
-- Customer portal document upload and self-service profile flows
+- Customer portal self-service profile flows
 - Email and SMS notifications
-- Cloud file storage
+- Private cloud object storage for documents
+- Production malware scanning for uploaded files
 - OCR-assisted document processing
 - Advanced analytics and configurable reports
 - Multi-branch support and deeper localization coverage
@@ -566,13 +570,13 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
 | Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED`; admins can edit the current workspace profile |
 | Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens, console email preview, optional Resend delivery, and resend token rotation |
-| Customer portal | Implemented with separate `CustomerPortalAccount` records, portal-purpose JWTs, `/portal/login`, `/portal/dashboard`, `/portal/cases`, read-only portal case detail, and internal admin/manager portal access controls for existing customers |
+| Customer portal | Implemented with separate `CustomerPortalAccount` records, portal-purpose JWTs, `/portal/login`, `/portal/dashboard`, `/portal/cases`, read-only portal case detail, `/portal/documents` upload/download, and internal admin/manager portal access controls for existing customers |
 | Bilingual UI | Implemented with English/Vietnamese resources, `advisora_locale` persistence, switchers in public/admin/portal layouts and login flows, localized core status labels, and locale-aware portal date/file-size helpers |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
 | Production deployment | Not deployed yet |
-| Document storage | Local development storage only; persistent private object storage remains future work |
+| Document storage | Local development storage only with authenticated internal/portal downloads; persistent private object storage remains future work |
 | Auth hardening | JWT Bearer flow implemented; HttpOnly cookie session strategy remains future work |
 
 ## Known Limitations
@@ -594,16 +598,15 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Invitation email delivery defaults to `EMAIL_PROVIDER=console`; real Resend
   sending requires provider secrets configured outside the repository.
 - The customer portal currently supports login, session restore, dashboard,
-  profile/account summary, internal access controls, and read-only case
-  tracking for the authenticated customer.
+  profile/account summary, internal access controls, read-only case tracking,
+  and customer document upload/download for the authenticated customer.
 - Bilingual UI currently focuses on core navigation, layout chrome, login
   flows, status labels, and portal case tracking. Backend API response
   localization, email template localization, and translation of user-generated
   database content remain future work.
-- No customer document upload/download, customer self-registration,
-  billing, OCR, malware scanning, cloud object storage, report exports,
-  realtime updates, production-grade rate limiting, or centralized
-  observability yet.
+- No customer self-registration, billing, OCR, production malware scanning,
+  cloud object storage, report exports, realtime updates, production-grade rate
+  limiting, or centralized observability yet.
 
 ## Learning Goals
 
@@ -652,11 +655,12 @@ This project is designed to practice:
 - [x] Workspace settings / organization profile
 - [x] Customer portal case tracking
 - [x] Bilingual English/Vietnamese UI
+- [x] Customer portal documents
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Step 28.5 complete - Bilingual English/Vietnamese UI
+**Current phase:** Step 29 complete - Customer Portal Documents
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -732,12 +736,22 @@ portal access for existing customers, and `/portal/login` plus
 `/portal/dashboard` provide the first separate customer-facing portal UI.
 Step 28 adds read-only Customer Portal Case Tracking: portal customers can view
 only cases scoped to their portal account's `organizationId + customerId`,
-open safe case detail pages, see status timeline, appointments, document
-metadata, and task summary, while internal notes, document file URLs, secrets,
-and customer document upload/download remain excluded.
+open safe case detail pages, see status timeline, appointments, safe document
+metadata, and task summary, while internal notes, document file URLs, and
+secrets remain excluded.
 Step 28.5 adds bilingual UI support: i18next resources for English and
 Vietnamese, `advisora_locale` local storage persistence, language switchers in
 public/admin/portal surfaces, translated core navigation/buttons/status labels,
 and locale-aware formatting helpers for the portal case-tracking flow. Backend
 API response localization, email template localization, and translation of
 user-generated/database content remain future work.
+Step 29 adds Customer Portal Documents: portal customers use `/portal/documents`
+and `/api/portal/documents` with portal-purpose JWTs to list visible documents,
+upload customer-provided files, and download through a dedicated portal route.
+Existing internal documents default to `INTERNAL_ONLY`; Admins and Managers can
+toggle `CUSTOMER_VISIBLE` from admin document management. Portal document
+responses never expose `fileUrl`, raw storage paths, or internal-only documents,
+and every portal document query is scoped by `organizationId`, `customerId`, and
+case ownership when a document is case-linked. Files still use local portfolio
+storage; private object storage, OCR, and production malware scanning remain
+future hardening.

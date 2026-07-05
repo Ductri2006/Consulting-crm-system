@@ -226,14 +226,16 @@ Portal JWT payloads include `purpose: "customer_portal"`, `portalAccountId`,
 `organizationId`, and `customerId`. Internal `User` tokens and customer portal
 tokens are intentionally not interchangeable.
 
-Step 28 portal case tracking does not add new tables. It reads existing
-`CaseProfile`, `CaseHistory`, `Appointment`, `Task`, and `Document` records
-through the `CustomerPortalAccount` scope. Every portal case query must include
-both `organizationId` and `customerId` from the authenticated portal account.
-Portal responses are whitelist DTOs: internal case notes, case-history notes,
-document file URLs, password hashes, token hashes, and staff contact details are
-not exposed. Document data is metadata-only until portal file permissions are
-implemented in a later step.
+Step 28 portal case tracking reads existing `CaseProfile`, `CaseHistory`,
+`Appointment`, `Task`, and `Document` records through the
+`CustomerPortalAccount` scope. Step 29 adds document source and visibility
+metadata so portal customers can list, upload, and download only documents with
+`visibility=CUSTOMER_VISIBLE`. Every portal case and document query must include
+both `organizationId` and `customerId` from the authenticated portal account;
+case-linked documents must also belong to a case owned by that same customer and
+workspace. Portal responses are whitelist DTOs: internal case notes,
+case-history notes, `Document.fileUrl`, raw storage paths, password hashes,
+token hashes, and staff contact details are not exposed.
 
 ### 5.3 Service
 
@@ -419,7 +421,9 @@ Stores internal work items assigned to staff.
 
 ### 5.9 Document
 
-Stores metadata for files held in external object storage.
+Stores metadata for files held in local portfolio storage. Production should
+move customer files to private persistent object storage with authenticated or
+short-lived signed access.
 
 | Field | Type | Required | Rules / Default |
 | --- | --- | --- | --- |
@@ -427,12 +431,18 @@ Stores metadata for files held in external object storage.
 | `caseProfileId` | UUID | No | Optional related case |
 | `customerId` | UUID | No | Optional related customer |
 | `uploadedById` | UUID | No | Optional uploader; null for public uploads |
+| `uploadedByPortalAccountId` | UUID | No | Customer portal uploader for portal uploads |
+| `portalVisibilityUpdatedById` | UUID | No | Internal user who last changed portal visibility |
 | `fileName` | String | Yes | Sanitized display name |
-| `fileUrl` | String | Yes | Object-storage URL or key |
+| `fileUrl` | String | Yes | Internal local storage key/path reference; not returned to portal |
 | `fileType` | `DocumentType` | Yes | Defaults to `OTHER` |
+| `source` | `DocumentSource` | Yes | Defaults to `INTERNAL` |
+| `visibility` | `DocumentVisibility` | Yes | Defaults to `INTERNAL_ONLY` |
 | `mimeType` | String | No | Validated media type |
 | `size` | Integer | No | File size in bytes |
+| `portalVisibilityUpdatedAt` | DateTime | No | Last portal visibility change time |
 | `createdAt` | DateTime | Yes | Defaults to the current time |
+| `updatedAt` | DateTime | Yes | Updated automatically |
 
 `DocumentType` values:
 
@@ -443,7 +453,24 @@ Stores metadata for files held in external object storage.
 - `CONSTRUCTION_DOCUMENT`
 - `OTHER`
 
-At least one of `caseProfileId` or `customerId` must be present. Prisma cannot express that cross-column check directly, so it should be enforced in service validation and, preferably, in a custom SQL migration constraint.
+`DocumentSource` values:
+
+- `INTERNAL`
+- `CUSTOMER_PORTAL`
+
+`DocumentVisibility` values:
+
+- `INTERNAL_ONLY`
+- `CUSTOMER_VISIBLE`
+
+Existing and internal admin uploads default to `source=INTERNAL` and
+`visibility=INTERNAL_ONLY`. Customer portal uploads default to
+`source=CUSTOMER_PORTAL` and `visibility=CUSTOMER_VISIBLE`. The customer portal
+may list or download only `CUSTOMER_VISIBLE` documents scoped to its
+`organizationId`, `customerId`, and related case ownership. At least one of
+`caseProfileId` or `customerId` must be present. Prisma cannot express that
+cross-column check directly, so it should be enforced in service validation and,
+preferably, in a custom SQL migration constraint.
 
 ### 5.10 News
 
@@ -576,8 +603,13 @@ PostgreSQL full-text search or trigram indexes can be added later for customer n
 - Portal case tracking must scope by portal-account `organizationId` and
   `customerId`, return generic `404` for out-of-scope case IDs, and expose only
   safe case/timeline/appointment/document metadata fields.
+- Portal document list, upload, and download must use portal auth only, scope by
+  portal-account `organizationId` and `customerId`, verify case ownership for
+  case-linked documents, require `visibility=CUSTOMER_VISIBLE`, and return
+  generic `404` for hidden or out-of-scope documents.
 - Customer identity numbers and private documents should be encrypted or protected with provider-level encryption at rest.
-- File URLs should be private or signed when they contain customer information.
+- File URLs/storage paths must not be returned to portal responses. They should
+  be private or signed when they contain customer information.
 - Role-based authorization must be enforced in backend services, not only in the frontend.
 - Public form endpoints require rate limiting, validation, malware scanning where available, and abuse protection.
 - Activity logs must avoid storing secrets, raw passwords, JWTs, or entire uploaded documents.
@@ -654,6 +686,16 @@ enum DocumentType {
   LEGAL_DOCUMENT
   CONSTRUCTION_DOCUMENT
   OTHER
+}
+
+enum DocumentSource {
+  INTERNAL
+  CUSTOMER_PORTAL
+}
+
+enum DocumentVisibility {
+  INTERNAL_ONLY
+  CUSTOMER_VISIBLE
 }
 
 enum PublishStatus {
@@ -868,25 +910,40 @@ model Task {
 }
 
 model Document {
-  id                    String       @id @default(uuid())
-  caseProfileId         String?
-  customerId            String?
-  uploadedById          String?
-  fileName              String
-  fileUrl               String
-  fileType              DocumentType @default(OTHER)
-  mimeType              String?
-  size                  Int?
-  createdAt             DateTime     @default(now())
+  id                          String             @id @default(uuid())
+  organizationId              String
+  caseProfileId               String?
+  customerId                  String?
+  uploadedById                String?
+  uploadedByPortalAccountId   String?
+  portalVisibilityUpdatedById String?
+  fileName                    String
+  fileUrl                     String
+  fileType                    DocumentType       @default(OTHER)
+  source                      DocumentSource     @default(INTERNAL)
+  visibility                  DocumentVisibility @default(INTERNAL_ONLY)
+  mimeType                    String?
+  size                        Int?
+  portalVisibilityUpdatedAt   DateTime?
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime           @updatedAt
 
-  caseProfile        CaseProfile?        @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
-  customer           Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  uploadedBy         User?               @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  organization              Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  caseProfile               CaseProfile?           @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  customer                  Customer?              @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  uploadedBy                User?                  @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedByPortalAccount   CustomerPortalAccount? @relation("PortalUploadedDocuments", fields: [uploadedByPortalAccountId], references: [id], onDelete: SetNull)
+  portalVisibilityUpdatedBy User?                  @relation("DocumentPortalVisibilityUpdatedBy", fields: [portalVisibilityUpdatedById], references: [id], onDelete: SetNull)
 
   @@index([caseProfileId, createdAt])
   @@index([customerId, createdAt])
   @@index([uploadedById])
+  @@index([uploadedByPortalAccountId])
   @@index([fileType])
+  @@index([source])
+  @@index([visibility])
+  @@index([organizationId, customerId, visibility, createdAt])
+  @@index([organizationId, caseProfileId, visibility, createdAt])
 }
 
 model News {

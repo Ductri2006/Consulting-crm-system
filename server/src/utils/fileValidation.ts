@@ -29,6 +29,7 @@ export interface UploadFileDescriptor {
   originalName: string;
   mimeType: string;
   size?: number;
+  buffer?: Buffer;
 }
 
 export const getLowercaseFileExtension = (
@@ -39,6 +40,7 @@ export const assertValidUploadFile = ({
   originalName,
   mimeType,
   size,
+  buffer,
 }: UploadFileDescriptor): void => {
   const normalizedName = originalName.replaceAll("\\", "/");
   const baseName = path.posix.basename(normalizedName);
@@ -62,6 +64,69 @@ export const assertValidUploadFile = ({
       HTTP_STATUS.BAD_REQUEST,
     );
   }
+
+  if (buffer && !hasExpectedFileSignature(mimeType, buffer)) {
+    throw new AppError(
+      "The selected file content does not match its declared type.",
+      HTTP_STATUS.BAD_REQUEST,
+    );
+  }
+};
+
+const startsWithBytes = (
+  buffer: Buffer,
+  signature: readonly number[],
+): boolean =>
+  signature.every((byte, index) => buffer[index] === byte);
+
+const hasExpectedFileSignature = (
+  mimeType: string,
+  buffer: Buffer,
+): boolean => {
+  if (buffer.length === 0) {
+    return false;
+  }
+
+  if (mimeType === "application/pdf") {
+    return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+  }
+
+  if (mimeType === "image/jpeg") {
+    return startsWithBytes(buffer, [0xff, 0xd8, 0xff]);
+  }
+
+  if (mimeType === "image/png") {
+    return startsWithBytes(buffer, [
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+  }
+
+  if (mimeType === "image/webp") {
+    return (
+      buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+      buffer.subarray(8, 12).toString("ascii") === "WEBP"
+    );
+  }
+
+  if (
+    mimeType === "application/msword" ||
+    mimeType === "application/vnd.ms-excel"
+  ) {
+    return startsWithBytes(buffer, [
+      0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1,
+    ]);
+  }
+
+  if (
+    mimeType ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    mimeType ===
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  ) {
+    return startsWithBytes(buffer, [0x50, 0x4b, 0x03, 0x04]);
+  }
+
+  return false;
 };
 
 export const sanitizeOriginalFileName = (

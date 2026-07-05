@@ -90,15 +90,32 @@ Customer Portal:
   summary, recent cases, and next appointment if available.
 - [ ] `/portal/cases` lists only the authenticated portal customer's cases.
 - [ ] `/portal/cases/:id` shows safe case overview, timeline, appointments,
-  document metadata, and task summary for the portal customer's own case.
+  portal-visible document metadata/download actions, and task summary for the
+  portal customer's own case.
+- [ ] `/portal/documents` lists only `CUSTOMER_VISIBLE` documents scoped to the
+  portal account's organization and customer.
+- [ ] Portal uploads create `CUSTOMER_PORTAL` + `CUSTOMER_VISIBLE` documents
+  without accepting customer or organization IDs from the client.
+- [ ] Portal downloads use `/api/portal/documents/:id/download`, not the
+  internal `/api/documents/:id/download` route.
+- [ ] Internal document uploads are hidden from portal by default until an Admin
+  or Manager marks them customer-visible.
+- [ ] Admin Documents shows source/visibility badges and lets Admin/Manager
+  toggle customer visibility.
+- [ ] Admin Documents shows customer portal uploads.
 - [ ] Portal case status, priority, appointment method/status, document type,
   and task status labels translate in English and Vietnamese.
 - [ ] Another customer's case ID returns generic `404`.
 - [ ] A cross-workspace case ID returns generic `404`.
+- [ ] Another customer's document ID returns generic `404` for portal list or
+  download.
+- [ ] A cross-workspace document ID returns generic `404` for portal list or
+  download.
 - [ ] Portal case responses do not include internal notes, `fileUrl`,
-  `passwordHash`, `tokenHash`, raw upload paths, or document download links.
-- [ ] Portal case pages have no edit, upload, download, delete, assign, or
-  status-update controls.
+  `passwordHash`, `tokenHash`, or raw upload paths.
+- [ ] Portal document responses do not include `fileUrl`, `filePath`, raw
+  upload paths, `passwordHash`, `tokenHash`, or internal-only documents.
+- [ ] Portal case pages have no edit, delete, assign, or status-update controls.
 - [ ] Refreshing `/portal/dashboard` restores the portal session.
 - [ ] Portal password reset invalidates the old password and allows the new
   password.
@@ -251,6 +268,9 @@ testing.
 - [ ] Admin login returns a sanitized user and access token.
 - [ ] Dashboard API returns data.
 - [ ] Document upload and download work.
+- [ ] Customer portal document list/upload/download works with portal auth only.
+- [ ] Internal-only documents remain hidden until Admin/Manager toggles
+  `CUSTOMER_VISIBLE`.
 - [ ] Reports APIs return data for an admin account.
 - [ ] Admin user management create/edit/reset/deactivate/reactivate smoke works
   with fictional users.

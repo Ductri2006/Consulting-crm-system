@@ -1,4 +1,9 @@
-import { Prisma, UserRole } from "@prisma/client";
+import {
+  DocumentSource,
+  DocumentVisibility,
+  Prisma,
+  UserRole,
+} from "@prisma/client";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
@@ -24,6 +29,7 @@ import type { SafeUser } from "../../utils/sanitizeUser";
 import type {
   DocumentDownload,
   DocumentListQuery,
+  DocumentPortalVisibilityInput,
   DocumentUploadFile,
   UploadDocumentInput,
 } from "./document.types";
@@ -66,10 +72,23 @@ const documentInclude = {
   uploadedBy: {
     select: safeUserSelect,
   },
+  uploadedByPortalAccount: {
+    select: {
+      id: true,
+      email: true,
+      customer: {
+        select: customerSummarySelect,
+      },
+    },
+  },
+  portalVisibilityUpdatedBy: {
+    select: safeUserSelect,
+  },
 } satisfies Prisma.DocumentInclude;
 
 type DocumentAccessRecord = {
   uploadedById: string | null;
+  source: DocumentSource;
   caseProfile: {
     assignedToId: string | null;
   } | null;
@@ -97,6 +116,7 @@ const assertDocumentReadAccess = (
   if (
     actor.role === UserRole.STAFF &&
     document.uploadedById !== actor.id &&
+    document.source !== DocumentSource.CUSTOMER_PORTAL &&
     document.caseProfile?.assignedToId !== actor.id
   ) {
     throw new AppError(
@@ -173,6 +193,7 @@ export const listDocuments = async (
     scopedFilters.push({
       OR: [
         { uploadedById: actor.id },
+        { source: DocumentSource.CUSTOMER_PORTAL },
         {
           caseProfile: {
             is: {
@@ -283,6 +304,7 @@ export const uploadDocument = async (
     originalName: file.originalName,
     mimeType: file.mimeType,
     size: file.size,
+    buffer: file.buffer,
   });
 
   const [customer, caseProfile] = await Promise.all([
@@ -375,6 +397,8 @@ export const uploadDocument = async (
         fileName: sanitizeOriginalFileName(file.originalName),
         fileUrl,
         fileType: input.fileType,
+        source: DocumentSource.INTERNAL,
+        visibility: DocumentVisibility.INTERNAL_ONLY,
         mimeType: file.mimeType,
         size: file.size,
       },
@@ -461,4 +485,70 @@ export const getDocumentDownload = async (
     fileName: document.fileName,
     localPath,
   };
+};
+
+export const setDocumentPortalVisibility = async (
+  id: string,
+  input: DocumentPortalVisibilityInput,
+  actor: SafeUser,
+) => {
+  assertCrmActor(actor);
+
+  if (actor.role !== UserRole.ADMIN && actor.role !== UserRole.MANAGER) {
+    throw new AppError(
+      "Only administrators and managers can update portal document visibility.",
+      HTTP_STATUS.FORBIDDEN,
+    );
+  }
+
+  try {
+    return await prisma.$transaction(async (transaction) => {
+      const document = await transaction.document.findFirst({
+        where: {
+          id,
+          organizationId: actor.organizationId,
+        },
+        select: {
+          id: true,
+          fileName: true,
+          visibility: true,
+        },
+      });
+
+      if (!document) {
+        throw new AppError(
+          "Document not found.",
+          HTTP_STATUS.NOT_FOUND,
+        );
+      }
+
+      const updatedDocument = await transaction.document.update({
+        where: { id },
+        data: {
+          visibility: input.visibility,
+          portalVisibilityUpdatedAt: new Date(),
+          portalVisibilityUpdatedById: actor.id,
+        },
+        include: documentInclude,
+      });
+
+      await transaction.activityLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          userId: actor.id,
+          action: "DOCUMENT_PORTAL_VISIBILITY_UPDATED",
+          entityType: "Document",
+          entityId: updatedDocument.id,
+          description:
+            input.visibility === DocumentVisibility.CUSTOMER_VISIBLE
+              ? `Document ${document.fileName} was made visible in the customer portal.`
+              : `Document ${document.fileName} was hidden from the customer portal.`,
+        },
+      });
+
+      return updatedDocument;
+    });
+  } catch (error) {
+    return throwDocumentPersistenceError(error);
+  }
 };

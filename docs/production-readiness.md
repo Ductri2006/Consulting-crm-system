@@ -27,6 +27,9 @@ accepted.
 - Step 28.5 bilingual UI support is implemented for English (`en`) and
   Vietnamese (`vi`). Locale preference is browser-only and stored in
   `advisora_locale`.
+- Step 29 customer portal documents are implemented with portal-authenticated
+  list/upload/download, hidden-by-default internal documents, Admin/Manager
+  customer-visible controls, and no portal file-path exposure.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -283,9 +286,9 @@ Recommended later upgrade:
   that environment value aligned with the intended default workspace.
 - Workspace logo management is URL-only in this step; there is no logo upload
   pipeline yet.
-- Customer portal supports login/dashboard/profile and read-only case tracking;
-  customer document upload/download, messages, billing, and self-registration
-  remain future work.
+- Customer portal supports login/dashboard/profile, read-only case tracking, and
+  customer document upload/download in the local-storage portfolio phase.
+  Messages, billing, and self-registration remain future work.
 - No billing, workspace switcher, or workspace-specific public intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production
   tenant onboarding flow.

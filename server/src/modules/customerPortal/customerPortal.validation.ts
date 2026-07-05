@@ -1,4 +1,8 @@
-import { CaseStatus } from "@prisma/client";
+import {
+  CaseStatus,
+  DocumentSource,
+  DocumentType,
+} from "@prisma/client";
 import { z } from "zod";
 
 import { paginationQuerySchema } from "../../utils/pagination";
@@ -66,3 +70,22 @@ export const portalCaseSummaryQuerySchema = z.object({}).strict();
 export const portalCaseIdParamsSchema = z.object({
   id: uuidSchema("Case id"),
 }).strict();
+
+export const portalDocumentIdParamsSchema = z.object({
+  id: uuidSchema("Document id"),
+}).strict();
+
+export const portalDocumentListQuerySchema = paginationQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  caseId: uuidSchema("Case id").optional(),
+  search: z.string().trim().min(1).max(100).optional(),
+  fileType: z.enum(DocumentType).optional(),
+  source: z.enum(DocumentSource).optional(),
+}).strict();
+
+export const portalDocumentUploadSchema = z
+  .object({
+    caseProfileId: uuidSchema("Case profile id").optional(),
+    fileType: z.enum(DocumentType).default(DocumentType.OTHER),
+  })
+  .strict();

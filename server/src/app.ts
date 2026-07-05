@@ -22,6 +22,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: allowedOrigins,
+    exposedHeaders: ["Content-Disposition"],
   }),
 );
 app.use(express.json());

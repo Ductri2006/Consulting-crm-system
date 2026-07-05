@@ -10,6 +10,11 @@ export {
   listPortalCases,
 } from './portalCases.api'
 export {
+  downloadPortalDocument,
+  listPortalDocuments,
+  uploadPortalDocument,
+} from './portalDocuments.api'
+export {
   PortalAuthProvider,
   usePortalAuth,
 } from './portalAuth.context'
@@ -39,8 +44,23 @@ export type {
 } from './portalCases.types'
 export {
   portalCaseStatuses,
+  portalDocumentTypes,
   portalPriorities,
 } from './portalCases.types'
+export type {
+  PortalDocumentCaseSummary,
+  PortalDocumentListParams,
+  PortalDocumentListResponse,
+  PortalDocumentRecord,
+  PortalDocumentSource,
+  PortalDocumentUploadFormValues,
+  PortalDocumentUploadInput,
+  PortalDocumentVisibility,
+} from './portalDocuments.types'
+export {
+  portalDocumentSources,
+  portalDocumentVisibilities,
+} from './portalDocuments.types'
 export {
   portalLoginFormSchema,
   type PortalLoginFormValues,
@@ -51,3 +71,10 @@ export {
   portalCaseStatusFilterSchema,
   type PortalCaseListFilterValues,
 } from './portalCases.validation'
+export {
+  portalDocumentFilterSchema,
+  portalDocumentSearchSchema,
+  portalDocumentSourceFilterSchema,
+  portalDocumentUploadFormSchema,
+  toPortalDocumentUploadInput,
+} from './portalDocuments.validation'

@@ -1,5 +1,6 @@
 import {
   BriefcaseBusiness,
+  FileText,
   LayoutDashboard,
   LogOut,
   ShieldCheck,
@@ -20,6 +21,11 @@ const portalNavItems = [
     href: '/portal/cases',
     labelKey: 'myCases',
     icon: BriefcaseBusiness,
+  },
+  {
+    href: '/portal/documents',
+    labelKey: 'documents',
+    icon: FileText,
   },
 ]
 

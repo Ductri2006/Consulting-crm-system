@@ -27,13 +27,16 @@ export type PortalTaskStatus =
   | 'IN_PROGRESS'
   | 'DONE'
   | 'CANCELLED'
-export type PortalDocumentType =
-  | 'IDENTITY_DOCUMENT'
-  | 'REAL_ESTATE_DOCUMENT'
-  | 'CONTRACT'
-  | 'LEGAL_DOCUMENT'
-  | 'CONSTRUCTION_DOCUMENT'
-  | 'OTHER'
+export const portalDocumentTypes = [
+  'IDENTITY_DOCUMENT',
+  'REAL_ESTATE_DOCUMENT',
+  'CONTRACT',
+  'LEGAL_DOCUMENT',
+  'CONSTRUCTION_DOCUMENT',
+  'OTHER',
+] as const
+
+export type PortalDocumentType = (typeof portalDocumentTypes)[number]
 
 export interface PortalPaginationMeta {
   page: number
@@ -109,7 +112,17 @@ export interface PortalDocumentMetadata {
   fileType: PortalDocumentType
   mimeType: string | null
   size: number | null
+  source: 'INTERNAL' | 'CUSTOMER_PORTAL'
+  visibility: 'INTERNAL_ONLY' | 'CUSTOMER_VISIBLE'
+  caseProfile: {
+    id: string
+    caseCode: string
+    title: string
+    status: PortalCaseStatus
+  } | null
   createdAt: string
+  uploadedByLabel: string
+  downloadAvailable: boolean
 }
 
 export interface PortalTaskSummary {

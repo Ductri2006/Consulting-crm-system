@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  documentPortalVisibilitySchema,
   documentIdParamsSchema,
   documentListQuerySchema,
   uploadDocumentMetadataSchema,
@@ -12,6 +13,9 @@ export type DocumentListQuery = z.infer<
 >;
 export type UploadDocumentInput = z.infer<
   typeof uploadDocumentMetadataSchema
+>;
+export type DocumentPortalVisibilityInput = z.infer<
+  typeof documentPortalVisibilitySchema
 >;
 
 export interface DocumentUploadFile {

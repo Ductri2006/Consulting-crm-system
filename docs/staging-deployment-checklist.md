@@ -403,7 +403,21 @@ Before real customer documents:
 - [ ] A case ID from another workspace returns generic `404` for the portal
   account.
 - [ ] Portal case responses do not include internal notes, `fileUrl`,
-  `passwordHash`, `tokenHash`, raw upload paths, or document download links.
+  `passwordHash`, `tokenHash`, or raw upload paths.
+- [ ] `GET /api/portal/documents` returns only `CUSTOMER_VISIBLE` documents for
+  the portal account's `organizationId + customerId`.
+- [ ] `POST /api/portal/documents` uploads only for the authenticated portal
+  customer and never accepts customer or organization IDs from the client.
+- [ ] `GET /api/portal/documents/:id/download` uses portal auth, returns the
+  file for an allowed document, and never exposes a storage path.
+- [ ] Another customer's document ID returns generic `404`.
+- [ ] A document ID from another workspace returns generic `404`.
+- [ ] Internal documents are hidden by default until Admin/Manager toggles
+  `CUSTOMER_VISIBLE`.
+- [ ] Portal token cannot call `/api/documents/:id/download`; internal token
+  cannot call `/api/portal/documents`.
+- [ ] Portal document responses do not include `fileUrl`, `filePath`, raw upload
+  paths, `passwordHash`, `tokenHash`, or internal-only documents.
 - [ ] Portal account deactivate blocks login with the generic failure message.
 - [ ] Portal account activate allows login again.
 - [ ] Portal password reset invalidates the old password and allows the new
@@ -440,8 +454,11 @@ Before real customer documents:
   customer profile, portal account info, case summary, and recent cases.
 - [ ] `/portal/cases` loads after portal login.
 - [ ] `/portal/cases/:id` loads for the portal customer's own case.
-- [ ] Portal case pages have no edit, upload, download, delete, assign, or
-  status-update controls.
+- [ ] `/portal/documents` loads after portal login.
+- [ ] Portal document upload/download UI works with portal auth only.
+- [ ] Portal case pages have no edit, delete, assign, or status-update controls.
+- [ ] Admin Documents shows source/visibility badges, customer uploads, and
+  Admin/Manager customer-visible controls.
 - [ ] Refreshing `/portal/dashboard` restores the portal session.
 - [ ] Consultation requests page loads.
 - [ ] Cases page loads.
@@ -580,8 +597,9 @@ Known staging limitations to acknowledge:
 - Workspace settings are available to admins; logo upload, custom domains,
   billing, workspace switching, and multi-membership remain future work.
 - Customer portal supports login, dashboard, profile/account summary, internal
-  access controls, and read-only case tracking. Customer document
-  upload/download, messages, billing, and self-registration remain future work.
+  access controls, read-only case tracking, and customer document
+  upload/download in the local-storage portfolio phase. Messages, billing, and
+  self-registration remain future work.
 - Public contact and appointment forms are validation/demo flows only.
 - No production-grade rate limiting, captcha, centralized monitoring, alerting,
   refresh-token revocation, malware scanning, report export, or automated E2E

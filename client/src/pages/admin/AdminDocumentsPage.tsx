@@ -4,7 +4,9 @@ import {
   CheckCircle2,
   Download,
   Eye,
+  EyeOff,
   FileText,
+  Globe2,
   Plus,
   SearchX,
   Trash2,
@@ -39,13 +41,16 @@ import {
   listDocuments,
   listDocumentUploaders,
   toDocumentUploadInput,
+  updateDocumentPortalVisibility,
   uploadDocument,
   type CaseOption,
   type CustomerOption,
   type DocumentDetail,
   type DocumentRecord,
+  type DocumentSource,
   type DocumentType,
   type DocumentUploadFormValues,
+  type DocumentVisibility,
   type PaginationMeta,
   type UserOption,
 } from '../../features/documents'
@@ -224,6 +229,61 @@ function DocumentTypeBadge({ fileType }: { fileType: DocumentType }) {
   )
 }
 
+function DocumentSourceBadge({ source }: { source: DocumentSource }) {
+  const { t } = useTranslation()
+  const isCustomerUpload = source === 'CUSTOMER_PORTAL'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+        isCustomerUpload
+          ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+          : 'bg-sky-50 text-sky-700 ring-sky-600/20',
+      )}
+    >
+      {t(`admin.documents.source.${source}`)}
+    </span>
+  )
+}
+
+function DocumentVisibilityBadge({
+  visibility,
+}: {
+  visibility: DocumentVisibility
+}) {
+  const { t } = useTranslation()
+  const isVisible = visibility === 'CUSTOMER_VISIBLE'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+        isVisible
+          ? 'bg-teal-50 text-teal-700 ring-teal-600/20'
+          : 'bg-slate-100 text-slate-700 ring-slate-500/20',
+      )}
+    >
+      {t(`admin.documents.visibility.${visibility}`)}
+    </span>
+  )
+}
+
+const getDocumentUploaderLabel = (
+  document: DocumentRecord,
+  fallback: string,
+): string => {
+  if (document.source === 'CUSTOMER_PORTAL') {
+    return (
+      document.uploadedByPortalAccount?.customer.fullName ??
+      document.uploadedByPortalAccount?.email ??
+      fallback
+    )
+  }
+
+  return document.uploadedBy?.fullName ?? fallback
+}
+
 function UploadDocumentForm({
   error,
   isLoadingLookups,
@@ -281,7 +341,7 @@ function UploadDocumentForm({
               {t('admin.documents.fields.file')} <span aria-hidden="true">*</span>
             </label>
             <input
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp"
               aria-describedby={
                 errors.file ? 'document-file-error' : undefined
               }
@@ -439,6 +499,14 @@ function DocumentDetailView({
           value={document.mimeType ?? t('common.notProvided')}
         />
         <DetailItem
+          label={t('admin.documents.fields.source')}
+          value={t(`admin.documents.source.${document.source}`)}
+        />
+        <DetailItem
+          label={t('admin.documents.fields.portalVisibility')}
+          value={t(`admin.documents.visibility.${document.visibility}`)}
+        />
+        <DetailItem
           label={t('admin.documents.fields.size')}
           value={formatFileSize(document.size)}
         />
@@ -456,11 +524,25 @@ function DocumentDetailView({
         />
         <DetailItem
           label={t('admin.documents.fields.uploadedBy')}
-          value={document.uploadedBy?.fullName ?? t('admin.documents.unknownUploader')}
+          value={getDocumentUploaderLabel(
+            document,
+            t('admin.documents.unknownUploader'),
+          )}
         />
         <DetailItem
           label={t('admin.documents.fields.uploadedDate')}
           value={formatDateTime(document.createdAt)}
+        />
+        <DetailItem
+          label={t('admin.documents.fields.visibilityUpdatedBy')}
+          value={
+            document.portalVisibilityUpdatedBy?.fullName ??
+            t('common.notProvided')
+          }
+        />
+        <DetailItem
+          label={t('admin.documents.fields.visibilityUpdatedAt')}
+          value={formatDateTime(document.portalVisibilityUpdatedAt ?? undefined)}
         />
         {document.updatedAt ? (
           <DetailItem
@@ -502,6 +584,9 @@ export function AdminDocumentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<DocumentRecord | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [visibilityUpdatingId, setVisibilityUpdatingId] = useState<
+    string | null
+  >(null)
   const listSequence = useRef(0)
   const lookupSequence = useRef(0)
   const detailSequence = useRef(0)
@@ -683,6 +768,44 @@ export function AdminDocumentsPage() {
     }
   }
 
+  const handlePortalVisibilityToggle = async (document: DocumentRecord) => {
+    const nextVisibility: DocumentVisibility =
+      document.visibility === 'CUSTOMER_VISIBLE'
+        ? 'INTERNAL_ONLY'
+        : 'CUSTOMER_VISIBLE'
+
+    setVisibilityUpdatingId(document.id)
+    setFeedback(null)
+
+    try {
+      const updated = await updateDocumentPortalVisibility(document.id, {
+        visibility: nextVisibility,
+      })
+      setFeedback({
+        type: 'success',
+        message: t('admin.documents.visibilityUpdatedFeedback', {
+          fileName: updated.fileName,
+          visibility: t(`admin.documents.visibility.${updated.visibility}`),
+        }),
+      })
+      await refreshAfterMutation()
+
+      if (documentDetail?.id === updated.id) {
+        setDocumentDetail(updated)
+      }
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message: getErrorMessage(
+          error,
+          t('admin.documents.visibilityUpdateError'),
+        ),
+      })
+    } finally {
+      setVisibilityUpdatingId(null)
+    }
+  }
+
   const handleDelete = async () => {
     if (!deleteTarget) {
       return
@@ -772,6 +895,18 @@ export function AdminDocumentsPage() {
       ),
     },
     {
+      key: 'source',
+      header: t('admin.documents.fields.source'),
+      render: (document) => <DocumentSourceBadge source={document.source} />,
+    },
+    {
+      key: 'visibility',
+      header: t('admin.documents.fields.portalVisibility'),
+      render: (document) => (
+        <DocumentVisibilityBadge visibility={document.visibility} />
+      ),
+    },
+    {
       key: 'customer',
       header: t('navigation.customers'),
       render: (document) =>
@@ -799,7 +934,10 @@ export function AdminDocumentsPage() {
       key: 'uploadedBy',
       header: t('admin.documents.fields.uploadedBy'),
       render: (document) =>
-        document.uploadedBy?.fullName ?? t('admin.documents.unknownUploader'),
+        getDocumentUploaderLabel(
+          document,
+          t('admin.documents.unknownUploader'),
+        ),
     },
     {
       key: 'createdAt',
@@ -836,6 +974,31 @@ export function AdminDocumentsPage() {
           >
             <Download className="h-4 w-4" aria-hidden="true" />
           </button>
+          {canManage ? (
+            <button
+              aria-label={t(
+                document.visibility === 'CUSTOMER_VISIBLE'
+                  ? 'admin.documents.actions.hideFromPortalAria'
+                  : 'admin.documents.actions.showInPortalAria',
+                { fileName: document.fileName },
+              )}
+              className="rounded-lg p-2 text-teal-700 transition hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={visibilityUpdatingId === document.id}
+              onClick={() => void handlePortalVisibilityToggle(document)}
+              title={
+                document.visibility === 'CUSTOMER_VISIBLE'
+                  ? t('admin.documents.hideFromPortal')
+                  : t('admin.documents.makeVisibleToCustomer')
+              }
+              type="button"
+            >
+              {document.visibility === 'CUSTOMER_VISIBLE' ? (
+                <EyeOff className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Globe2 className="h-4 w-4" aria-hidden="true" />
+              )}
+            </button>
+          ) : null}
           {canDelete(document) ? (
             <button
               aria-label={t('admin.documents.actions.deleteAria', {

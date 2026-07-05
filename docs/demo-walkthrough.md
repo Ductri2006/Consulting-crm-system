@@ -64,12 +64,13 @@ Public visitors do not need an account. Admin, manager, and staff users are
 internal CRM users. Customer portal accounts are separate and are created for
 existing customers by an internal Admin or Manager.
 
-Step 28.5 adds bilingual English/Vietnamese UI support. The selected language
-is stored in local storage as `advisora_locale`. The language switcher appears
-in the public layout, admin surfaces, and customer portal surfaces. Database
-content and user-generated values such as customer names, case titles, notes,
-and file names are not translated. Backend API response localization and email
-template localization remain future work.
+Step 28.5 adds bilingual English/Vietnamese UI support. Step 29 adds customer
+portal documents with portal-authenticated list, upload, and download. The
+selected language is stored in local storage as `advisora_locale`. The language
+switcher appears in the public layout, admin surfaces, and customer portal
+surfaces. Database content and user-generated values such as customer names,
+case titles, notes, and file names are not translated. Backend API response
+localization and email template localization remain future work.
 
 Default demo workspace:
 
@@ -445,13 +446,23 @@ Show:
 - Switch EN/VI on `/portal/login` and confirm the choice persists after
   refresh through `advisora_locale`.
 - Confirm `/portal/dashboard` shows workspace, customer profile, portal account
-  info, case summary, recent cases, and future placeholders for documents and
-  messages.
+  info, case summary, recent cases, and document availability.
 - Open `/portal/cases`, search/filter the customer's cases, and open a case
   detail page.
 - Confirm the portal case detail shows safe overview, timeline, appointments,
-  document metadata, and task summary without edit, upload, download, or delete
-  actions.
+  portal-visible document metadata/download actions, and task summary without
+  edit, delete, assign, or status-update actions.
+- In admin `/admin/documents`, upload an internal document for the same
+  customer/case and confirm it starts as Internal only.
+- Confirm the document is not visible from `/portal/documents` until an Admin or
+  Manager marks it Visible to customer.
+- Open `/portal/documents`, search/filter documents, download the visible
+  internal document through the portal route, and confirm no file path appears
+  in the JSON response.
+- Upload a small PDF/image/Word/Excel test file from `/portal/documents`, linked
+  to one of the portal customer's cases if available.
+- Confirm the uploaded portal document appears in admin `/admin/documents` as a
+  customer upload and remains scoped to the same customer/workspace.
 - Confirm status, priority, appointment method, document type, and task status
   labels translate in both English and Vietnamese.
 - Return to Admin Customers and reset the portal password.
@@ -471,7 +482,12 @@ Talk track:
   workspace.
 - Case tracking is read-only and scoped to the portal account's customer and
   workspace.
-- Customer document upload/download remains a future portal step.
+- Portal document upload/download uses `/api/portal/documents` and never the
+  internal admin download route.
+- Internal documents are hidden by default; customers see them only after an
+  Admin or Manager sets `CUSTOMER_VISIBLE`.
+- Uploaded files still use local portfolio storage. Private object storage,
+  OCR, and production malware scanning remain future hardening.
 
 ## Workspace Settings Demo
 
@@ -598,14 +614,14 @@ Talk track:
 - Public consultation requests map to one configured default workspace until
   workspace-specific public portals or custom-domain routing exists.
 - No request-to-customer conversion workflow yet.
-- Customer portal supports login/dashboard/profile and read-only case tracking;
-  customer document upload/download, messages, billing, and self-registration
+- Customer portal supports login/dashboard/profile, read-only case tracking, and
+  customer document upload/download; messages, billing, and self-registration
   remain future work.
 - Bilingual UI focuses on core UI, navigation, login flows, common actions,
   status labels, and portal case tracking. Backend API response localization,
   email template localization, and user-generated content translation remain
   future work.
-- No OCR, malware scanning, or private object storage yet.
+- No OCR, production malware scanning, or private object storage yet.
 - No public CMS APIs for news/projects yet.
 - No report exports yet.
 - No realtime updates yet.

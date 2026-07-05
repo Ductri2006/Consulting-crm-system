@@ -3,6 +3,8 @@ import { randomBytes } from "node:crypto";
 import {
   AppointmentStatus,
   CaseStatus,
+  DocumentSource,
+  DocumentVisibility,
   Prisma,
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -11,6 +13,18 @@ import { HTTP_STATUS } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { getServerCalendarDate } from "../../utils/dateRange";
+import {
+  buildLocalFileUrl,
+  buildStoredFileName,
+  deleteLocalFile,
+  getLocalFilePathFromUrl,
+  localFileExists,
+  saveLocalFile,
+} from "../../utils/fileStorage";
+import {
+  assertValidUploadFile,
+  sanitizeOriginalFileName,
+} from "../../utils/fileValidation";
 import { signCustomerPortalAccessToken } from "../../utils/jwt";
 import {
   createPaginationMeta,
@@ -25,6 +39,11 @@ import {
   type PortalCaseSummary,
   type PortalCaseSummaryResult,
   type PortalCaseTimelineItem,
+  type PortalDocumentDownload,
+  type PortalDocumentListQuery,
+  type PortalDocumentListResult,
+  type PortalDocumentUploadFile,
+  type PortalDocumentUploadInput,
   type PortalAccountMutationResult,
   type PortalLoginInput,
   type PortalLoginResult,
@@ -109,11 +128,26 @@ const safePortalAppointmentSelect = {
 
 const safePortalDocumentMetadataSelect = {
   id: true,
+  organizationId: true,
+  customerId: true,
   fileName: true,
   fileType: true,
   mimeType: true,
   size: true,
+  source: true,
+  visibility: true,
   createdAt: true,
+  caseProfile: {
+    select: {
+      id: true,
+      caseCode: true,
+      title: true,
+      status: true,
+    },
+  },
+  uploadedBy: {
+    select: safePortalStaffSelect,
+  },
 } satisfies Prisma.DocumentSelect;
 
 const safePortalTaskSelect = {
@@ -171,6 +205,9 @@ const safePortalCaseDetailSelect = {
     select: safePortalAppointmentSelect,
   },
   documents: {
+    where: {
+      visibility: DocumentVisibility.CUSTOMER_VISIBLE,
+    },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: safePortalDocumentMetadataSelect,
   },
@@ -211,6 +248,10 @@ type PortalCaseDetailRecord = Prisma.CaseProfileGetPayload<{
 
 type PortalNextAppointmentRecord = Prisma.AppointmentGetPayload<{
   select: typeof safePortalAppointmentSelect;
+}>;
+
+type PortalDocumentMetadataRecord = Prisma.DocumentGetPayload<{
+  select: typeof safePortalDocumentMetadataSelect;
 }>;
 
 const generateTemporaryPassword = (): string =>
@@ -262,7 +303,7 @@ export const toPortalProfile = (
   overview: {
     message: CASE_TRACKING_MESSAGE,
     caseTrackingAvailable: true,
-    documentUploadAvailable: false,
+    documentUploadAvailable: true,
     messagingAvailable: false,
   },
 });
@@ -273,6 +314,69 @@ const getPortalCaseScope = (
   organizationId: session.portalAccount.organizationId,
   customerId: session.portalAccount.customerId,
 });
+
+const getPortalDocumentVisibilityWhere =
+  (): Prisma.DocumentWhereInput => ({
+    visibility: DocumentVisibility.CUSTOMER_VISIBLE,
+  });
+
+const getPortalDocumentWhere = (
+  session: PortalSession,
+  caseProfileId?: string,
+): Prisma.DocumentWhereInput => {
+  const scope = getPortalCaseScope(session);
+
+  return {
+    organizationId: scope.organizationId,
+    customerId: scope.customerId,
+    ...(caseProfileId && { caseProfileId }),
+    AND: [
+      getPortalDocumentVisibilityWhere(),
+      {
+        OR: [
+          { caseProfileId: null },
+          {
+            caseProfile: {
+              is: scope,
+            },
+          },
+        ],
+      },
+    ],
+  };
+};
+
+const toSafePortalDocumentMetadata = (
+  document: PortalDocumentMetadataRecord,
+) => ({
+  id: document.id,
+  fileName: document.fileName,
+  fileType: document.fileType,
+  mimeType: document.mimeType,
+  size: document.size,
+  source: document.source,
+  visibility: document.visibility,
+  caseProfile: document.caseProfile,
+  createdAt: document.createdAt,
+  uploadedByLabel:
+    document.source === DocumentSource.CUSTOMER_PORTAL
+      ? "Customer"
+      : (document.uploadedBy?.fullName ?? "Workspace team"),
+  downloadAvailable: true,
+});
+
+const isPortalDocumentScopedToSession = (
+  document: PortalDocumentMetadataRecord,
+  session: PortalSession,
+) => {
+  const scope = getPortalCaseScope(session);
+
+  return (
+    document.visibility === DocumentVisibility.CUSTOMER_VISIBLE &&
+    document.organizationId === scope.organizationId &&
+    document.customerId === scope.customerId
+  );
+};
 
 const formatPortalTimelineDescription = (
   action: string,
@@ -309,6 +413,7 @@ const toPortalTimelineItem = (
 const toPortalCaseSummary = (
   caseProfile: PortalCaseSummaryRecord,
   upcomingAppointmentCount = 0,
+  documentCount = 0,
 ): PortalCaseSummary => ({
   id: caseProfile.id,
   caseCode: caseProfile.caseCode,
@@ -324,7 +429,7 @@ const toPortalCaseSummary = (
     ? toPortalTimelineItem(caseProfile.histories[0])
     : null,
   upcomingAppointmentCount,
-  documentCount: caseProfile._count.documents,
+  documentCount,
   taskCount: caseProfile._count.tasks,
 });
 
@@ -408,6 +513,37 @@ const getUpcomingAppointmentCountByCase = async (
   return counts;
 };
 
+const getVisiblePortalDocumentCountByCase = async (
+  session: PortalSession,
+  caseIds: string[],
+): Promise<Map<string, number>> => {
+  if (caseIds.length === 0) {
+    return new Map();
+  }
+
+  const groups = await prisma.document.groupBy({
+    by: ["caseProfileId"],
+    where: {
+      ...getPortalDocumentWhere(session),
+      caseProfileId: {
+        in: caseIds,
+      },
+    },
+    _count: {
+      _all: true,
+    },
+  });
+  const counts = new Map<string, number>();
+
+  for (const group of groups) {
+    if (group.caseProfileId) {
+      counts.set(group.caseProfileId, group._count._all);
+    }
+  }
+
+  return counts;
+};
+
 export const listPortalCases = async (
   query: PortalCaseListQuery,
   session: PortalSession,
@@ -433,12 +569,17 @@ export const listPortalCases = async (
     session,
     caseProfiles.map((caseProfile) => caseProfile.id),
   );
+  const documentCounts = await getVisiblePortalDocumentCountByCase(
+    session,
+    caseProfiles.map((caseProfile) => caseProfile.id),
+  );
 
   return {
     items: caseProfiles.map((caseProfile) =>
       toPortalCaseSummary(
         caseProfile,
         upcomingCounts.get(caseProfile.id) ?? 0,
+        documentCounts.get(caseProfile.id) ?? 0,
       ),
     ),
     meta: createPaginationMeta(page, limit, total),
@@ -488,6 +629,10 @@ export const getPortalCaseSummary = async (
     session,
     recentCases.map((caseProfile) => caseProfile.id),
   );
+  const recentDocumentCounts = await getVisiblePortalDocumentCountByCase(
+    session,
+    recentCases.map((caseProfile) => caseProfile.id),
+  );
   const completedCases = countsByStatus.get(CaseStatus.COMPLETED) ?? 0;
   const cancelledCases = countsByStatus.get(CaseStatus.CANCELLED) ?? 0;
   const totalCases = Object.values(CaseStatus).reduce(
@@ -512,6 +657,7 @@ export const getPortalCaseSummary = async (
       toPortalCaseSummary(
         caseProfile,
         recentUpcomingCounts.get(caseProfile.id) ?? 0,
+        recentDocumentCounts.get(caseProfile.id) ?? 0,
       ),
     ),
   };
@@ -536,9 +682,13 @@ export const getPortalCaseById = async (
   const upcomingCounts = await getUpcomingAppointmentCountByCase(session, [
     caseProfile.id,
   ]);
+  const documentCounts = await getVisiblePortalDocumentCountByCase(session, [
+    caseProfile.id,
+  ]);
   const summary = toPortalCaseSummary(
     caseProfile,
     upcomingCounts.get(caseProfile.id) ?? 0,
+    documentCounts.get(caseProfile.id) ?? 0,
   );
 
   return {
@@ -549,19 +699,16 @@ export const getPortalCaseById = async (
     counts: {
       histories: caseProfile._count.histories,
       appointments: caseProfile._count.appointments,
-      documents: caseProfile._count.documents,
+      documents: documentCounts.get(caseProfile.id) ?? 0,
       tasks: caseProfile._count.tasks,
     },
     timeline: caseProfile.histories.map(toPortalTimelineItem),
     appointments: caseProfile.appointments.map(toSafePortalAppointment),
-    documents: caseProfile.documents.map((document) => ({
-      id: document.id,
-      fileName: document.fileName,
-      fileType: document.fileType,
-      mimeType: document.mimeType,
-      size: document.size,
-      createdAt: document.createdAt,
-    })),
+    documents: caseProfile.documents
+      .filter((document) =>
+        isPortalDocumentScopedToSession(document, session),
+      )
+      .map(toSafePortalDocumentMetadata),
     tasks: caseProfile.tasks.map((task) => ({
       id: task.id,
       title: task.title,
@@ -570,6 +717,206 @@ export const getPortalCaseById = async (
       deadline: task.deadline,
       updatedAt: task.updatedAt,
     })),
+  };
+};
+
+const getPortalDocumentSearchFilter = (
+  search: string | undefined,
+): Prisma.DocumentWhereInput | undefined =>
+  search
+    ? {
+        OR: [
+          {
+            fileName: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+          {
+            caseProfile: {
+              is: {
+                caseCode: {
+                  contains: search,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            },
+          },
+          {
+            caseProfile: {
+              is: {
+                title: {
+                  contains: search,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            },
+          },
+        ],
+      }
+    : undefined;
+
+export const listPortalDocuments = async (
+  query: PortalDocumentListQuery,
+  session: PortalSession,
+): Promise<PortalDocumentListResult> => {
+  const { page, limit, caseId, search, fileType, source } = query;
+  const where: Prisma.DocumentWhereInput = {
+    ...getPortalDocumentWhere(session, caseId),
+    ...(fileType && { fileType }),
+    ...(source && { source }),
+    ...getPortalDocumentSearchFilter(search),
+  };
+  const pagination = getPagination(page, limit);
+  const [documents, total] = await prisma.$transaction([
+    prisma.document.findMany({
+      where,
+      ...pagination,
+      select: safePortalDocumentMetadataSelect,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    }),
+    prisma.document.count({ where }),
+  ]);
+
+  return {
+    items: documents.map(toSafePortalDocumentMetadata),
+    meta: createPaginationMeta(page, limit, total),
+  };
+};
+
+export const uploadPortalDocument = async (
+  input: PortalDocumentUploadInput,
+  file: PortalDocumentUploadFile,
+  session: PortalSession,
+) => {
+  assertValidUploadFile({
+    originalName: file.originalName,
+    mimeType: file.mimeType,
+    size: file.size,
+    buffer: file.buffer,
+  });
+
+  const scope = getPortalCaseScope(session);
+
+  if (input.caseProfileId) {
+    const caseProfile = await prisma.caseProfile.findFirst({
+      where: {
+        id: input.caseProfileId,
+        ...scope,
+      },
+      select: { id: true },
+    });
+
+    if (!caseProfile) {
+      throw new AppError(
+        "Case profile not found.",
+        HTTP_STATUS.NOT_FOUND,
+      );
+    }
+  }
+
+  const storedFileName = buildStoredFileName(file.originalName);
+  const fileUrl = buildLocalFileUrl(storedFileName);
+
+  try {
+    await saveLocalFile(storedFileName, file.buffer);
+  } catch {
+    await deleteLocalFile(fileUrl).catch(() => false);
+    throw new AppError(
+      "The document file could not be stored.",
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    );
+  }
+
+  try {
+    const document = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.document.create({
+        data: {
+          organizationId: scope.organizationId,
+          customerId: scope.customerId,
+          caseProfileId: input.caseProfileId,
+          uploadedByPortalAccountId: session.portalAccount.id,
+          fileName: sanitizeOriginalFileName(file.originalName),
+          fileUrl,
+          fileType: input.fileType,
+          source: DocumentSource.CUSTOMER_PORTAL,
+          visibility: DocumentVisibility.CUSTOMER_VISIBLE,
+          mimeType: file.mimeType,
+          size: file.size,
+        },
+        select: safePortalDocumentMetadataSelect,
+      });
+
+      await transaction.activityLog.create({
+        data: {
+          organizationId: scope.organizationId,
+          userId: null,
+          action: "CUSTOMER_PORTAL_DOCUMENT_UPLOADED",
+          entityType: "Document",
+          entityId: created.id,
+          description:
+            "Customer portal document uploaded by portal account.",
+        },
+      });
+
+      return created;
+    });
+
+    return toSafePortalDocumentMetadata(document);
+  } catch (error) {
+    await deleteLocalFile(fileUrl).catch(() => false);
+
+    if (isPrismaError(error, "P2003")) {
+      throw new AppError(
+        "The related case profile is no longer available.",
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const getPortalDocumentDownload = async (
+  id: string,
+  session: PortalSession,
+): Promise<PortalDocumentDownload> => {
+  const document = await prisma.document.findFirst({
+    where: {
+      id,
+      ...getPortalDocumentWhere(session),
+    },
+    select: {
+      fileName: true,
+      fileUrl: true,
+    },
+  });
+
+  if (!document) {
+    throw new AppError("Document not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  const localPath = getLocalFilePathFromUrl(document.fileUrl);
+  let fileExists = false;
+
+  if (localPath) {
+    try {
+      fileExists = await localFileExists(localPath);
+    } catch {
+      throw new AppError(
+        "The document file could not be accessed.",
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  if (!localPath || !fileExists) {
+    throw new AppError("Document not found.", HTTP_STATUS.NOT_FOUND);
+  }
+
+  return {
+    fileName: document.fileName,
+    localPath,
   };
 };
 

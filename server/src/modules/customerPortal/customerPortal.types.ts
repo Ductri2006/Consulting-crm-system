@@ -4,7 +4,9 @@ import type {
   CaseStatus,
   Customer,
   CustomerPortalAccount,
+  DocumentSource,
   DocumentType,
+  DocumentVisibility,
   Organization,
   Priority,
   TaskStatus,
@@ -16,6 +18,9 @@ import type {
   createPortalAccountSchema,
   portalCaseIdParamsSchema,
   portalCaseListQuerySchema,
+  portalDocumentIdParamsSchema,
+  portalDocumentListQuerySchema,
+  portalDocumentUploadSchema,
   portalLoginSchema,
   resetPortalPasswordSchema,
 } from "./customerPortal.validation";
@@ -29,6 +34,15 @@ export type ResetPortalPasswordInput = z.infer<
 export type PortalLoginInput = z.infer<typeof portalLoginSchema>;
 export type PortalCaseListQuery = z.infer<typeof portalCaseListQuerySchema>;
 export type PortalCaseIdParams = z.infer<typeof portalCaseIdParamsSchema>;
+export type PortalDocumentIdParams = z.infer<
+  typeof portalDocumentIdParamsSchema
+>;
+export type PortalDocumentListQuery = z.infer<
+  typeof portalDocumentListQuerySchema
+>;
+export type PortalDocumentUploadInput = z.infer<
+  typeof portalDocumentUploadSchema
+>;
 
 export type SafeCustomerPortalAccount = Pick<
   CustomerPortalAccount,
@@ -145,7 +159,17 @@ export interface SafePortalDocumentMetadata {
   fileType: DocumentType;
   mimeType: string | null;
   size: number | null;
+  source: DocumentSource;
+  visibility: DocumentVisibility;
+  caseProfile: {
+    id: string;
+    caseCode: string;
+    title: string;
+    status: CaseStatus;
+  } | null;
   createdAt: Date;
+  uploadedByLabel: string;
+  downloadAvailable: boolean;
 }
 
 export interface SafePortalTaskSummary {
@@ -182,4 +206,26 @@ export interface PortalCaseSummaryResult {
   nextAppointment: SafePortalAppointment | null;
   casesByStatus: PortalCaseStatusCount[];
   recentCases: PortalCaseSummary[];
+}
+
+export interface PortalDocumentListResult {
+  items: SafePortalDocumentMetadata[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface PortalDocumentDownload {
+  fileName: string;
+  localPath: string;
+}
+
+export interface PortalDocumentUploadFile {
+  originalName: string;
+  mimeType: string;
+  size: number;
+  buffer: Buffer;
 }

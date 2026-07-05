@@ -1,4 +1,4 @@
-import type { Request, RequestHandler } from "express";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { AppError } from "../../utils/AppError";
@@ -12,14 +12,19 @@ import {
   getPortalCaseById,
   getPortalCaseSummary,
   getCustomerPortalAccount,
+  getPortalDocumentDownload,
   listPortalCases,
+  listPortalDocuments,
   loginCustomerPortal,
   resetCustomerPortalPassword,
   toPortalProfile,
+  uploadPortalDocument,
 } from "./customerPortal.service";
 import type {
   CreatePortalAccountInput,
   PortalCaseListQuery,
+  PortalDocumentListQuery,
+  PortalDocumentUploadInput,
   PortalLoginInput,
   ResetPortalPasswordInput,
 } from "./customerPortal.types";
@@ -39,6 +44,16 @@ const getCaseId = (params: Request["params"]): string => {
 
   if (typeof id !== "string") {
     throw new TypeError("Validated case id is missing.");
+  }
+
+  return id;
+};
+
+const getDocumentId = (params: Request["params"]): string => {
+  const { id } = params;
+
+  if (typeof id !== "string") {
+    throw new TypeError("Validated document id is missing.");
   }
 
   return id;
@@ -220,6 +235,88 @@ export const getPortalCaseController = asyncHandler(
     );
   },
 );
+
+export const listPortalDocumentsController = asyncHandler(
+  async (request, response): Promise<void> => {
+    const session = getPortalSession(request);
+    const result = await listPortalDocuments(
+      request.query as unknown as PortalDocumentListQuery,
+      session,
+    );
+
+    response
+      .status(HTTP_STATUS.OK)
+      .json(successResponse("Portal documents retrieved successfully.", result));
+  },
+);
+
+export const uploadPortalDocumentController = asyncHandler(
+  async (request, response): Promise<void> => {
+    if (!request.file) {
+      throw new AppError(
+        "A file is required.",
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    const document = await uploadPortalDocument(
+      request.body as PortalDocumentUploadInput,
+      {
+        originalName: request.file.originalname,
+        mimeType: request.file.mimetype,
+        size: request.file.size,
+        buffer: request.file.buffer,
+      },
+      getPortalSession(request),
+    );
+
+    response.status(HTTP_STATUS.CREATED).json(
+      successResponse("Portal document uploaded successfully.", {
+        document,
+      }),
+    );
+  },
+);
+
+export const downloadPortalDocumentController = async (
+  request: Request,
+  response: Response,
+  next: NextFunction,
+): Promise<void> => {
+  const download = await getPortalDocumentDownload(
+    getDocumentId(request.params),
+    getPortalSession(request),
+  );
+
+  response.download(
+    download.localPath,
+    download.fileName,
+    (error?: Error) => {
+      if (!error) {
+        return;
+      }
+
+      if (response.headersSent) {
+        response.destroy();
+        return;
+      }
+
+      const isMissingFile =
+        "code" in error && error.code === "ENOENT";
+
+      next(
+        new AppError(
+          isMissingFile
+            ? "Document not found."
+            : "The document file could not be downloaded.",
+          isMissingFile
+            ? HTTP_STATUS.NOT_FOUND
+            : HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ),
+      );
+    },
+  );
+};
 
 export const portalLogoutController: RequestHandler = (_request, response): void => {
   response

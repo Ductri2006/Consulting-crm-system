@@ -5,8 +5,10 @@ import {
   CalendarClock,
   CheckCircle2,
   ClipboardList,
+  Download,
   FileText,
   RefreshCw,
+  Upload,
   UserRound,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -14,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
+  downloadPortalDocument,
   getPortalCase,
   type PortalCaseDetail,
 } from '../../features/customerPortal'
@@ -72,6 +75,9 @@ export function CustomerPortalCaseDetailPage() {
   const [caseDetail, setCaseDetail] = useState<PortalCaseDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<
+    string | null
+  >(null)
 
   const loadCase = useCallback(async () => {
     if (!id) {
@@ -104,6 +110,27 @@ export function CustomerPortalCaseDetailPage() {
   useEffect(() => {
     void loadCase()
   }, [loadCase])
+
+  const handleDownloadDocument = async (
+    documentId: string,
+    fileName: string,
+  ) => {
+    setDownloadingDocumentId(documentId)
+    setLoadError(null)
+
+    try {
+      await downloadPortalDocument(documentId, fileName)
+    } catch (error) {
+      setLoadError(
+        getErrorMessage(
+          error,
+          t('portal.documents.downloadFailed'),
+        ),
+      )
+    } finally {
+      setDownloadingDocumentId(null)
+    }
+  }
 
   if (isLoading && !caseDetail) {
     return (
@@ -336,13 +363,19 @@ export function CustomerPortalCaseDetailPage() {
 
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <SectionTitle
-            icon={<FileText className="h-5 w-5" aria-hidden="true" />}
-            title={t('portal.caseDetail.documents')}
-          />
-          <p className="mt-3 text-sm font-semibold text-slate-500">
-            {t('portal.caseDetail.documentsFuture')}
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <SectionTitle
+              icon={<FileText className="h-5 w-5" aria-hidden="true" />}
+              title={t('portal.caseDetail.documents')}
+            />
+            <Link
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+              to="/portal/documents"
+            >
+              <Upload className="h-4 w-4" aria-hidden="true" />
+              {t('portal.documents.uploadDocument')}
+            </Link>
+          </div>
           {caseDetail.documents.length === 0 ? (
             <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
               {t('portal.caseDetail.noDocuments')}
@@ -350,21 +383,41 @@ export function CustomerPortalCaseDetailPage() {
           ) : (
             <div className="mt-5 divide-y divide-slate-100 rounded-lg border border-slate-200">
               {caseDetail.documents.map((document) => (
-                <div className="p-4" key={document.id}>
-                  <p className="break-words text-sm font-bold text-slate-950">
-                    {document.fileName}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    {getStatusLabel(t, 'document', document.fileType)} -{' '}
-                    {document.mimeType ?? t('portal.caseDetail.unknownType')}{' '}
-                    -{' '}
-                    {formatPortalFileSize(document.size)}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-slate-400">
-                    {t('portal.caseDetail.added', {
-                      date: formatPortalDateTime(document.createdAt),
-                    })}
-                  </p>
+                <div
+                  className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between"
+                  key={document.id}
+                >
+                  <div className="min-w-0">
+                    <p className="break-words text-sm font-bold text-slate-950">
+                      {document.fileName}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      {getStatusLabel(t, 'document', document.fileType)} -{' '}
+                      {document.mimeType ?? t('portal.caseDetail.unknownType')}{' '}
+                      - {formatPortalFileSize(document.size)}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-slate-400">
+                      {t('portal.caseDetail.added', {
+                        date: formatPortalDateTime(document.createdAt),
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    className="inline-flex min-h-9 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={downloadingDocumentId === document.id}
+                    onClick={() =>
+                      void handleDownloadDocument(
+                        document.id,
+                        document.fileName,
+                      )
+                    }
+                    type="button"
+                  >
+                    <Download className="h-4 w-4" aria-hidden="true" />
+                    {downloadingDocumentId === document.id
+                      ? t('portal.documents.downloading')
+                      : t('portal.documents.download')}
+                  </button>
                 </div>
               ))}
             </div>

@@ -73,6 +73,16 @@ enum DocumentType {
   OTHER
 }
 
+enum DocumentSource {
+  INTERNAL
+  CUSTOMER_PORTAL
+}
+
+enum DocumentVisibility {
+  INTERNAL_ONLY
+  CUSTOMER_VISIBLE
+}
+
 enum PublishStatus {
   DRAFT
   PUBLISHED
@@ -121,17 +131,18 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  assignedCases       CaseProfile[]         @relation("AssignedCases")
-  caseHistories       CaseHistory[]
-  managedAppointments Appointment[]         @relation("AppointmentStaff")
-  createdTasks        Task[]                @relation("CreatedTasks")
-  assignedTasks       Task[]                @relation("AssignedTasks")
-  uploadedDocuments   Document[]
-  news                News[]
-  activityLogs        ActivityLog[]
-  sentInvitations     WorkspaceInvitation[] @relation("WorkspaceInvitationInvitedBy")
-  acceptedInvitations WorkspaceInvitation[] @relation("WorkspaceInvitationAcceptedBy")
+  organization                     Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  assignedCases                    CaseProfile[]         @relation("AssignedCases")
+  caseHistories                    CaseHistory[]
+  managedAppointments              Appointment[]         @relation("AppointmentStaff")
+  createdTasks                     Task[]                @relation("CreatedTasks")
+  assignedTasks                    Task[]                @relation("AssignedTasks")
+  uploadedDocuments                Document[]
+  portalVisibilityUpdatedDocuments Document[]            @relation("DocumentPortalVisibilityUpdatedBy")
+  news                             News[]
+  activityLogs                     ActivityLog[]
+  sentInvitations                  WorkspaceInvitation[] @relation("WorkspaceInvitationInvitedBy")
+  acceptedInvitations              WorkspaceInvitation[] @relation("WorkspaceInvitationAcceptedBy")
 
   @@index([role, isActive])
   @@index([organizationId, role, isActive])
@@ -203,8 +214,9 @@ model CustomerPortalAccount {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customer          Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  uploadedDocuments Document[]   @relation("PortalUploadedDocuments")
 
   @@unique([organizationId, email])
   @@index([organizationId, isActive])
@@ -380,31 +392,46 @@ model Task {
 }
 
 model Document {
-  id             String       @id @default(uuid())
-  organizationId String
-  caseProfileId  String?
-  customerId     String?
-  uploadedById   String?
-  fileName       String
-  fileUrl        String
-  fileType       DocumentType @default(OTHER)
-  mimeType       String?
-  size           Int?
-  createdAt      DateTime     @default(now())
+  id                          String             @id @default(uuid())
+  organizationId              String
+  caseProfileId               String?
+  customerId                  String?
+  uploadedById                String?
+  uploadedByPortalAccountId   String?
+  portalVisibilityUpdatedById String?
+  fileName                    String
+  fileUrl                     String
+  fileType                    DocumentType       @default(OTHER)
+  source                      DocumentSource     @default(INTERNAL)
+  visibility                  DocumentVisibility @default(INTERNAL_ONLY)
+  mimeType                    String?
+  size                        Int?
+  portalVisibilityUpdatedAt   DateTime?
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime           @default(now()) @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  caseProfile  CaseProfile? @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
-  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  uploadedBy   User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  organization              Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  caseProfile               CaseProfile?           @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  customer                  Customer?              @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  uploadedBy                User?                  @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedByPortalAccount   CustomerPortalAccount? @relation("PortalUploadedDocuments", fields: [uploadedByPortalAccountId], references: [id], onDelete: SetNull)
+  portalVisibilityUpdatedBy User?                  @relation("DocumentPortalVisibilityUpdatedBy", fields: [portalVisibilityUpdatedById], references: [id], onDelete: SetNull)
 
   @@index([caseProfileId, createdAt])
   @@index([customerId, createdAt])
   @@index([uploadedById])
+  @@index([uploadedByPortalAccountId])
+  @@index([portalVisibilityUpdatedById])
   @@index([fileType])
+  @@index([source])
+  @@index([visibility])
   @@index([organizationId, caseProfileId, createdAt])
   @@index([organizationId, customerId, createdAt])
+  @@index([organizationId, customerId, visibility, createdAt])
+  @@index([organizationId, caseProfileId, visibility, createdAt])
   @@index([organizationId, uploadedById])
   @@index([organizationId, fileType])
+  @@index([organizationId, source, createdAt])
 }
 
 model News {
