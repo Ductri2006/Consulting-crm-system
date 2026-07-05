@@ -3,6 +3,10 @@ import { Router } from "express";
 
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorizeRoles } from "../../middlewares/authorize.middleware";
+import {
+  downloadRateLimit,
+  uploadRateLimit,
+} from "../../middlewares/rateLimit.middleware";
 import { uploadDocumentFile } from "../../middlewares/upload.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
@@ -40,12 +44,14 @@ documentRouter.get(
 );
 documentRouter.post(
   "/upload",
+  uploadRateLimit,
   uploadDocumentFile,
   validate({ body: uploadDocumentMetadataSchema }),
   asyncHandler(uploadDocumentController),
 );
 documentRouter.get(
   "/:id/download",
+  downloadRateLimit,
   validate({ params: documentIdParamsSchema }),
   asyncHandler(downloadDocumentController),
 );

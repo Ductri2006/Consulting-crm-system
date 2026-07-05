@@ -84,11 +84,17 @@ const verifyTenantIsolation = async (): Promise<void> => {
     northstarTasks,
     northstarCaseHistories,
     northstarActivityLogs,
+    northstarDocuments,
+    northstarDocumentDownloads,
+    northstarPortalAccounts,
     northstarUsersOutsideNorthstar,
     advisoraUsersInsideNorthstar,
     northstarCustomersOutsideNorthstar,
     northstarCasesOutsideNorthstar,
     northstarTasksOutsideNorthstar,
+    northstarDocumentsOutsideNorthstar,
+    northstarDownloadsOutsideNorthstar,
+    northstarActivityLogsOutsideNorthstar,
   ] = await Promise.all([
     prisma.user.count({ where: { organizationId: advisoraId } }),
     prisma.user.count({ where: { organizationId: northstarId } }),
@@ -103,6 +109,9 @@ const verifyTenantIsolation = async (): Promise<void> => {
     prisma.task.count({ where: { organizationId: northstarId } }),
     prisma.caseHistory.count({ where: { organizationId: northstarId } }),
     prisma.activityLog.count({ where: { organizationId: northstarId } }),
+    prisma.document.count({ where: { organizationId: northstarId } }),
+    prisma.documentDownloadAudit.count({ where: { organizationId: northstarId } }),
+    prisma.customerPortalAccount.count({ where: { organizationId: northstarId } }),
     prisma.user.count({
       where: {
         email: { in: [...northstarDemoEmails] },
@@ -133,6 +142,29 @@ const verifyTenantIsolation = async (): Promise<void> => {
         organizationId: { not: northstarId },
       },
     }),
+    prisma.document.count({
+      where: {
+        customer: { fullName: { in: [...northstarCustomerNames] } },
+        organizationId: { not: northstarId },
+      },
+    }),
+    prisma.documentDownloadAudit.count({
+      where: {
+        document: {
+          customer: { fullName: { in: [...northstarCustomerNames] } },
+        },
+        organizationId: { not: northstarId },
+      },
+    }),
+    prisma.activityLog.count({
+      where: {
+        organizationId: { not: northstarId },
+        OR: [
+          { description: { contains: "northstar", mode: "insensitive" } },
+          { description: { contains: "NORTH-", mode: "insensitive" } },
+        ],
+      },
+    }),
   ]);
 
   assertCondition(advisoraUsers > 0, "advisora-demo has no users.");
@@ -161,8 +193,27 @@ const verifyTenantIsolation = async (): Promise<void> => {
     northstarActivityLogs > 0,
     "northstar-legal must have activity log records.",
   );
+  assertCondition(
+    northstarDocuments > 0,
+    "northstar-legal must have document records.",
+  );
+  assertCondition(
+    northstarDocumentDownloads > 0,
+    "northstar-legal must have document download audit records.",
+  );
+  assertCondition(
+    northstarPortalAccounts > 0,
+    "northstar-legal must have portal accounts.",
+  );
 
-  const [northstarCasesWithRelations, northstarTasksWithRelations, northstarAppointmentsWithRelations] =
+  const [
+    northstarCasesWithRelations,
+    northstarTasksWithRelations,
+    northstarAppointmentsWithRelations,
+    northstarDocumentsWithRelations,
+    northstarDownloadsWithRelations,
+    northstarPortalAccountsWithRelations,
+  ] =
     await Promise.all([
       prisma.caseProfile.findMany({
         where: { organizationId: northstarId },
@@ -190,6 +241,37 @@ const verifyTenantIsolation = async (): Promise<void> => {
           staff: { select: { organizationId: true } },
         },
       }),
+      prisma.document.findMany({
+        where: { organizationId: northstarId },
+        select: {
+          id: true,
+          customer: { select: { organizationId: true } },
+          caseProfile: { select: { organizationId: true } },
+          uploadedBy: { select: { organizationId: true } },
+          uploadedByPortalAccount: { select: { organizationId: true } },
+        },
+      }),
+      prisma.documentDownloadAudit.findMany({
+        where: { organizationId: northstarId },
+        select: {
+          id: true,
+          document: {
+            select: {
+              organizationId: true,
+              customer: { select: { organizationId: true } },
+            },
+          },
+          actorUser: { select: { organizationId: true } },
+          actorPortalAccount: { select: { organizationId: true } },
+        },
+      }),
+      prisma.customerPortalAccount.findMany({
+        where: { organizationId: northstarId },
+        select: {
+          id: true,
+          customer: { select: { organizationId: true } },
+        },
+      }),
     ]);
 
   const caseRelationLeaks = northstarCasesWithRelations.filter(
@@ -212,6 +294,30 @@ const verifyTenantIsolation = async (): Promise<void> => {
         appointment.caseProfile.organizationId !== northstarId) ||
       (appointment.staff !== null && appointment.staff.organizationId !== northstarId),
   );
+  const documentRelationLeaks = northstarDocumentsWithRelations.filter(
+    (document) =>
+      (document.customer !== null &&
+        document.customer.organizationId !== northstarId) ||
+      (document.caseProfile !== null &&
+        document.caseProfile.organizationId !== northstarId) ||
+      (document.uploadedBy !== null &&
+        document.uploadedBy.organizationId !== northstarId) ||
+      (document.uploadedByPortalAccount !== null &&
+        document.uploadedByPortalAccount.organizationId !== northstarId),
+  );
+  const downloadRelationLeaks = northstarDownloadsWithRelations.filter(
+    (download) =>
+      download.document.organizationId !== northstarId ||
+      (download.document.customer !== null &&
+        download.document.customer.organizationId !== northstarId) ||
+      (download.actorUser !== null &&
+        download.actorUser.organizationId !== northstarId) ||
+      (download.actorPortalAccount !== null &&
+        download.actorPortalAccount.organizationId !== northstarId),
+  );
+  const portalAccountRelationLeaks = northstarPortalAccountsWithRelations.filter(
+    (account) => account.customer.organizationId !== northstarId,
+  );
 
   const crossTenantOwnershipChecksPassed =
     northstarUsersOutsideNorthstar === 0 &&
@@ -219,9 +325,15 @@ const verifyTenantIsolation = async (): Promise<void> => {
     northstarCustomersOutsideNorthstar === 0 &&
     northstarCasesOutsideNorthstar === 0 &&
     northstarTasksOutsideNorthstar === 0 &&
+    northstarDocumentsOutsideNorthstar === 0 &&
+    northstarDownloadsOutsideNorthstar === 0 &&
+    northstarActivityLogsOutsideNorthstar === 0 &&
     caseRelationLeaks.length === 0 &&
     taskRelationLeaks.length === 0 &&
-    appointmentRelationLeaks.length === 0;
+    appointmentRelationLeaks.length === 0 &&
+    documentRelationLeaks.length === 0 &&
+    downloadRelationLeaks.length === 0 &&
+    portalAccountRelationLeaks.length === 0;
 
   assertCondition(
     crossTenantOwnershipChecksPassed,
@@ -232,9 +344,15 @@ const verifyTenantIsolation = async (): Promise<void> => {
       `northstarCustomersOutsideNorthstar=${northstarCustomersOutsideNorthstar}`,
       `northstarCasesOutsideNorthstar=${northstarCasesOutsideNorthstar}`,
       `northstarTasksOutsideNorthstar=${northstarTasksOutsideNorthstar}`,
+      `northstarDocumentsOutsideNorthstar=${northstarDocumentsOutsideNorthstar}`,
+      `northstarDownloadsOutsideNorthstar=${northstarDownloadsOutsideNorthstar}`,
+      `northstarActivityLogsOutsideNorthstar=${northstarActivityLogsOutsideNorthstar}`,
       `caseRelationLeaks=${caseRelationLeaks.length}`,
       `taskRelationLeaks=${taskRelationLeaks.length}`,
       `appointmentRelationLeaks=${appointmentRelationLeaks.length}`,
+      `documentRelationLeaks=${documentRelationLeaks.length}`,
+      `downloadRelationLeaks=${downloadRelationLeaks.length}`,
+      `portalAccountRelationLeaks=${portalAccountRelationLeaks.length}`,
     ].join(" "),
   );
 
@@ -248,6 +366,9 @@ const verifyTenantIsolation = async (): Promise<void> => {
   console.log(`- northstar-legal requests: ${northstarRequests}`);
   console.log(`- northstar-legal appointments: ${northstarAppointments}`);
   console.log(`- northstar-legal tasks: ${northstarTasks}`);
+  console.log(`- northstar-legal documents: ${northstarDocuments}`);
+  console.log(`- northstar-legal document downloads: ${northstarDocumentDownloads}`);
+  console.log(`- northstar-legal portal accounts: ${northstarPortalAccounts}`);
   console.log("- cross-tenant ownership checks: PASS");
 };
 

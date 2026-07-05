@@ -14,6 +14,8 @@ Step 29 adds Customer Portal Documents. Step 29.5 hardens document storage with
 a local/S3-compatible provider abstraction, protected streaming downloads,
 malware-scan and OCR provider abstractions, and per-download audit logging.
 Step 30 adds an internal Activity Center plus customer-safe Portal Updates.
+Step 31 adds HTTP hardening, rate limiting, token-boundary review, audit
+coverage, security documentation, and production QA smoke preparation.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -264,6 +266,8 @@ consulting-crm-system/
 |   |-- module-breakdown.md
 |   |-- database-design.md
 |   |-- api-documentation.md
+|   |-- security-hardening.md
+|   |-- security-rbac-matrix.md
 |   |-- development-roadmap.md
 |   |-- production-readiness.md
 |   |-- deployment-guide.md
@@ -283,6 +287,8 @@ consulting-crm-system/
 | [System Module Breakdown](docs/module-breakdown.md) | Scope and responsibilities of each public and internal module |
 | [Database Design](docs/database-design.md) | Planned entities, relationships, enums, indexes, and initial Prisma schema |
 | [API Documentation](docs/api-documentation.md) | Planned REST resources, endpoints, payloads, and response conventions |
+| [Security Hardening](docs/security-hardening.md) | Step 31 security headers, rate limiting, redaction, audit, tenant isolation, document security, and smoke-script notes |
+| [Security RBAC Matrix](docs/security-rbac-matrix.md) | Role-by-role access matrix for internal CRM, customer portal, and public routes |
 | [Development Roadmap](docs/development-roadmap.md) | Phased delivery plan from project foundation to advanced features |
 | [Production Readiness](docs/production-readiness.md) | Production readiness status, environment guidance, security checklist, and known limitations |
 | [Deployment Guide](docs/deployment-guide.md) | Provider-neutral deployment architecture, commands, environment variables, and smoke checks |
@@ -299,6 +305,8 @@ credentials stay outside the repository. Before demoing, staging, or deploying,
 review:
 
 - [Production Readiness](docs/production-readiness.md)
+- [Security Hardening](docs/security-hardening.md)
+- [Security RBAC Matrix](docs/security-rbac-matrix.md)
 - [Deployment Guide](docs/deployment-guide.md)
 - [Staging Deployment Checklist](docs/staging-deployment-checklist.md)
 - [Vercel + Render Staging Guide](docs/vercel-render-staging-guide.md)
@@ -421,8 +429,9 @@ npm run verify:tenant-isolation
 ```
 
 The second workspace seed creates fictional Northstar users, customers, cases,
-consultation requests, appointments, tasks, case history, and activity logs. It
-is idempotent, does not reset the database, does not delete Advisora demo data,
+consultation requests, appointments, tasks, case history, activity logs,
+document metadata, download audit metadata, and portal accounts. It is
+idempotent, does not reset the database, does not delete Advisora demo data,
 and does not seed physical document files. Public consultation requests still
 map to `DEFAULT_ORGANIZATION_SLUG`.
 
@@ -559,7 +568,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Accessibility, security, and performance audits
 - Production provisioning of private S3-compatible document storage
 - HttpOnly cookie authentication
-- Login and public-form rate limiting
+- Distributed production rate limiting, captcha, and abuse monitoring
 - Automated end-to-end tests
 
 ## Implemented Vs Future
@@ -582,6 +591,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Production deployment | Not deployed yet |
 | Document storage | Local provider remains the default; S3-compatible private object storage, protected streaming downloads, scan/OCR abstractions, and download audits are implemented/configurable |
 | Auth hardening | JWT Bearer flow implemented; HttpOnly cookie session strategy remains future work |
+| Security hardening | Step 31 adds Helmet headers, body limits, in-memory rate limiting, redaction helpers, expanded audit coverage, tenant verification updates, and production smoke guidance |
 
 ## Known Limitations
 
@@ -591,6 +601,8 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Staging URLs in this repository remain placeholders by design.
 - Local disk uploads are for development only.
 - Access tokens are stored in browser local storage for the portfolio demo.
+- Rate limiting is process-local and IP-based for portfolio/staging; use Redis
+  or another shared store before multi-instance production.
 - Contact and appointment public forms validate locally but do not create backend records yet.
 - Internal user management and workspace invitations are for CRM team members
   only; customer portal accounts are created separately for existing customers.
@@ -611,7 +623,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
   database content remain future work.
 - No customer self-registration, billing, live OCR/scanner infrastructure,
   configured production object-storage credentials, report exports, realtime or
-  push notifications, production-grade rate limiting, or centralized
+  push notifications, distributed production-grade rate limiting, or centralized
   observability yet.
 
 ## Learning Goals
@@ -664,11 +676,12 @@ This project is designed to practice:
 - [x] Customer portal documents
 - [x] Production document storage and security hardening
 - [x] Activity Center and Portal Updates
+- [x] Audit log, security review, and production QA hardening
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Step 30 complete - Activity Center and Portal Updates
+**Current phase:** Step 31 complete - Audit log, security review, and production QA hardening
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -779,3 +792,12 @@ descriptions, `fileUrl`, storage keys, object keys, bucket names, signed URLs,
 password hashes, token hashes, IP addresses, or user-agent data. Step 30 does
 not add realtime websocket, push notification, email automation, or notification
 preference features.
+Step 31 adds production-like security hardening: Helmet security headers,
+`x-powered-by` removal, `1mb` JSON/body limits, configurable in-memory rate
+limits for auth/public/invitation/upload/download routes, redacted request/error
+logging, internal JWT `purpose: "internal"` signing while preserving existing
+internal sessions, expanded user and document audit events, a read-only
+production smoke script, tenant-isolation verification for documents/downloads
+and portal accounts, plus dedicated security hardening and RBAC matrix docs.
+The rate limiter remains single-process and should be replaced with
+Redis-backed shared state before multi-instance production.

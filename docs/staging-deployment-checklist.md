@@ -102,6 +102,11 @@ credentials.
 | `EMAIL_FROM` | Placeholder sender or verified sender for Resend | Do not use unverified production sender domains casually. |
 | `EMAIL_REPLY_TO` | Optional support inbox | Leave blank if not reviewed. |
 | `RESEND_API_KEY` | Only when `EMAIL_PROVIDER=resend` | Store only in provider secrets; never commit. |
+| `RATE_LIMIT_ENABLED` | `true` by default | Keep enabled unless a short, documented troubleshooting window requires otherwise. |
+| `AUTH_RATE_LIMIT_WINDOW_MINUTES` / `AUTH_RATE_LIMIT_MAX` | `15` / `10` by default | Covers internal login, portal login, workspace signup, and invitation routes. |
+| `PUBLIC_RATE_LIMIT_WINDOW_MINUTES` / `PUBLIC_RATE_LIMIT_MAX` | `15` / `50` by default | Covers public consultation request submission. |
+| `UPLOAD_RATE_LIMIT_WINDOW_MINUTES` / `UPLOAD_RATE_LIMIT_MAX` | `15` / `20` by default | Covers internal and portal document uploads. |
+| `DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES` / `DOWNLOAD_RATE_LIMIT_MAX` | `15` / `100` by default | Covers internal and portal protected downloads. |
 
 Backend rules:
 
@@ -153,6 +158,7 @@ Frontend rules:
   intentional replacement workspace.
 - [ ] Confirm `WORKSPACE_SIGNUP_ENABLED=false`, or document the short QA window
   when it is intentionally set to `true`.
+- [ ] Confirm `RATE_LIMIT_ENABLED=true`, or document a temporary exception.
 - [ ] Confirm `UPLOAD_DIR` is writable if document smoke testing is planned.
 - [ ] Install dependencies with `npm install`.
 - [ ] Generate Prisma Client with `npm run prisma:generate`.
@@ -286,15 +292,15 @@ Expected behavior:
 - Creates or updates three fictional customers: Aurora Legal Group, Pacific
   Compliance Studio, and Meridian Contract Partners.
 - Creates or updates Northstar consultation requests, cases, appointments,
-  tasks, case history, and activity logs.
+  tasks, case history, activity logs, document metadata, download audit
+  metadata, and portal accounts.
 - Assigns every Northstar CRM record to `northstar-legal`.
 - Uses fixed IDs and upserts so repeated runs do not duplicate the demo set.
 - Does not reset the database.
 - Does not delete or mutate Advisora demo data.
-- Does not seed physical document files.
+- Seeds document metadata and portal accounts for tenant-isolation verification
+  only; it does not create physical document files.
 - Does not create workspace invitations or a workspace switcher.
-- Does not create customer portal access automatically; create portal accounts
-  manually during Step 27 smoke testing if needed.
 
 Northstar demo credentials are fictional portfolio credentials:
 
@@ -376,6 +382,10 @@ Before real customer documents:
 ### Backend
 
 - [ ] `GET <staging-backend-origin>/api/health` returns success.
+- [ ] `GET <staging-backend-origin>/api/health` includes
+  `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and
+  `Referrer-Policy: no-referrer`.
+- [ ] `x-powered-by` is absent from API responses.
 - [ ] Invalid admin login returns a generic failure.
 - [ ] Valid admin login succeeds with a staging-safe account.
 - [ ] Login response does not include `passwordHash`.
@@ -392,6 +402,11 @@ Before real customer documents:
 - [ ] `npm run verify:tenant-isolation` prints
   `Tenant isolation verification: PASS` after the optional second workspace
   seed is run.
+- [ ] Invalid login attempts reach generic `429` when the auth limit is
+  intentionally exceeded.
+- [ ] Public consultation, invitation public preview/accept, upload, and
+  download limits are enabled or documented as an accepted staging exception.
+- [ ] Oversized JSON bodies over `1mb` are rejected safely.
 - [ ] At least one database-backed API call succeeds, such as
   `GET /api/customers` or `GET /api/public/services`.
 - [ ] Internal Admin or Manager can create
@@ -549,10 +564,16 @@ Before real customer documents:
 - [ ] The last active admin cannot be deactivated or demoted.
 - [ ] CORS allows only the staging frontend origin or intentional preview
   origins.
+- [ ] Security headers are present and `x-powered-by` is absent.
+- [ ] `RATE_LIMIT_ENABLED=true` and sensitive endpoint limits are configured.
+- [ ] `429` responses use generic messaging and do not reveal user, email,
+  workspace, or token details.
 - [ ] Browser console does not log access tokens, passwords, consultation form
   payloads, or other PII.
 - [ ] Backend logs do not print passwords, Bearer tokens, database URLs, or
   uploaded file contents.
+- [ ] Backend logs and API error paths redact invitation tokens, signed URLs,
+  storage keys, local paths, and `/uploads/...` paths.
 - [ ] The known local demo admin credential is disabled, replaced, or explicitly
   limited to a private demo window.
 - [ ] The known legacy login `admin@advisora.demo` / `password123` fails on
@@ -562,9 +583,32 @@ Before real customer documents:
 - [ ] Browser-readable Bearer token storage risk is explicitly accepted for
   portfolio staging, or authentication has been migrated to an HttpOnly cookie
   strategy before real customer data.
-- [ ] Login and public consultation abuse-protection risk is accepted for a
-  private portfolio staging run, or rate limiting is active before public
-  exposure.
+- [ ] Login, public consultation, invitation, upload, and download rate limits
+  are active before public exposure.
+
+## Production Smoke Script
+
+Use the read-only smoke script when staging has safe admin and portal test
+credentials:
+
+```bash
+cd server
+npm run smoke:production
+```
+
+Required environment variables:
+
+- `SMOKE_API_BASE_URL`
+- `SMOKE_ADMIN_EMAIL`
+- `SMOKE_ADMIN_PASSWORD`
+- `SMOKE_PORTAL_WORKSPACE_SLUG`
+- `SMOKE_PORTAL_EMAIL`
+- `SMOKE_PORTAL_PASSWORD`
+
+Optional:
+
+- `SMOKE_RATE_LIMIT_CHECK=true` intentionally performs invalid login attempts
+  until `429`. Use only during a planned abuse-protection smoke window.
 
 ## Rollback Checklist
 
@@ -606,8 +650,8 @@ Required go conditions:
 Choose `Go with accepted limitations`, not full `Go`, when:
 
 - Browser-readable Bearer token storage remains in use.
-- Signup has only a basic in-memory rate limit; login and other public form
-  rate limiting are not production-grade yet.
+- Sensitive routes have only process-local in-memory rate limiting; distributed
+  production-grade rate limiting is not configured yet.
 - Local disk upload storage is used only for tiny fictional smoke-test files.
 - The staging environment is private or short-lived portfolio review only.
 
@@ -628,6 +672,6 @@ Known staging limitations to acknowledge:
   upload/download with safe scan status and download availability. Messages, billing, and
   self-registration remain future work.
 - Public contact and appointment forms are validation/demo flows only.
-- No production-grade rate limiting, captcha, centralized monitoring, alerting,
-  refresh-token revocation, malware scanning, report export, or automated E2E
-  suite yet.
+- No distributed production-grade rate limiting, captcha, centralized
+  monitoring, alerting, refresh-token revocation, live malware scanning, report
+  export, or automated E2E suite yet.

@@ -417,34 +417,49 @@ export const uploadDocument = async (
   });
 
   try {
-    const document = await prisma.document.create({
-      data: {
-        id: documentId,
-        organizationId: actor.organizationId,
-        customerId,
-        caseProfileId: input.caseProfileId,
-        uploadedById: actor.id,
-        fileName,
-        fileUrl: storedDocument.fileUrl,
-        fileType: input.fileType,
-        source: DocumentSource.INTERNAL,
-        visibility: DocumentVisibility.INTERNAL_ONLY,
-        storageProvider: storedDocument.storageProvider,
-        storageKey: storedDocument.storageKey,
-        storageBucket: storedDocument.storageBucket,
-        storageRegion: storedDocument.storageRegion,
-        checksumSha256: storedDocument.checksumSha256,
-        scanStatus: storedDocument.scanStatus,
-        scanMessage: storedDocument.scanMessage,
-        scannedAt: storedDocument.scannedAt,
-        ocrStatus: storedDocument.ocrStatus,
-        ocrText: storedDocument.ocrText,
-        ocrTextPreview: storedDocument.ocrTextPreview,
-        ocrProcessedAt: storedDocument.ocrProcessedAt,
-        mimeType: file.mimeType,
-        size: file.size,
-      },
-      include: documentInclude,
+    const document = await prisma.$transaction(async (transaction) => {
+      const createdDocument = await transaction.document.create({
+        data: {
+          id: documentId,
+          organizationId: actor.organizationId,
+          customerId,
+          caseProfileId: input.caseProfileId,
+          uploadedById: actor.id,
+          fileName,
+          fileUrl: storedDocument.fileUrl,
+          fileType: input.fileType,
+          source: DocumentSource.INTERNAL,
+          visibility: DocumentVisibility.INTERNAL_ONLY,
+          storageProvider: storedDocument.storageProvider,
+          storageKey: storedDocument.storageKey,
+          storageBucket: storedDocument.storageBucket,
+          storageRegion: storedDocument.storageRegion,
+          checksumSha256: storedDocument.checksumSha256,
+          scanStatus: storedDocument.scanStatus,
+          scanMessage: storedDocument.scanMessage,
+          scannedAt: storedDocument.scannedAt,
+          ocrStatus: storedDocument.ocrStatus,
+          ocrText: storedDocument.ocrText,
+          ocrTextPreview: storedDocument.ocrTextPreview,
+          ocrProcessedAt: storedDocument.ocrProcessedAt,
+          mimeType: file.mimeType,
+          size: file.size,
+        },
+        include: documentInclude,
+      });
+
+      await transaction.activityLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          userId: actor.id,
+          action: "DOCUMENT_UPLOADED",
+          entityType: "Document",
+          entityId: createdDocument.id,
+          description: "Internal document uploaded.",
+        },
+      });
+
+      return createdDocument;
     });
 
     return toSafeDocumentResponse(document);
@@ -480,10 +495,23 @@ export const deleteDocument = async (
 
         assertDocumentDeleteAccess(document, actor);
 
-        return transaction.document.delete({
+        const deletedDocument = await transaction.document.delete({
           where: { id },
           include: documentInclude,
         });
+
+        await transaction.activityLog.create({
+          data: {
+            organizationId: actor.organizationId,
+            userId: actor.id,
+            action: "DOCUMENT_DELETED",
+            entityType: "Document",
+            entityId: deletedDocument.id,
+            description: "Internal document metadata deleted.",
+          },
+        });
+
+        return deletedDocument;
       },
     );
 

@@ -3,6 +3,7 @@ import { Router } from "express";
 
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorizeRoles } from "../../middlewares/authorize.middleware";
+import { invitationRateLimit } from "../../middlewares/rateLimit.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
 import {
@@ -13,7 +14,6 @@ import {
   resendInvitationController,
   revokeInvitationController,
 } from "./invitation.controller";
-import { limitInvitationAccept } from "./invitation.middleware";
 import {
   acceptInvitationSchema,
   createInvitationSchema,
@@ -27,12 +27,13 @@ const invitationRouter = Router();
 
 invitationRouter.get(
   "/public/:token",
+  invitationRateLimit,
   validate({ params: invitationTokenParamsSchema }),
   asyncHandler(previewInvitationController),
 );
 invitationRouter.post(
   "/public/:token/accept",
-  limitInvitationAccept,
+  invitationRateLimit,
   validate({
     params: invitationTokenParamsSchema,
     body: acceptInvitationSchema,
@@ -49,11 +50,13 @@ invitationRouter.get(
 );
 invitationRouter.post(
   "/",
+  invitationRateLimit,
   validate({ body: createInvitationSchema }),
   asyncHandler(createInvitationController),
 );
 invitationRouter.post(
   "/:id/resend",
+  invitationRateLimit,
   validate({
     params: invitationIdParamsSchema,
     body: resendInvitationSchema,

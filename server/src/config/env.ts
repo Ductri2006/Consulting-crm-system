@@ -137,6 +137,47 @@ const envSchema = z.object({
     .default("Advisora CRM <no-reply@advisora.test>"),
   EMAIL_REPLY_TO: optionalTrimmedString,
   RESEND_API_KEY: optionalTrimmedString,
+  RATE_LIMIT_ENABLED: booleanString("true"),
+  AUTH_RATE_LIMIT_WINDOW_MINUTES: z.coerce
+    .number()
+    .int("AUTH_RATE_LIMIT_WINDOW_MINUTES must be an integer.")
+    .min(1, "AUTH_RATE_LIMIT_WINDOW_MINUTES must be at least 1.")
+    .default(15),
+  AUTH_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int("AUTH_RATE_LIMIT_MAX must be an integer.")
+    .min(1, "AUTH_RATE_LIMIT_MAX must be at least 1.")
+    .default(10),
+  PUBLIC_RATE_LIMIT_WINDOW_MINUTES: z.coerce
+    .number()
+    .int("PUBLIC_RATE_LIMIT_WINDOW_MINUTES must be an integer.")
+    .min(1, "PUBLIC_RATE_LIMIT_WINDOW_MINUTES must be at least 1.")
+    .default(15),
+  PUBLIC_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int("PUBLIC_RATE_LIMIT_MAX must be an integer.")
+    .min(1, "PUBLIC_RATE_LIMIT_MAX must be at least 1.")
+    .default(50),
+  UPLOAD_RATE_LIMIT_WINDOW_MINUTES: z.coerce
+    .number()
+    .int("UPLOAD_RATE_LIMIT_WINDOW_MINUTES must be an integer.")
+    .min(1, "UPLOAD_RATE_LIMIT_WINDOW_MINUTES must be at least 1.")
+    .default(15),
+  UPLOAD_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int("UPLOAD_RATE_LIMIT_MAX must be an integer.")
+    .min(1, "UPLOAD_RATE_LIMIT_MAX must be at least 1.")
+    .default(20),
+  DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES: z.coerce
+    .number()
+    .int("DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES must be an integer.")
+    .min(1, "DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES must be at least 1.")
+    .default(15),
+  DOWNLOAD_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int("DOWNLOAD_RATE_LIMIT_MAX must be an integer.")
+    .min(1, "DOWNLOAD_RATE_LIMIT_MAX must be at least 1.")
+    .default(100),
 }).superRefine((value, context) => {
   if (value.DOCUMENT_STORAGE_PROVIDER !== "s3") {
     return;

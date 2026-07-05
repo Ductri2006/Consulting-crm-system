@@ -207,7 +207,7 @@ export const findUserById = async (
 
 export const createUser = async (
   input: CreateUserInput,
-  organizationId: string,
+  actor: SafeUser,
 ): Promise<SafeUser> => {
   if (!input.password) {
     throw new AppError(
@@ -219,17 +219,32 @@ export const createUser = async (
   const passwordHash = await bcrypt.hash(input.password, 12);
 
   try {
-    const user = await prisma.user.create({
-      data: {
-        fullName: input.fullName,
-        organizationId,
-        email: input.email,
-        phone: input.phone,
-        avatarUrl: input.avatarUrl,
-        role: input.role,
-        isActive: input.isActive,
-        passwordHash,
-      },
+    const user = await prisma.$transaction(async (transaction) => {
+      const createdUser = await transaction.user.create({
+        data: {
+          fullName: input.fullName,
+          organizationId: actor.organizationId,
+          email: input.email,
+          phone: input.phone,
+          avatarUrl: input.avatarUrl,
+          role: input.role,
+          isActive: input.isActive,
+          passwordHash,
+        },
+      });
+
+      await transaction.activityLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          userId: actor.id,
+          action: "USER_CREATED",
+          entityType: "User",
+          entityId: createdUser.id,
+          description: "Internal user created.",
+        },
+      });
+
+      return createdUser;
     });
 
     return sanitizeUser(user);
@@ -241,14 +256,34 @@ export const createUser = async (
 export const updateUser = async (
   id: string,
   input: UpdateUserInput,
-  organizationId: string,
+  actor: SafeUser,
 ): Promise<SafeUser> => {
-  await assertAdminWouldRemain(id, input, organizationId);
+  await assertAdminWouldRemain(id, input, actor.organizationId);
 
   try {
-    const user = await prisma.user.update({
-      where: { id },
-      data: input,
+    const user = await prisma.$transaction(async (transaction) => {
+      const updatedUser = await transaction.user.update({
+        where: { id },
+        data: input,
+      });
+
+      await transaction.activityLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          userId: actor.id,
+          action:
+            input.isActive === false
+              ? "USER_DEACTIVATED"
+              : input.isActive === true
+                ? "USER_ACTIVATED"
+                : "USER_UPDATED",
+          entityType: "User",
+          entityId: updatedUser.id,
+          description: "Internal user updated.",
+        },
+      });
+
+      return updatedUser;
     });
 
     return sanitizeUser(user);
@@ -260,12 +295,12 @@ export const updateUser = async (
 export const resetUserPassword = async (
   id: string,
   input: ResetUserPasswordInput,
-  organizationId: string,
+  actor: SafeUser,
 ): Promise<SafeUser> => {
   const target = await prisma.user.findFirst({
     where: {
       id,
-      organizationId,
+      organizationId: actor.organizationId,
       ...internalUserRoleWhere,
     },
     select: {
@@ -280,11 +315,26 @@ export const resetUserPassword = async (
   const passwordHash = await bcrypt.hash(input.newPassword, 12);
 
   try {
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
-        passwordHash,
-      },
+    const user = await prisma.$transaction(async (transaction) => {
+      const updatedUser = await transaction.user.update({
+        where: { id },
+        data: {
+          passwordHash,
+        },
+      });
+
+      await transaction.activityLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          userId: actor.id,
+          action: "USER_PASSWORD_RESET",
+          entityType: "User",
+          entityId: updatedUser.id,
+          description: "Internal user password reset.",
+        },
+      });
+
+      return updatedUser;
     });
 
     return sanitizeUser(user);

@@ -3,6 +3,7 @@ import { Router } from "express";
 
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorizeRoles } from "../../middlewares/authorize.middleware";
+import { publicRateLimit } from "../../middlewares/rateLimit.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
 import {
@@ -24,6 +25,7 @@ const publicConsultationRequestRouter = Router();
 
 publicConsultationRequestRouter.post(
   "/",
+  publicRateLimit,
   validate({ body: createConsultationRequestSchema }),
   asyncHandler(submitConsultationRequest),
 );

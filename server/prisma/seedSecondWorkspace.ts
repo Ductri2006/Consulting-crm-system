@@ -2,6 +2,13 @@ import {
   AppointmentMethod,
   AppointmentStatus,
   CaseStatus,
+  DocumentDownloadActorType,
+  DocumentOcrStatus,
+  DocumentScanStatus,
+  DocumentSource,
+  DocumentStorageProvider,
+  DocumentType,
+  DocumentVisibility,
   PrismaClient,
   Priority,
   RequestStatus,
@@ -72,6 +79,15 @@ const demoIds = {
     "00000000-0000-4000-8000-000000001802",
     "00000000-0000-4000-8000-000000001803",
   ],
+  portalAccounts: [
+    "00000000-0000-4000-8000-000000001901",
+    "00000000-0000-4000-8000-000000001902",
+  ],
+  documents: [
+    "00000000-0000-4000-8000-000000001a01",
+    "00000000-0000-4000-8000-000000001a02",
+  ],
+  documentDownloads: ["00000000-0000-4000-8000-000000001b01"],
 } as const;
 
 const services = [
@@ -687,6 +703,156 @@ const upsertActivityLogs = async (
   );
 };
 
+const upsertPortalAccounts = async (customerIds: readonly string[]) => {
+  const portalPasswordHash = await bcrypt.hash("Northstar-Portal-Demo-2026!", 12);
+  const portalAccountData = [
+    {
+      id: demoIds.portalAccounts[0],
+      customerId: customerIds[0],
+      email: "portal.aurora@northstar.test",
+    },
+    {
+      id: demoIds.portalAccounts[1],
+      customerId: customerIds[1],
+      email: "portal.pacific@northstar.test",
+    },
+  ] as const;
+
+  return Promise.all(
+    portalAccountData.map((account) =>
+      prisma.customerPortalAccount.upsert({
+        where: { customerId: account.customerId },
+        update: {
+          organizationId: secondOrganization.id,
+          email: account.email,
+          passwordHash: portalPasswordHash,
+          isActive: true,
+        },
+        create: {
+          ...account,
+          organizationId: secondOrganization.id,
+          passwordHash: portalPasswordHash,
+        },
+      }),
+    ),
+  );
+};
+
+const upsertDocuments = async (
+  customerIds: readonly string[],
+  caseIds: readonly string[],
+  users: {
+    managerId: string;
+  },
+  portalAccountIds: readonly string[],
+) => {
+  const documentData = [
+    {
+      id: demoIds.documents[0],
+      customerId: customerIds[0],
+      caseProfileId: caseIds[0],
+      uploadedById: users.managerId,
+      uploadedByPortalAccountId: null,
+      fileName: "northstar-contract-review-summary.pdf",
+      fileUrl: "seeded-placeholder://northstar/contract-review-summary.pdf",
+      fileType: DocumentType.LEGAL_DOCUMENT,
+      source: DocumentSource.INTERNAL,
+      visibility: DocumentVisibility.CUSTOMER_VISIBLE,
+      storageProvider: DocumentStorageProvider.LOCAL,
+      scanStatus: DocumentScanStatus.SKIPPED,
+      ocrStatus: DocumentOcrStatus.SKIPPED,
+      mimeType: "application/pdf",
+      size: 1024,
+      downloadCount: 1,
+      lastDownloadedAt: addDays(-1),
+    },
+    {
+      id: demoIds.documents[1],
+      customerId: customerIds[1],
+      caseProfileId: caseIds[1],
+      uploadedById: null,
+      uploadedByPortalAccountId: portalAccountIds[1],
+      fileName: "northstar-compliance-supporting-notes.pdf",
+      fileUrl: "seeded-placeholder://northstar/compliance-supporting-notes.pdf",
+      fileType: DocumentType.CONTRACT,
+      source: DocumentSource.CUSTOMER_PORTAL,
+      visibility: DocumentVisibility.CUSTOMER_VISIBLE,
+      storageProvider: DocumentStorageProvider.LOCAL,
+      scanStatus: DocumentScanStatus.SKIPPED,
+      ocrStatus: DocumentOcrStatus.SKIPPED,
+      mimeType: "application/pdf",
+      size: 2048,
+      downloadCount: 0,
+      lastDownloadedAt: null,
+    },
+  ] as const;
+
+  return Promise.all(
+    documentData.map((document) =>
+      prisma.document.upsert({
+        where: { id: document.id },
+        update: {
+          organizationId: secondOrganization.id,
+          customerId: document.customerId,
+          caseProfileId: document.caseProfileId,
+          uploadedById: document.uploadedById,
+          uploadedByPortalAccountId: document.uploadedByPortalAccountId,
+          fileName: document.fileName,
+          fileUrl: document.fileUrl,
+          fileType: document.fileType,
+          source: document.source,
+          visibility: document.visibility,
+          storageProvider: document.storageProvider,
+          scanStatus: document.scanStatus,
+          ocrStatus: document.ocrStatus,
+          mimeType: document.mimeType,
+          size: document.size,
+          downloadCount: document.downloadCount,
+          lastDownloadedAt: document.lastDownloadedAt,
+        },
+        create: {
+          ...document,
+          organizationId: secondOrganization.id,
+        },
+      }),
+    ),
+  );
+};
+
+const upsertDocumentDownloadAudits = async (
+  documentIds: readonly string[],
+  customerIds: readonly string[],
+  caseIds: readonly string[],
+  portalAccountIds: readonly string[],
+) =>
+  prisma.documentDownloadAudit.upsert({
+    where: { id: demoIds.documentDownloads[0] },
+    update: {
+      organizationId: secondOrganization.id,
+      documentId: documentIds[0],
+      actorPortalAccountId: portalAccountIds[0],
+      actorUserId: null,
+      actorType: DocumentDownloadActorType.CUSTOMER_PORTAL,
+      customerId: customerIds[0],
+      caseProfileId: caseIds[0],
+      ipAddress: null,
+      userAgent: null,
+      createdAt: addDays(-1),
+    },
+    create: {
+      id: demoIds.documentDownloads[0],
+      organizationId: secondOrganization.id,
+      documentId: documentIds[0],
+      actorPortalAccountId: portalAccountIds[0],
+      actorType: DocumentDownloadActorType.CUSTOMER_PORTAL,
+      customerId: customerIds[0],
+      caseProfileId: caseIds[0],
+      ipAddress: null,
+      userAgent: null,
+      createdAt: addDays(-1),
+    },
+  });
+
 async function main(): Promise<void> {
   assertSecondWorkspaceSeedAllowed();
 
@@ -726,12 +892,29 @@ async function main(): Promise<void> {
     },
     caseIds,
   );
+  const portalAccounts = await upsertPortalAccounts(customerIds);
+  const portalAccountIds = portalAccounts.map((account) => account.id);
+  const documents = await upsertDocuments(
+    customerIds,
+    caseIds,
+    {
+      managerId: users.manager.id,
+    },
+    portalAccountIds,
+  );
+
+  await upsertDocumentDownloadAudits(
+    documents.map((document) => document.id),
+    customerIds,
+    caseIds,
+    portalAccountIds,
+  );
 
   console.log(
-    "Second workspace seed completed: Northstar Legal Workspace demo users, customers, requests, cases, appointments, tasks, and activity records are ready.",
+    "Second workspace seed completed: Northstar Legal Workspace demo users, customers, requests, cases, appointments, tasks, documents, portal accounts, and activity records are ready.",
   );
   console.log(
-    "No physical document files were seeded. Public consultation requests still use DEFAULT_ORGANIZATION_SLUG.",
+    "Only document metadata was seeded; no physical document files were created. Public consultation requests still use DEFAULT_ORGANIZATION_SLUG.",
   );
 }
 

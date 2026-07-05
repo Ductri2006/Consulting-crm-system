@@ -70,6 +70,15 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `EMAIL_FROM` | No | Sender identity for invitation emails |
 | `EMAIL_REPLY_TO` | No | Optional reply-to address for invitation emails |
 | `RESEND_API_KEY` | No | Resend API key, required only when `EMAIL_PROVIDER=resend`; never commit it |
+| `RATE_LIMIT_ENABLED` | No | Enables in-memory rate limits, defaults to `true` |
+| `AUTH_RATE_LIMIT_WINDOW_MINUTES` | No | Auth/invitation rate-limit window, defaults to `15` |
+| `AUTH_RATE_LIMIT_MAX` | No | Auth/invitation requests per window, defaults to `10` |
+| `PUBLIC_RATE_LIMIT_WINDOW_MINUTES` | No | Public intake rate-limit window, defaults to `15` |
+| `PUBLIC_RATE_LIMIT_MAX` | No | Public intake requests per window, defaults to `50` |
+| `UPLOAD_RATE_LIMIT_WINDOW_MINUTES` | No | Upload rate-limit window, defaults to `15` |
+| `UPLOAD_RATE_LIMIT_MAX` | No | Upload requests per window, defaults to `20` |
+| `DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES` | No | Download rate-limit window, defaults to `15` |
+| `DOWNLOAD_RATE_LIMIT_MAX` | No | Download requests per window, defaults to `100` |
 
 Example:
 
@@ -105,6 +114,15 @@ EMAIL_PROVIDER=console
 EMAIL_FROM="Advisora CRM <no-reply@advisora.test>"
 EMAIL_REPLY_TO=
 RESEND_API_KEY=
+RATE_LIMIT_ENABLED=true
+AUTH_RATE_LIMIT_WINDOW_MINUTES=15
+AUTH_RATE_LIMIT_MAX=10
+PUBLIC_RATE_LIMIT_WINDOW_MINUTES=15
+PUBLIC_RATE_LIMIT_MAX=50
+UPLOAD_RATE_LIMIT_WINDOW_MINUTES=15
+UPLOAD_RATE_LIMIT_MAX=20
+DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES=15
+DOWNLOAD_RATE_LIMIT_MAX=100
 ```
 
 `CLIENT_URL` can be a single origin such as `http://localhost:5173` or a
@@ -115,6 +133,47 @@ trailing commas.
 
 Do not commit `.env`, real email provider API keys, or verified sender
 credentials in a shared or production environment.
+
+## Security hardening
+
+Step 31 configures Helmet security headers in `src/app.ts`, disables
+`x-powered-by`, keeps CORS restricted to `CLIENT_URL`, and limits JSON and
+URL-encoded bodies to `1mb`. Upload routes still use multer and
+`MAX_FILE_SIZE_MB` separately.
+
+The app uses reusable in-memory rate limiters for:
+
+- `POST /api/auth/login`
+- `POST /api/portal/auth/login`
+- `POST /api/workspaces/signup`
+- `POST /api/public/consultation-requests`
+- `POST /api/invitations`
+- `POST /api/invitations/:id/resend`
+- `GET /api/invitations/public/:token`
+- `POST /api/invitations/public/:token/accept`
+- `POST /api/documents/upload`
+- `POST /api/portal/documents`
+- `GET /api/documents/:id/download`
+- `GET /api/portal/documents/:id/download`
+
+Rate-limit failures return `429` with the generic message
+`Too many requests. Please try again later.` and do not expose email,
+workspace, user, or token details. The limiter is process-local and IP-based,
+so use Redis or another shared store before multi-instance production.
+
+`src/utils/redact.ts` redacts Bearer tokens, invitation URLs, token/password/key
+query parameters, storage URLs, environment secret assignments, `/uploads/...`
+paths, and local Windows paths. Request logs, non-production error details,
+not-found paths, and Activity Center descriptions use this helper.
+
+Internal access tokens are now signed with `purpose: "internal"` while older
+internal tokens without a purpose remain accepted for compatibility. Customer
+portal tokens still require `purpose: "customer_portal"`. Internal middleware
+rejects portal tokens, and portal middleware rejects internal tokens.
+
+See [Security Hardening](../docs/security-hardening.md) and
+[Security RBAC Matrix](../docs/security-rbac-matrix.md) for the full Step 31
+review.
 
 ## Run with a real database
 
@@ -637,7 +696,10 @@ List responses use a consistent pagination envelope:
 }
 ```
 
-Public form submissions are validated but should additionally receive production rate limiting and abuse protection before deployment. Protected CRM routes enforce authorization on the server; hiding controls in a client is not a security boundary.
+Public consultation submissions use the Step 31 public rate limiter. Distributed
+rate limiting, captcha, and abuse monitoring remain future production
+hardening. Protected CRM routes enforce authorization on the server; hiding
+controls in a client is not a security boundary.
 
 ### Case profiles
 
@@ -983,6 +1045,8 @@ npm run prisma:studio
 npm run seed
 npm run seed:demo
 npm run db:verify
+npm run verify:tenant-isolation
+npm run smoke:production
 ```
 
 - `prisma:generate` generates the type-safe Prisma Client.
@@ -1000,6 +1064,16 @@ npm run db:verify
   `DEMO_SEED_ENABLED=true`.
 - `db:verify` checks connectivity, the seeded administrator, and the four
   expected service slugs.
+- `verify:tenant-isolation` is a read-only QA script for the Advisora and
+  Northstar demo workspaces. It checks users, customers, cases, requests,
+  appointments, tasks, case history, activity logs, documents, document
+  downloads, portal accounts, and cross-tenant relation leaks.
+- `smoke:production` is a read-only HTTP smoke script for a deployed API. It
+  requires `SMOKE_API_BASE_URL`, `SMOKE_ADMIN_EMAIL`,
+  `SMOKE_ADMIN_PASSWORD`, `SMOKE_PORTAL_WORKSPACE_SLUG`,
+  `SMOKE_PORTAL_EMAIL`, and `SMOKE_PORTAL_PASSWORD`. Set
+  `SMOKE_RATE_LIMIT_CHECK=true` only when intentionally stress-checking invalid
+  login attempts until `429`.
 
 A running PostgreSQL database is required for migrations and seeding. Generating the client only requires a syntactically valid `DATABASE_URL`.
 
@@ -1070,9 +1144,10 @@ Slug: northstar-legal
 ```
 
 It creates fictional demo users, customers, consultation requests, cases,
-appointments, tasks, case history, and activity logs under `northstar-legal`.
-It does not create physical document files, reset the database, delete existing
-data, or add public workspace signup or invitations.
+appointments, tasks, case history, activity logs, document metadata, download
+audit metadata, and portal accounts under `northstar-legal`. It does not
+create physical document files, reset the database, delete existing data, or add
+public workspace signup or invitations.
 
 Run it after migrations and the main demo seed:
 
@@ -1094,8 +1169,9 @@ When `NODE_ENV=production`, `seed:second-workspace` refuses to run unless
 `SECOND_WORKSPACE_SEED_ENABLED=true` is set for that command. Keep this flag
 out of permanent runtime configuration. The verification script checks that
 `advisora-demo` and `northstar-legal` have separate users, customers, cases,
-requests, appointments, tasks, case history, and activity logs, and that
-Northstar demo records are not assigned to Advisora.
+requests, appointments, tasks, case history, activity logs, documents, document
+download audits, and portal accounts, and that Northstar demo records are not
+assigned to Advisora.
 
 ## Implementation status
 
@@ -1132,11 +1208,14 @@ scan-based download blocking, protected streaming downloads, and download audit
 logging. Step 30 adds an Admin/Manager Activity Center and customer-safe Portal
 Updates built from existing audit, case, appointment, document, download, and
 portal account data without exposing internal notes or storage/secret fields.
-The
-repository also includes production readiness, deployment, and final QA
-documentation. It does not include request-to-customer conversion, configured
-live scanner/OCR infrastructure, report exports, realtime/push notifications,
-or real production deployment.
+Step 31 adds security headers, request body limits, configurable in-memory rate
+limits, redacted logging/error output, internal token purpose signing, expanded
+user/document audit events, tenant-isolation verification for documents and
+portal accounts, and the read-only production smoke script. The repository also
+includes production readiness, deployment, final QA, security hardening, and
+RBAC matrix documentation. It does not include request-to-customer conversion,
+configured live scanner/OCR infrastructure, report exports, realtime/push
+notifications, distributed rate limiting, or real production deployment.
 
 ## Future phases
 
@@ -1147,7 +1226,8 @@ or real production deployment.
 - Realtime notifications, notification preferences, and activity retention
   policies
 - Public news and project content APIs
-- Rate limiting, abuse protection, private file storage, and production observability
+- Distributed rate limiting, captcha/abuse protection, private file storage
+  operations, and production observability
 - Custom database checks for document ownership and other cross-field rules documented in `../docs/database-design.md`
 
 Customer, service, consultation-request, case-profile workflow, appointment,

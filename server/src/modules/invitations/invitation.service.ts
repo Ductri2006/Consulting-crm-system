@@ -23,6 +23,7 @@ import {
   safeOrganizationSelect,
   sanitizeUser,
 } from "../../utils/sanitizeUser";
+import { redactSensitiveText } from "../../utils/redact";
 import type {
   AcceptInvitationInput,
   AcceptInvitationResult,
@@ -117,23 +118,7 @@ const buildInviteUrl = (token: string): string => {
   return `${clientOrigin}/invite/${encodeURIComponent(token)}`;
 };
 
-const redactInviteUrl = (inviteUrl: string): string => {
-  try {
-    const url = new URL(inviteUrl);
-    const parts = url.pathname.split("/").filter(Boolean);
-
-    if (parts[0] === "invite" && parts[1]) {
-      url.pathname = "/invite/[redacted-token]";
-      url.search = "";
-      url.hash = "";
-      return url.toString();
-    }
-  } catch {
-    return inviteUrl.replace(/(\/invite\/)[^/?#]+/g, "$1[redacted-token]");
-  }
-
-  return inviteUrl.replace(/(\/invite\/)[^/?#]+/g, "$1[redacted-token]");
-};
+const redactInviteUrl = redactSensitiveText;
 
 const throwInvalidInvitation = (): never => {
   throw new AppError(

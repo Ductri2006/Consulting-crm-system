@@ -1,7 +1,7 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System through Step 30. It documents staging demo hardening, the workspace
+System through Step 31. It documents staging demo hardening, the workspace
 tenant foundation, customer portal document security, activity feeds, and production
 gaps while keeping real provider URLs, credentials, and secrets out of the
 repository.
@@ -39,6 +39,11 @@ accepted.
   is organization-scoped and Admin/Manager-only; portal updates are
   customer-scoped and omit internal notes, raw storage metadata, token/password
   hashes, IP addresses, and user-agent data.
+- Step 31 security hardening is implemented for the staging/portfolio path:
+  Helmet security headers, `x-powered-by` removal, `1mb` body limits,
+  configurable in-memory rate limiting, logging/error redaction, expanded audit
+  coverage, tenant verification updates, and a read-only production smoke
+  script.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -102,6 +107,11 @@ Server:
 | `EMAIL_FROM` | Sender identity for invitation emails. Use a verified sender for real Resend delivery. |
 | `EMAIL_REPLY_TO` | Optional reply-to address for invitation emails. |
 | `RESEND_API_KEY` | Resend API key. Required only when `EMAIL_PROVIDER=resend`; never commit it. |
+| `RATE_LIMIT_ENABLED` | Enables in-memory rate limits. Defaults to `true`. |
+| `AUTH_RATE_LIMIT_WINDOW_MINUTES` / `AUTH_RATE_LIMIT_MAX` | Auth and invitation limit window/count. Defaults to `15` and `10`. |
+| `PUBLIC_RATE_LIMIT_WINDOW_MINUTES` / `PUBLIC_RATE_LIMIT_MAX` | Public intake limit window/count. Defaults to `15` and `50`. |
+| `UPLOAD_RATE_LIMIT_WINDOW_MINUTES` / `UPLOAD_RATE_LIMIT_MAX` | Upload limit window/count. Defaults to `15` and `20`. |
+| `DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES` / `DOWNLOAD_RATE_LIMIT_MAX` | Download limit window/count. Defaults to `15` and `100`. |
 
 Client:
 
@@ -125,6 +135,8 @@ Production rules:
   staging, use `advisora-demo`.
 - `WORKSPACE_SIGNUP_ENABLED` should remain `false` for production unless
   signup abuse protection, monitoring, and token/session hardening are reviewed.
+- Current rate limiting is in-memory and IP-based. Use Redis or another shared
+  rate-limit store before multi-instance production.
 - Do not commit `.env`, tokens, local upload files, or generated secrets.
 
 ## Database Readiness
@@ -211,6 +223,44 @@ Rotation steps:
 - Do not use wildcard origins for authenticated production traffic.
 - Keep `VITE_API_BASE_URL` aligned with the deployed backend API URL.
 
+## Security Headers And Rate Limiting
+
+- API responses should not include `x-powered-by`.
+- Helmet should emit `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, and `Referrer-Policy: no-referrer`.
+- Production-mode deployments should also emit HSTS through Helmet.
+- Rate-limited routes should return `429` with the generic message
+  `Too many requests. Please try again later.`.
+- The current limiter is process-local and IP-based. Treat it as staging/demo
+  protection, not distributed production abuse defense.
+- Before real production, use Redis/shared storage, verify proxy IP handling,
+  consider captcha or WAF controls for public forms, and add monitoring for
+  repeated 429/auth failures.
+
+## Production Smoke Script
+
+Run the read-only smoke script only with sanitized staging/production-like
+credentials stored outside the repository:
+
+```bash
+cd server
+npm run smoke:production
+```
+
+Required variables:
+
+- `SMOKE_API_BASE_URL`
+- `SMOKE_ADMIN_EMAIL`
+- `SMOKE_ADMIN_PASSWORD`
+- `SMOKE_PORTAL_WORKSPACE_SLUG`
+- `SMOKE_PORTAL_EMAIL`
+- `SMOKE_PORTAL_PASSWORD`
+
+Optional:
+
+- `SMOKE_RATE_LIMIT_CHECK=true` intentionally sends invalid login attempts
+  until a `429` is observed. Use it only during a planned smoke window.
+
 ## File Upload Limitation
 
 Local file uploads work for development and single-instance testing.
@@ -245,6 +295,12 @@ Production document requirements:
 - [ ] Token storage risk is accepted or migrated away from browser local
   storage.
 - [ ] CORS allowlist matches the deployed frontend origin.
+- [ ] Helmet security headers are present and `x-powered-by` is absent.
+- [ ] Rate limits are enabled or a documented staging exception is accepted.
+- [ ] `429` responses use generic messaging and do not expose user, email,
+  workspace, or token data.
+- [ ] Request logs, error responses, 404 paths, and activity descriptions
+  redact tokens, secrets, signed URLs, storage keys, and local paths.
 - [ ] `passwordHash` is not returned by auth or user endpoints.
 - [ ] Auth responses include the expected current workspace and no other
   workspace data.
@@ -279,6 +335,7 @@ Production document requirements:
 - [ ] Run client `npm run lint`.
 - [ ] Run `npm run prisma:deploy` against the target database.
 - [ ] Verify `GET /api/health`.
+- [ ] Run `npm run smoke:production` when smoke credentials are available.
 - [ ] Complete the final QA checklist.
 
 ## Known Limitations
@@ -291,6 +348,8 @@ Production document requirements:
   is implemented but must be configured with provider secrets outside the repo.
 - Render Free may cold start during portfolio staging.
 - No refresh tokens or token revocation workflow yet.
+- No separate JWT signing secrets per token family yet; current separation uses
+  payload purpose checks and middleware boundaries.
 - Current frontend token storage uses local storage for both internal and
   customer portal sessions, not HttpOnly cookies.
 - Workspace signup exists for controlled staging/local onboarding tests and is
@@ -318,7 +377,9 @@ Production document requirements:
 - No billing, workspace switcher, or workspace-specific public intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production
   tenant onboarding flow.
-- No production rate limiting, captcha, or dedicated abuse-protection layer yet.
+- Basic in-memory rate limiting is implemented for sensitive endpoints, but
+  distributed production-grade rate limiting, captcha, and dedicated
+  abuse-protection monitoring are not implemented yet.
 - No centralized production logging, metrics, or alerting yet.
 - No automated end-to-end test suite yet.
 - No report export to Excel/PDF yet.

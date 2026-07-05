@@ -18,7 +18,8 @@
     "seed:demo": "tsx prisma/seedDemo.ts",
     "seed:second-workspace": "tsx prisma/seedSecondWorkspace.ts",
     "db:verify": "tsx src/scripts/verifyDatabase.ts",
-    "verify:tenant-isolation": "tsx src/scripts/verifyTenantIsolation.ts"
+    "verify:tenant-isolation": "tsx src/scripts/verifyTenantIsolation.ts",
+    "smoke:production": "tsx src/scripts/productionSmoke.ts"
   },
   "engines": {
     "node": ">=20"

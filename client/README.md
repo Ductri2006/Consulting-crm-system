@@ -22,8 +22,8 @@ current demo/staging workspace is `Advisora Demo Workspace`.
 
 Step 28.5 adds bilingual English/Vietnamese UI support, Step 29 keeps the
 Customer Portal Documents screens covered by the same English/Vietnamese
-translation resources, and Step 30 adds bilingual Activity Center and Portal
-Updates screens.
+translation resources, Step 30 adds bilingual Activity Center and Portal
+Updates screens, and Step 31 reviews the admin/portal route guard separation.
 
 - Supported locales: `en`, `vi`.
 - Locale preference is stored in local storage as `advisora_locale`.
@@ -145,6 +145,9 @@ Activity Center adds `/admin/activity` for Admin and Manager users, with
 workspace-scoped summary cards, search, action/entity/date filters, reset, and
 pagination. The dashboard recent activity card links to the Activity Center for
 allowed roles. Staff users do not see the Activity navigation item.
+Step 31 confirms that `/admin/activity` remains Admin/Manager-only and that
+`/admin/users`, `/admin/invitations`, and `/admin/settings` remain Admin-only
+at the route-guard layer. Backend authorization remains the source of truth.
 Reports use the dashboard/reporting APIs for operational insight, with staff
 performance available to administrators and managers only. Admin and public page
 routes are lazy-loaded to keep the initial bundle smaller.
@@ -181,3 +184,7 @@ user-agent data. The portal UI shows safe scan status and disables downloads
 when the backend marks a document unsafe or unavailable. Portal Updates are a
 read-only feed, not realtime websocket or push notifications. Billing, messages,
 and customer self-registration are not part of this step.
+Step 31 confirms that portal routes continue to use `PortalProtectedRoute`,
+`PortalLayout`, the portal API client, and `advisora_portal_access_token`.
+Internal admin API calls continue to use the separate admin token key
+`consulting_crm_access_token`.

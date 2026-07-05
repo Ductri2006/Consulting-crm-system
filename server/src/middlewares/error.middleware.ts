@@ -9,6 +9,7 @@ import { env } from "../config/env";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { AppError } from "../utils/AppError";
 import { errorResponse } from "../utils/apiResponse";
+import { redactSensitiveText } from "../utils/redact";
 
 type ErrorRecord = Record<string, unknown>;
 
@@ -48,13 +49,14 @@ const handleError = (
   const message = isProductionServerError
     ? "Internal server error."
     : error instanceof Error
-      ? error.message
+      ? redactSensitiveText(error.message)
       : "Internal server error.";
   const errors = isProductionServerError || !isAppError ? [] : error.errors;
   const body = {
     ...errorResponse(message, errors),
     ...(env.NODE_ENV === "development" &&
-      error instanceof Error && { stack: error.stack }),
+      error instanceof Error &&
+      error.stack && { stack: redactSensitiveText(error.stack) }),
   };
 
   response.status(statusCode).json(body);

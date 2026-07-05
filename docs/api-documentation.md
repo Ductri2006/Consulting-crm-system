@@ -5,7 +5,8 @@ started as a design reference and now tracks the implemented portfolio API for
 auth, workspace signup, workspace settings, workspace invitations, CRM workflows,
 internal users, documents, dashboard, reports, and the Organization / Workspace tenant
 foundation. Step 30 adds the Admin/Manager Activity Center and customer-safe
-Portal Updates feed.
+Portal Updates feed. Step 31 adds security header, rate-limit, token-purpose,
+redaction, audit, and production smoke documentation.
 
 ## Base URL and Conventions
 
@@ -27,6 +28,24 @@ Portal Updates feed.
 - Clients must not send `organizationId` in body or query payloads. Unknown
   fields are rejected by validation.
 - Services remain a global catalog in this step.
+
+Security conventions:
+
+- The API disables `x-powered-by` and uses Helmet security headers including
+  `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and
+  `Referrer-Policy: no-referrer`.
+- JSON and URL-encoded request bodies are limited to `1mb`. Multipart upload
+  size remains controlled by document upload middleware and `MAX_FILE_SIZE_MB`.
+- Sensitive route groups are rate-limited. A blocked request returns `429` with
+  the generic message `Too many requests. Please try again later.`.
+- Rate-limited responses include standard helper headers such as
+  `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, and
+  `Retry-After` when applicable.
+- Request logging and error output must redact Bearer tokens, invitation
+  tokens, password/token/secret query values, storage URLs, local file paths,
+  and upload paths.
+- See [Security Hardening](security-hardening.md) and
+  [Security RBAC Matrix](security-rbac-matrix.md) for the full Step 31 review.
 
 ## 1. Authentication API
 
@@ -1664,8 +1683,20 @@ Recommended HTTP status codes:
 - `403 Forbidden`: insufficient permission
 - `404 Not Found`: resource not found
 - `409 Conflict`: duplicate or conflicting resource state
+- `429 Too Many Requests`: rate limit exceeded for auth, public, invitation,
+  upload, or download route groups
 - `422 Unprocessable Content`: field validation failure
 - `500 Internal Server Error`: unexpected server failure
+
+Rate-limited endpoint groups:
+
+| Group | Endpoints |
+| --- | --- |
+| Auth | `POST /api/auth/login`, `POST /api/portal/auth/login`, `POST /api/workspaces/signup` |
+| Public | `POST /api/public/consultation-requests` |
+| Invitation | `POST /api/invitations`, `POST /api/invitations/:id/resend`, `GET /api/invitations/public/:token`, `POST /api/invitations/public/:token/accept` |
+| Upload | `POST /api/documents/upload`, `POST /api/portal/documents` |
+| Download | `GET /api/documents/:id/download`, `GET /api/portal/documents/:id/download` |
 
 ## 15. Authentication and Authorization Notes
 
@@ -1686,6 +1717,9 @@ Recommended HTTP status codes:
 - Customer portal endpoints are separate from internal user endpoints. Portal
   JWTs require `purpose: "customer_portal"`, and portal responses expose only
   safe account, customer, and organization fields.
+- Internal JWTs are signed with `purpose: "internal"` in Step 31. Older
+  internal JWTs without a purpose remain accepted for compatibility, but portal
+  tokens are never accepted by internal middleware.
 - Authorization must be enforced by the backend; hiding UI actions is not a security control.
 - Sensitive fields, including `passwordHash`, must never be returned by the API.
 

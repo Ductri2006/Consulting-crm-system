@@ -634,7 +634,9 @@ Talk track:
 - No report exports yet.
 - No realtime websocket, push notification, or notification preference system
   yet.
-- No production rate limiting, captcha, centralized monitoring, or alerting yet.
+- Basic in-memory rate limiting exists for sensitive endpoints; distributed
+  production-grade rate limiting, captcha, centralized monitoring, and alerting
+  remain future work.
 - No automated end-to-end test suite yet.
 
 ## Local QA Result

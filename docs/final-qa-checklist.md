@@ -27,6 +27,9 @@ Do not paste real secrets, database URLs, or access tokens into this document.
 - [ ] Client `npm run build` passes.
 - [ ] Client `npm run lint` passes.
 - [ ] `git diff --check` passes.
+- [ ] Server `npm run verify:tenant-isolation` passes after the optional
+  Northstar QA seed is present.
+- [ ] EN/VI i18n key parity script passes.
 - [ ] No `.env`, token, secret, database URL, or upload file is staged.
 
 ## Public Website
@@ -278,10 +281,27 @@ Reports:
 - [ ] Admin token key and portal token key are separate
   (`consulting_crm_access_token` vs `advisora_portal_access_token`).
 - [ ] API errors do not reveal secrets.
+- [ ] API 404 responses redact invitation tokens, signed URLs, storage keys,
+  local paths, and `/uploads/...` path fragments.
+- [ ] Non-production API error details redact tokens, passwords, secrets,
+  signed URLs, storage keys, and local paths.
 - [ ] Browser console does not print tokens or sensitive payloads.
 - [ ] Server logs do not print passwords, Bearer tokens, database URLs, or file
   contents.
 - [ ] CORS allows only the configured frontend origin or allowlist.
+- [ ] `GET /api/health` response includes security headers:
+  `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and
+  `Referrer-Policy: no-referrer`.
+- [ ] `x-powered-by` is absent from API responses.
+- [ ] Oversized JSON body over the configured `1mb` parser limit is rejected
+  without exposing stack traces or secrets.
+- [ ] Invalid internal login attempts eventually return `429` with a generic
+  message and no email/user/workspace leak.
+- [ ] Invalid portal login attempts eventually return `429` with a generic
+  message and no email/user/workspace leak.
+- [ ] Invitation preview/accept, public consultation, document upload, and
+  document download routes return generic `429` when their configured limits
+  are intentionally exceeded.
 - [ ] Staff users see only data scoped to their backend permissions.
 
 ## Staging/Production Smoke
@@ -292,8 +312,14 @@ testing.
 - [ ] English/Vietnamese switching works on public, admin, and portal surfaces.
 - [ ] User-generated data is still displayed as entered and is not auto-translated.
 - [ ] `GET /api/health` returns success.
+- [ ] `npm run smoke:production` passes when sanitized smoke credentials are
+  available.
+- [ ] Optional `SMOKE_RATE_LIMIT_CHECK=true npm run smoke:production` observes
+  `429` during an intentional abuse-protection test window.
 - [ ] Admin login returns a sanitized user and access token.
 - [ ] Dashboard API returns data.
+- [ ] Portal token cannot call `/api/users`.
+- [ ] Internal token cannot call `/api/portal/me`.
 - [ ] Document upload and download work.
 - [ ] Customer portal document list/upload/download works with portal auth only.
 - [ ] Customer portal updates list and dashboard recent updates work with portal
@@ -341,6 +367,7 @@ testing.
 | Documents |  |  |
 | Reports |  |  |
 | Activity Center / Portal Updates |  |  |
+| Step 31 security hardening |  |  |
 | Security |  |  |
 | Production smoke |  |  |
 

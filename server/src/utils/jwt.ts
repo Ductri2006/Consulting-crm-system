@@ -51,7 +51,7 @@ const signToken = (payload: AccessTokenPayload): string => {
 
 export const signAccessToken = (
   payload: InternalAccessTokenPayload,
-): string => signToken(payload);
+): string => signToken({ ...payload, purpose: "internal" });
 
 export const signCustomerPortalAccessToken = (
   payload: CustomerPortalAccessTokenPayload,

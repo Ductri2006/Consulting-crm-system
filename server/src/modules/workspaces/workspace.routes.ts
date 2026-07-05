@@ -3,6 +3,7 @@ import { Router } from "express";
 
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorizeRoles } from "../../middlewares/authorize.middleware";
+import { authRateLimit } from "../../middlewares/rateLimit.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import {
   getCurrentWorkspaceController,
@@ -10,7 +11,6 @@ import {
   updateCurrentWorkspaceController,
 } from "./workspace.controller";
 import {
-  limitWorkspaceSignup,
   requireWorkspaceSignupEnabled,
 } from "./workspace.middleware";
 import {
@@ -24,7 +24,7 @@ const currentWorkspaceRouter = Router();
 workspaceRouter.post(
   "/signup",
   requireWorkspaceSignupEnabled,
-  limitWorkspaceSignup,
+  authRateLimit,
   validate({ body: workspaceSignupSchema }),
   signupWorkspaceController,
 );

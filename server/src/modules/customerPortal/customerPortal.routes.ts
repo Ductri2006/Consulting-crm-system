@@ -17,6 +17,11 @@ import {
   uploadPortalDocumentController,
 } from "./customerPortal.controller";
 import { uploadDocumentFile } from "../../middlewares/upload.middleware";
+import {
+  authRateLimit,
+  downloadRateLimit,
+  uploadRateLimit,
+} from "../../middlewares/rateLimit.middleware";
 import { authenticateCustomerPortal } from "./customerPortal.middleware";
 import {
   portalCaseIdParamsSchema,
@@ -33,6 +38,7 @@ const customerPortalRouter = Router();
 
 customerPortalRouter.post(
   "/auth/login",
+  authRateLimit,
   validate({ body: portalLoginSchema }),
   portalLoginController,
 );
@@ -44,12 +50,14 @@ customerPortalRouter.get(
 );
 customerPortalRouter.post(
   "/documents",
+  uploadRateLimit,
   uploadDocumentFile,
   validate({ body: portalDocumentUploadSchema }),
   uploadPortalDocumentController,
 );
 customerPortalRouter.get(
   "/documents/:id/download",
+  downloadRateLimit,
   validate({ params: portalDocumentIdParamsSchema }),
   asyncHandler(downloadPortalDocumentController),
 );

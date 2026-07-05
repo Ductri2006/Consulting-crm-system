@@ -17,6 +17,7 @@ import {
   createPaginationMeta,
   getPagination,
 } from "../../utils/pagination";
+import { redactSensitiveText } from "../../utils/redact";
 import type { SafeUser } from "../../utils/sanitizeUser";
 import type {
   ActivityItem,
@@ -60,12 +61,7 @@ const sanitizeDescription = (description: string | null): string | null => {
     return null;
   }
 
-  return description
-    .replace(/s3:\/\/\S+/gi, "[private storage]")
-    .replace(/\/uploads\/\S+/gi, "[private file]")
-    .replace(/[A-Za-z]:\\\S+/g, "[private file]")
-    .replace(/(token|password|secret|storageKey|signedUrl)[^.,;]*/gi, "[redacted]")
-    .trim();
+  return redactSensitiveText(description).trim();
 };
 
 const describeCaseHistory = (

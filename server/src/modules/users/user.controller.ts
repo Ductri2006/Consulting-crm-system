@@ -82,9 +82,10 @@ export const createUserController = async (
   request: Request,
   response: Response,
 ): Promise<void> => {
+  const actor = getActor(request);
   const user = await createUser(
     request.body as CreateUserInput,
-    getActor(request).organizationId,
+    actor,
   );
 
   response
@@ -108,7 +109,7 @@ export const updateUserController = async (
   const user = await updateUser(
     id,
     request.body as UpdateUserInput,
-    getActor(request).organizationId,
+    getActor(request),
   );
 
   response
@@ -132,7 +133,7 @@ export const resetUserPasswordController = async (
   const user = await resetUserPassword(
     id,
     request.body as ResetUserPasswordInput,
-    getActor(request).organizationId,
+    getActor(request),
   );
 
   response
