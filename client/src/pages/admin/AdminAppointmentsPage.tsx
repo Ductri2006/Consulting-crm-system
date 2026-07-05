@@ -1001,7 +1001,7 @@ export function AdminAppointmentsPage() {
     },
     {
       key: 'status',
-      header: t('portal.dashboard.status'),
+      header: t('common.status'),
       render: (appointment) => (
         <StatusBadge namespace="appointment" status={appointment.status} />
       ),

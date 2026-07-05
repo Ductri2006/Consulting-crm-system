@@ -610,6 +610,11 @@ Optional:
 - `SMOKE_RATE_LIMIT_CHECK=true` intentionally performs invalid login attempts
   until `429`. Use only during a planned abuse-protection smoke window.
 
+Step 33 confirmed local smoke-script readiness against localhost with sanitized
+demo credentials, including `SMOKE_RATE_LIMIT_CHECK=true`. If these `SMOKE_*`
+variables are not available for a deployed API, record production live smoke as
+skipped rather than failed.
+
 ## Rollback Checklist
 
 - [ ] Record the currently deployed frontend artifact or commit.

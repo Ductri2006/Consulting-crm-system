@@ -19,6 +19,9 @@ coverage, security documentation, and production QA smoke preparation.
 Step 32 polishes loading, empty, and error states, responsive table/card
 behavior, accessibility labels, and bilingual admin/portal microcopy for the
 final demo pass.
+Step 33 runs the final QA smoke and fixes a small document-security regression
+so staff users can no longer read unrelated portal-uploaded documents in the
+same workspace.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -686,7 +689,7 @@ This project is designed to practice:
 
 ## Repository Status
 
-**Current phase:** Step 31 complete - Audit log, security review, and production QA hardening
+**Current phase:** Step 33 complete - Final QA smoke and small bug-fix pass
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -806,3 +809,12 @@ production smoke script, tenant-isolation verification for documents/downloads
 and portal accounts, plus dedicated security hardening and RBAC matrix docs.
 The rate limiter remains single-process and should be replaced with
 Redis-backed shared state before multi-instance production.
+Step 32 polishes loading, empty, error, responsive, accessibility, and
+bilingual microcopy states for the public/admin/portal demo path.
+Step 33 completes the final local QA/fix sprint before portfolio release:
+client/server build and lint passed, Prisma validate/generate passed, EN/VI key
+parity and static translation-key scans passed, tenant-isolation verification
+passed, local API smoke passed, and the production smoke script passed against
+localhost with sanitized demo credentials. No `SMOKE_*` values were present for
+a live production smoke run, so live production smoke remains skipped until a
+deployed API and safe smoke credentials are provided outside the repository.

@@ -24,7 +24,9 @@ Step 28.5 adds bilingual English/Vietnamese UI support, Step 29 keeps the
 Customer Portal Documents screens covered by the same English/Vietnamese
 translation resources, Step 30 adds bilingual Activity Center and Portal
 Updates screens, Step 31 reviews the admin/portal route guard separation, and
-Step 32 polishes bilingual loading, empty, error, and responsive states.
+Step 32 polishes bilingual loading, empty, error, and responsive states. Step
+33 re-runs final client QA and keeps task/admin status labels in task-owned or
+common i18n namespaces.
 
 - Supported locales: `en`, `vi`.
 - Locale preference is stored in local storage as `advisora_locale`.
@@ -66,6 +68,13 @@ Create a production build with:
 
 ```bash
 npm run build
+```
+
+Run the frontend static checks used by the final QA pass with:
+
+```bash
+npm run lint
+npm run preview
 ```
 
 The production build output is `dist`. For deployment, set

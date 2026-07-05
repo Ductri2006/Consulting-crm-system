@@ -436,13 +436,13 @@ function StatusForm({
       <div className="p-5 sm:p-6">
         <FormError message={error} />
         <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
-          <p className="font-bold">{t('admin.appointments.currentStatus')}</p>
+          <p className="font-bold">{t('admin.tasks.currentStatus')}</p>
           <div className="mt-2">
             <StatusBadge namespace="task" status={task.status} />
           </div>
         </div>
         <label className="field-label" htmlFor="task-status">
-          {t('admin.appointments.newStatus')}
+          {t('admin.tasks.newStatus')}
         </label>
         <select
           aria-describedby={errors.status ? 'task-status-error' : undefined}
@@ -465,7 +465,7 @@ function StatusForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel={t('admin.appointments.updateStatus')}
+        submitLabel={t('admin.tasks.updateStatus')}
       />
     </form>
   )
@@ -821,7 +821,7 @@ export function AdminTasksPage() {
     },
     {
       key: 'status',
-      header: t('portal.dashboard.status'),
+      header: t('common.status'),
       render: (task) => <StatusBadge namespace="task" status={task.status} />,
     },
     {
@@ -858,7 +858,7 @@ export function AdminTasksPage() {
               setStatusError(null)
               setStatusTarget(task)
             }}
-            title={t('admin.appointments.updateStatus')}
+            title={t('admin.tasks.updateStatus')}
             type="button"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
@@ -930,7 +930,7 @@ export function AdminTasksPage() {
             }}
             value={status}
           >
-            <option value="">{t('admin.appointments.allStatuses')}</option>
+            <option value="">{t('admin.tasks.allStatuses')}</option>
             {taskStatuses.map((taskStatus) => (
               <option key={taskStatus} value={taskStatus}>
                 {getStatusLabel(t, 'task', taskStatus)}

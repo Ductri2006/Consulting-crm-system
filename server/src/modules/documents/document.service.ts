@@ -141,7 +141,6 @@ const assertDocumentReadAccess = (
   if (
     actor.role === UserRole.STAFF &&
     document.uploadedById !== actor.id &&
-    document.source !== DocumentSource.CUSTOMER_PORTAL &&
     document.caseProfile?.assignedToId !== actor.id
   ) {
     throw new AppError(
@@ -221,7 +220,6 @@ export const listDocuments = async (
     scopedFilters.push({
       OR: [
         { uploadedById: actor.id },
-        { source: DocumentSource.CUSTOMER_PORTAL },
         {
           caseProfile: {
             is: {

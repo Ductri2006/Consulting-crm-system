@@ -69,7 +69,9 @@ portal documents with portal-authenticated list, upload, and download. Step
 29.5 adds configurable local/S3 storage, scan/OCR status, and download audit
 logging. Step 30 adds an Admin/Manager Activity Center and customer-safe Portal
 Updates. Step 32 polishes demo-ready loading, empty, error, responsive, and
-bilingual states across public, admin, and portal surfaces. The
+bilingual states across public, admin, and portal surfaces. Step 33 completes
+the final local QA/fix sprint and fixes a staff document-access regression for
+customer-portal uploads. The
 selected language is stored in local storage as `advisora_locale`. The language
 switcher appears in the public layout, admin surfaces, and customer portal
 surfaces. Database content and user-generated values such as customer names,
@@ -661,6 +663,22 @@ Step 18A local smoke testing covered:
 
 Browser visual screenshot checks were not completed in this environment because
 the in-app browser connector was unavailable. Run a visual pass before staging.
+
+Step 33 final local QA covered:
+
+- Client build and lint.
+- Server build, lint, Prisma validate, and Prisma generate.
+- EN/VI i18n key parity and static missing-key scan.
+- Tenant-isolation verification for the Advisora and Northstar demo workspaces.
+- Local API health/security-header smoke.
+- Localhost production-smoke script readiness with sanitized demo credentials,
+  including the optional rate-limit check.
+- Admin/portal token purpose separation.
+- Document security regression review for portal-uploaded documents.
+
+Production live smoke was skipped in Step 33 because no `SMOKE_*` environment
+variables were available. Configure safe deployed API smoke credentials outside
+the repository before running live production smoke.
 
 ## Reset And Cleanup
 

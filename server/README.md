@@ -1044,6 +1044,7 @@ npm run prisma:reset
 npm run prisma:studio
 npm run seed
 npm run seed:demo
+npm run seed:second-workspace
 npm run db:verify
 npm run verify:tenant-isolation
 npm run smoke:production
@@ -1062,6 +1063,9 @@ npm run smoke:production
 - `seed:demo` upserts fictional portfolio staging data and safer demo
   admin/manager/staff accounts. In `NODE_ENV=production`, run it with
   `DEMO_SEED_ENABLED=true`.
+- `seed:second-workspace` upserts the fictional Northstar QA workspace for
+  tenant-isolation checks. In `NODE_ENV=production`, run it with
+  `SECOND_WORKSPACE_SEED_ENABLED=true`.
 - `db:verify` checks connectivity, the seeded administrator, and the four
   expected service slugs.
 - `verify:tenant-isolation` is a read-only QA script for the Advisora and
@@ -1074,6 +1078,11 @@ npm run smoke:production
   `SMOKE_PORTAL_EMAIL`, and `SMOKE_PORTAL_PASSWORD`. Set
   `SMOKE_RATE_LIMIT_CHECK=true` only when intentionally stress-checking invalid
   login attempts until `429`.
+
+Step 33 confirmed that build/lint/Prisma checks, tenant-isolation verification,
+i18n key checks, and localhost smoke-script readiness pass, including
+`SMOKE_RATE_LIMIT_CHECK=true`. A live production smoke run still requires
+deployed `SMOKE_*` values supplied outside the repository.
 
 A running PostgreSQL database is required for migrations and seeding. Generating the client only requires a syntactically valid `DATABASE_URL`.
 

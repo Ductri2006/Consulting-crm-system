@@ -29,7 +29,8 @@ Do not paste real secrets, database URLs, or access tokens into this document.
 - [ ] `git diff --check` passes.
 - [ ] Server `npm run verify:tenant-isolation` passes after the optional
   Northstar QA seed is present.
-- [ ] EN/VI i18n key parity script passes.
+- [ ] EN/VI i18n key parity check passes. Step 33 used an ad hoc read-only
+  TypeScript AST command because no package script exists yet.
 - [ ] No `.env`, token, secret, database URL, or upload file is staged.
 
 ## Public Website
@@ -354,6 +355,48 @@ testing.
 - [ ] Portal document uploaded-by labels localize and download-unavailable
   reasons remain safe.
 
+## Step 33 Final QA Record
+
+Local Step 33 verification completed after Step 32.
+
+Commands run:
+
+- `cd client && npm run build`
+- `cd client && npm run lint`
+- `cd server && npm run build`
+- `cd server && npm run lint`
+- `cd server && npx prisma validate`
+- `cd server && npm run prisma:generate`
+- `cd server && npm run verify:tenant-isolation`
+- `git diff --check`
+- EN/VI key parity check using a read-only TypeScript AST command.
+- Static `t('...')` missing-key scan using a read-only TypeScript AST command.
+- Local API health/header smoke against `http://127.0.0.1:5000/api/health`.
+- `npm run smoke:production` against localhost with sanitized demo smoke
+  credentials, including `SMOKE_RATE_LIMIT_CHECK=true`.
+
+Step 33 results:
+
+- [x] Client build and lint passed.
+- [x] Server build, lint, Prisma validation, and Prisma generate passed.
+- [x] EN/VI key parity and static missing-key scan passed.
+- [x] Tenant isolation verification passed for Advisora and Northstar demo data.
+- [x] Local production-smoke script readiness passed against localhost.
+- [x] Health endpoint returned expected security headers and no
+  `x-powered-by`.
+- [x] Optional rate-limit smoke observed `429` during intentional invalid
+  login attempts.
+- [x] Admin token and portal token purpose separation passed in local smoke.
+- [x] Document security regression fixed: Staff document access no longer
+  treats every `CUSTOMER_PORTAL` upload in the same workspace as readable.
+- [x] Task/admin status labels now use task-owned/common i18n keys instead of
+  appointment or portal namespaces.
+- [x] No database reset, staging data deletion, secrets, `.env`, upload files,
+  or generated `dist` files were staged.
+- [ ] Production live smoke was not run because no `SMOKE_*` environment
+  variables were available in the shell. Provide safe deployed API smoke
+  credentials outside the repository before running live smoke.
+
 ## Step 18A Local QA Record
 
 - [x] Backend health check passed locally.
@@ -385,6 +428,7 @@ testing.
 | Activity Center / Portal Updates |  |  |
 | Step 31 security hardening |  |  |
 | Step 32 UI polish |  |  |
+| Step 33 final QA / bug fix | PASS | Local build/lint/prisma/i18n/tenant/API smoke passed; live production smoke skipped because no `SMOKE_*` env was available. |
 | Security |  |  |
 | Production smoke |  |  |
 

@@ -21,6 +21,11 @@ Step 31 adds or verifies:
 - A read-only production smoke script.
 - Security/RBAC documentation and QA checklist coverage.
 
+Step 33 re-reviewed this model during the final QA/fix sprint and closed a
+staff document-access regression: `CUSTOMER_PORTAL` source alone must not grant
+staff read/list/download access. Staff internal document access remains scoped
+to documents they uploaded or documents attached to cases assigned to them.
+
 ## HTTP Security Headers
 
 The Express app configures Helmet in `server/src/app.ts` with conservative
@@ -179,6 +184,10 @@ The Step 29.5 document security invariants remain required:
   `visibility=CUSTOMER_VISIBLE`.
 - Portal uploads are scoped to the authenticated portal account and are created
   as `source=CUSTOMER_PORTAL` and `visibility=CUSTOMER_VISIBLE`.
+- Staff users must not receive blanket access to every `CUSTOMER_PORTAL`
+  document in their workspace. They may read portal-uploaded documents through
+  the internal document APIs only when the document is otherwise in their staff
+  scope, such as an assigned case.
 - Download permission, tenant/customer/case scope, visibility, scan policy, and
   object existence are checked before streaming.
 - `INFECTED` downloads are blocked. `FAILED` downloads are blocked by default.

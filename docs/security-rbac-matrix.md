@@ -107,6 +107,9 @@ Public services:
   `storageKey`, bucket names, object keys, signed URLs, or local paths.
 - Portal download must use `/api/portal/documents/:id/download`, never the
   internal admin download route.
+- `source=CUSTOMER_PORTAL` is not itself a staff read permission. Staff access
+  to portal-uploaded documents through internal APIs still requires uploaded-by
+  or assigned-case scope.
 
 ## Audit Expectations By Role
 

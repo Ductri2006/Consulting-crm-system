@@ -1,10 +1,10 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System through Step 32. It documents staging demo hardening, the workspace
+System through Step 33. It documents staging demo hardening, the workspace
 tenant foundation, customer portal document security, activity feeds, and UI
-polish status while keeping real provider URLs, credentials, and secrets out of
-the repository.
+polish/final QA status while keeping real provider URLs, credentials, and
+secrets out of the repository.
 
 ## Current Production Readiness Status
 
@@ -47,6 +47,13 @@ accepted.
 - Step 32 final UI/UX polish standardizes loading, empty, and error states,
   responsive table/card behavior, accessible labels, and bilingual microcopy for
   the demo path without changing backend API contracts or resetting data.
+- Step 33 final QA/fix sprint passed local client/server build and lint,
+  Prisma validation/generate, EN/VI key parity and static missing-key scans,
+  tenant isolation verification, local API health/security-header smoke, and
+  localhost production-smoke script readiness including optional rate-limit
+  smoke. It also fixes a document access regression so staff users can no longer
+  read unrelated customer-portal uploads solely because the document source is
+  `CUSTOMER_PORTAL`.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -274,6 +281,11 @@ Optional:
 
 - `SMOKE_RATE_LIMIT_CHECK=true` intentionally sends invalid login attempts
   until a `429` is observed. Use it only during a planned smoke window.
+
+Step 33 local verification confirmed that the smoke script compiles and passes
+against localhost with sanitized demo credentials, including
+`SMOKE_RATE_LIMIT_CHECK=true`. A live production smoke run was skipped because
+no `SMOKE_*` variables were available in the shell.
 
 ## File Upload Limitation
 
