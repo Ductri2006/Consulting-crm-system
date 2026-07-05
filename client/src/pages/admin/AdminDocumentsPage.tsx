@@ -49,7 +49,12 @@ import {
   type PaginationMeta,
   type UserOption,
 } from '../../features/documents'
+import {
+  formatDateTime as formatLocalizedDateTime,
+  formatFileSize as formatLocalizedFileSize,
+} from '../../i18n/format'
 import { getStatusLabel } from '../../i18n/statusLabels'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -84,56 +89,14 @@ const EMPTY_LOOKUPS: LookupState = {
   uploaders: [],
 }
 
-const formatLabel = (value: string): string =>
-  value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
-
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
 
-const formatDateTime = (value: string | undefined): string => {
-  if (!value) {
-    return 'None'
-  }
+const formatDateTime = (value: string | undefined): string =>
+  formatLocalizedDateTime(value ?? null)
 
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
-
-const formatFileSize = (size: number | null | undefined): string => {
-  if (typeof size !== 'number') {
-    return 'Unknown size'
-  }
-
-  if (size < 1024) {
-    return `${size} B`
-  }
-
-  const units = ['KB', 'MB', 'GB'] as const
-  let value = size / 1024
-  let unitIndex = 0
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024
-    unitIndex += 1
-  }
-
-  return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`
-}
+const formatFileSize = (size: number | null | undefined): string =>
+  formatLocalizedFileSize(size ?? null)
 
 function FieldError({
   id,
@@ -142,9 +105,12 @@ function FieldError({
   id: string
   message?: string
 }) {
+  const { t } = useTranslation()
+  const translatedMessage = translateValidationMessage(t, message)
+
   return message ? (
     <p className="field-error" id={id}>
-      {message}
+      {translatedMessage}
     </p>
   ) : null
 }
@@ -167,6 +133,7 @@ function FeedbackBanner({
   feedback: Feedback
   onDismiss: () => void
 }) {
+  const { t } = useTranslation()
   const isSuccess = feedback.type === 'success'
 
   return (
@@ -192,7 +159,7 @@ function FeedbackBanner({
         onClick={onDismiss}
         type="button"
       >
-        Dismiss
+        {t('common.close')}
       </button>
     </div>
   )
@@ -202,13 +169,15 @@ function ModalActions({
   isSubmitting,
   onCancel,
   submitLabel,
-  submittingLabel = 'Saving...',
+  submittingLabel,
 }: {
   isSubmitting: boolean
   onCancel: () => void
   submitLabel: string
   submittingLabel?: string
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
       <button
@@ -217,14 +186,16 @@ function ModalActions({
         onClick={onCancel}
         type="button"
       >
-        Cancel
+        {t('common.cancel')}
       </button>
       <button
         className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? submittingLabel : submitLabel}
+        {isSubmitting
+          ? (submittingLabel ?? t('admin.documents.saving'))
+          : submitLabel}
       </button>
     </div>
   )
@@ -268,6 +239,7 @@ function UploadDocumentForm({
   onCancel: () => void
   onSubmit: (values: DocumentUploadFormValues) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -299,14 +271,14 @@ function UploadDocumentForm({
         ) : null}
         {isLoadingLookups ? (
           <div className="mb-5 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-            Loading document options...
+            {t('admin.documents.loadingOptions')}
           </div>
         ) : null}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="document-file">
-              File <span aria-hidden="true">*</span>
+              {t('admin.documents.fields.file')} <span aria-hidden="true">*</span>
             </label>
             <input
               accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
@@ -335,7 +307,7 @@ function UploadDocumentForm({
 
           <div>
             <label className="field-label" htmlFor="document-type">
-              File type <span aria-hidden="true">*</span>
+              {t('admin.documents.fields.fileType')} <span aria-hidden="true">*</span>
             </label>
             <select
               className="field-input"
@@ -344,7 +316,7 @@ function UploadDocumentForm({
             >
               {documentTypes.map((fileType) => (
                 <option key={fileType} value={fileType}>
-                  {formatLabel(fileType)}
+                  {getStatusLabel(t, 'document', fileType)}
                 </option>
               ))}
             </select>
@@ -352,7 +324,7 @@ function UploadDocumentForm({
 
           <div>
             <label className="field-label" htmlFor="document-customer">
-              Customer
+              {t('navigation.customers')}
             </label>
             <select
               aria-describedby={
@@ -364,7 +336,7 @@ function UploadDocumentForm({
               id="document-customer"
               {...register('customerId')}
             >
-              <option value="">No direct customer</option>
+              <option value="">{t('admin.documents.noDirectCustomer')}</option>
               {lookups.customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
                   {customer.fullName} - {customer.phone}
@@ -379,7 +351,7 @@ function UploadDocumentForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="document-case">
-              Case
+              {t('navigation.cases')}
             </label>
             <select
               className="field-input"
@@ -387,7 +359,7 @@ function UploadDocumentForm({
               id="document-case"
               {...register('caseProfileId')}
             >
-              <option value="">No linked case</option>
+              <option value="">{t('admin.documents.noLinkedCase')}</option>
               {lookups.cases.map((caseProfile) => (
                 <option key={caseProfile.id} value={caseProfile.id}>
                   {caseProfile.caseCode} - {caseProfile.title}
@@ -401,8 +373,8 @@ function UploadDocumentForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Upload document"
-        submittingLabel="Uploading..."
+        submitLabel={t('admin.documents.uploadDocument')}
+        submittingLabel={t('admin.documents.uploading')}
       />
     </form>
   )
@@ -436,6 +408,8 @@ function DocumentDetailView({
   isDownloading: boolean
   onDownload: (document: DocumentRecord) => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="p-5 sm:p-6">
       <div className="mb-6 flex flex-col gap-4 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-start sm:justify-between">
@@ -455,36 +429,42 @@ function DocumentDetailView({
           type="button"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
-          {isDownloading ? 'Downloading...' : 'Download'}
+          {isDownloading ? t('admin.documents.downloading') : t('admin.documents.download')}
         </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DetailItem label="MIME type" value={document.mimeType ?? 'Unknown'} />
-        <DetailItem label="Size" value={formatFileSize(document.size)} />
         <DetailItem
-          label="Customer"
-          value={document.customer?.fullName ?? 'No customer'}
+          label={t('admin.documents.fields.mimeType')}
+          value={document.mimeType ?? t('common.notProvided')}
         />
         <DetailItem
-          label="Case profile"
+          label={t('admin.documents.fields.size')}
+          value={formatFileSize(document.size)}
+        />
+        <DetailItem
+          label={t('navigation.customers')}
+          value={document.customer?.fullName ?? t('admin.documents.noCustomer')}
+        />
+        <DetailItem
+          label={t('admin.documents.fields.caseProfile')}
           value={
             document.caseProfile
               ? `${document.caseProfile.caseCode} - ${document.caseProfile.title}`
-              : 'No case'
+              : t('admin.documents.noCase')
           }
         />
         <DetailItem
-          label="Uploaded by"
-          value={document.uploadedBy?.fullName ?? 'Unknown uploader'}
+          label={t('admin.documents.fields.uploadedBy')}
+          value={document.uploadedBy?.fullName ?? t('admin.documents.unknownUploader')}
         />
         <DetailItem
-          label="Uploaded date"
+          label={t('admin.documents.fields.uploadedDate')}
           value={formatDateTime(document.createdAt)}
         />
         {document.updatedAt ? (
           <DetailItem
-            label="Updated date"
+            label={t('admin.documents.fields.updatedDate')}
             value={formatDateTime(document.updatedAt)}
           />
         ) : null}
@@ -549,7 +529,7 @@ export function AdminDocumentsPage() {
     } catch (error) {
       if (sequence === listSequence.current) {
         setLoadError(
-          getErrorMessage(error, 'Documents could not be loaded.'),
+          getErrorMessage(error, t('admin.documents.loadError')),
         )
       }
     } finally {
@@ -557,7 +537,7 @@ export function AdminDocumentsPage() {
         setIsLoading(false)
       }
     }
-  }, [caseProfileId, customerId, fileType, page, search, uploadedById])
+  }, [caseProfileId, customerId, fileType, page, search, t, uploadedById])
 
   useEffect(() => {
     void loadDocuments()
@@ -595,13 +575,13 @@ export function AdminDocumentsPage() {
 
     const warnings = [
       customersResult.status === 'rejected'
-        ? getErrorMessage(customersResult.reason, 'Customers could not load.')
+        ? getErrorMessage(customersResult.reason, t('admin.documents.customersLoadError'))
         : '',
       casesResult.status === 'rejected'
-        ? getErrorMessage(casesResult.reason, 'Cases could not load.')
+        ? getErrorMessage(casesResult.reason, t('admin.documents.casesLoadError'))
         : '',
       uploadersResult.status === 'rejected'
-        ? getErrorMessage(uploadersResult.reason, 'Uploaders could not load.')
+        ? getErrorMessage(uploadersResult.reason, t('admin.documents.uploadersLoadError'))
         : '',
     ].filter(Boolean)
 
@@ -641,7 +621,7 @@ export function AdminDocumentsPage() {
     } catch (error) {
       if (sequence === detailSequence.current) {
         setDetailError(
-          getErrorMessage(error, 'Document details could not be loaded.'),
+          getErrorMessage(error, t('admin.documents.detailsLoadError')),
         )
       }
     } finally {
@@ -672,12 +652,14 @@ export function AdminDocumentsPage() {
       closeUpload()
       setFeedback({
         type: 'success',
-        message: `${uploaded.fileName} uploaded successfully.`,
+        message: t('admin.documents.uploadedFeedback', {
+          fileName: uploaded.fileName,
+        }),
       })
       await refreshAfterMutation()
     } catch (error) {
       setUploadError(
-        getErrorMessage(error, 'The document could not be uploaded.'),
+        getErrorMessage(error, t('admin.documents.uploadError')),
       )
     }
   }
@@ -693,7 +675,7 @@ export function AdminDocumentsPage() {
         type: 'error',
         message: getErrorMessage(
           error,
-          'The document could not be downloaded.',
+          t('admin.documents.downloadError'),
         ),
       })
     } finally {
@@ -715,7 +697,7 @@ export function AdminDocumentsPage() {
       setDeleteTarget(null)
       setFeedback({
         type: 'success',
-        message: `${fileName} deleted successfully.`,
+        message: t('admin.documents.deletedFeedback', { fileName }),
       })
 
       if (documents.length === 1 && page > 1) {
@@ -729,7 +711,7 @@ export function AdminDocumentsPage() {
         type: 'error',
         message: getErrorMessage(
           error,
-          'The document could not be deleted.',
+          t('admin.documents.deleteError'),
         ),
       })
     } finally {
@@ -769,7 +751,7 @@ export function AdminDocumentsPage() {
   const columns: readonly DataTableColumn<DocumentRecord>[] = [
     {
       key: 'fileName',
-      header: 'File name',
+      header: t('admin.documents.fields.fileName'),
       className: 'max-w-72',
       render: (document) => (
         <div>
@@ -784,19 +766,20 @@ export function AdminDocumentsPage() {
     },
     {
       key: 'type',
-      header: 'Type',
+      header: t('admin.documents.fields.type'),
       render: (document) => (
         <DocumentTypeBadge fileType={document.fileType} />
       ),
     },
     {
       key: 'customer',
-      header: 'Customer',
-      render: (document) => document.customer?.fullName ?? 'No customer',
+      header: t('navigation.customers'),
+      render: (document) =>
+        document.customer?.fullName ?? t('admin.documents.noCustomer'),
     },
     {
       key: 'case',
-      header: 'Case',
+      header: t('navigation.cases'),
       className: 'max-w-56',
       render: (document) =>
         document.caseProfile ? (
@@ -809,51 +792,58 @@ export function AdminDocumentsPage() {
             </p>
           </div>
         ) : (
-          'No case'
+          t('admin.documents.noCase')
         ),
     },
     {
       key: 'uploadedBy',
-      header: 'Uploaded by',
-      render: (document) => document.uploadedBy?.fullName ?? 'Unknown',
+      header: t('admin.documents.fields.uploadedBy'),
+      render: (document) =>
+        document.uploadedBy?.fullName ?? t('admin.documents.unknownUploader'),
     },
     {
       key: 'createdAt',
-      header: 'Uploaded date',
+      header: t('admin.documents.fields.uploadedDate'),
       render: (document) => formatDateTime(document.createdAt),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
       className: 'text-right',
       render: (document) => (
         <div className="flex justify-end gap-1">
           <button
-            aria-label={`View details for ${document.fileName}`}
+            aria-label={t('admin.documents.actions.viewAria', {
+              fileName: document.fileName,
+            })}
             className="rounded-lg p-2 text-blue-700 transition hover:bg-blue-50"
             onClick={() => openDetail(document)}
-            title="View detail"
+            title={t('common.viewDetails')}
             type="button"
           >
             <Eye className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
-            aria-label={`Download ${document.fileName}`}
+            aria-label={t('admin.documents.actions.downloadAria', {
+              fileName: document.fileName,
+            })}
             className="rounded-lg p-2 text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={downloadingId === document.id}
             onClick={() => void handleDownload(document)}
-            title="Download"
+            title={t('admin.documents.download')}
             type="button"
           >
             <Download className="h-4 w-4" aria-hidden="true" />
           </button>
           {canDelete(document) ? (
             <button
-              aria-label={`Delete ${document.fileName}`}
+              aria-label={t('admin.documents.actions.deleteAria', {
+                fileName: document.fileName,
+              })}
               className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"
               onClick={() => setDeleteTarget(document)}
-              title="Delete"
+              title={t('common.delete')}
               type="button"
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -869,13 +859,13 @@ export function AdminDocumentsPage() {
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            Document archive
+            {t('admin.documents.eyebrow')}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Documents
+            {t('navigation.documents')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Store and retrieve customer documents linked to CRM records.
+            {t('admin.documents.description')}
           </p>
         </div>
         <button
@@ -884,7 +874,7 @@ export function AdminDocumentsPage() {
           type="button"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Upload Document
+          {t('admin.documents.uploadDocument')}
         </button>
       </header>
 
@@ -899,14 +889,14 @@ export function AdminDocumentsPage() {
         <div className="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[minmax(16rem,1fr)_14rem_14rem_14rem_14rem_auto]">
           <SearchInput
             isDisabled={isLoading}
-            label="Search documents"
+            label={t('admin.documents.searchLabel')}
             onChange={setSearchInput}
             onSubmit={submitSearch}
-            placeholder="Search file, customer or case..."
+            placeholder={t('admin.documents.searchPlaceholder')}
             value={searchInput}
           />
           <select
-            aria-label="Filter by file type"
+            aria-label={t('admin.documents.filterFileType')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             onChange={(event) => {
               setPage(1)
@@ -914,7 +904,7 @@ export function AdminDocumentsPage() {
             }}
             value={fileType}
           >
-            <option value="">All file types</option>
+            <option value="">{t('admin.documents.allFileTypes')}</option>
             {documentTypes.map((type) => (
               <option key={type} value={type}>
                 {getStatusLabel(t, 'document', type)}
@@ -922,7 +912,7 @@ export function AdminDocumentsPage() {
             ))}
           </select>
           <select
-            aria-label="Filter by customer"
+            aria-label={t('admin.documents.filterCustomer')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             onChange={(event) => {
               setPage(1)
@@ -935,7 +925,7 @@ export function AdminDocumentsPage() {
             }}
             value={customerId}
           >
-            <option value="">All customers</option>
+            <option value="">{t('admin.documents.allCustomers')}</option>
             {lookups.customers.map((customer) => (
               <option key={customer.id} value={customer.id}>
                 {customer.fullName}
@@ -943,7 +933,7 @@ export function AdminDocumentsPage() {
             ))}
           </select>
           <select
-            aria-label="Filter by case"
+            aria-label={t('admin.documents.filterCase')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             onChange={(event) => {
               setPage(1)
@@ -956,7 +946,7 @@ export function AdminDocumentsPage() {
             }}
             value={caseProfileId}
           >
-            <option value="">All cases</option>
+            <option value="">{t('admin.documents.allCases')}</option>
             {lookups.cases.map((caseProfile) => (
               <option key={caseProfile.id} value={caseProfile.id}>
                 {caseProfile.caseCode}
@@ -965,7 +955,7 @@ export function AdminDocumentsPage() {
           </select>
           {canManage ? (
             <select
-              aria-label="Filter by uploader"
+              aria-label={t('admin.documents.filterUploader')}
               className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               onChange={(event) => {
                 setPage(1)
@@ -978,7 +968,7 @@ export function AdminDocumentsPage() {
               }}
               value={uploadedById}
             >
-              <option value="">All uploaders</option>
+              <option value="">{t('admin.documents.allUploaders')}</option>
               {lookups.uploaders.map((uploader) => (
                 <option key={uploader.id} value={uploader.id}>
                   {uploader.fullName}
@@ -992,7 +982,7 @@ export function AdminDocumentsPage() {
             onClick={clearFilters}
             type="button"
           >
-            Clear filters
+            {t('admin.cases.clearFilters')}
           </button>
         </div>
 
@@ -1010,7 +1000,7 @@ export function AdminDocumentsPage() {
             <div>
               <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
               <h2 className="mt-4 font-bold text-slate-900">
-                Couldn&apos;t load documents
+                {t('admin.documents.loadErrorTitle')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
                 {loadError}
@@ -1020,21 +1010,21 @@ export function AdminDocumentsPage() {
                 onClick={() => void loadDocuments()}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           </div>
         ) : isLoading && documents.length === 0 ? (
-          <LoadingState label="Loading documents..." />
+          <LoadingState label={t('admin.documents.loading')} />
         ) : documents.length === 0 ? (
           <EmptyState
             description={
               hasFilters
-                ? 'Try changing or clearing the current filters.'
-                : 'Upload the first document to start building the archive.'
+                ? t('admin.documents.emptyFiltered')
+                : t('admin.documents.emptyDefault')
             }
             icon={<SearchX className="h-6 w-6" aria-hidden="true" />}
-            title="No documents found"
+            title={t('admin.documents.emptyTitle')}
           />
         ) : (
           <>
@@ -1043,18 +1033,20 @@ export function AdminDocumentsPage() {
                 className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
                 role="alert"
               >
-                <span>Refresh failed: {loadError}. Showing cached data.</span>
+                <span>
+                  {t('admin.documents.refreshFailed', { message: loadError })}
+                </span>
                 <button
                   className="shrink-0 font-bold underline"
                   onClick={() => void loadDocuments()}
                   type="button"
                 >
-                  Retry
+                  {t('admin.appointments.retry')}
                 </button>
               </div>
             ) : null}
             <DataTable
-              caption="Documents"
+              caption={t('navigation.documents')}
               columns={columns}
               getRowKey={(document) => document.id}
               items={documents}
@@ -1075,7 +1067,7 @@ export function AdminDocumentsPage() {
         isOpen={isUploadOpen}
         onClose={closeUpload}
         size="lg"
-        title="Upload Document"
+        title={t('admin.documents.uploadDocument')}
       >
         <UploadDocumentForm
           error={uploadError}
@@ -1092,7 +1084,7 @@ export function AdminDocumentsPage() {
         isOpen={detailTarget !== null}
         onClose={closeDetail}
         size="lg"
-        title={detailTarget ? detailTarget.fileName : 'Document details'}
+        title={detailTarget ? detailTarget.fileName : t('admin.documents.detailsTitle')}
       >
         {documentDetail ? (
           <DocumentDetailView
@@ -1107,7 +1099,7 @@ export function AdminDocumentsPage() {
                 {detailError}
               </div>
             ) : (
-              <LoadingState label="Loading document details..." />
+              <LoadingState label={t('admin.documents.loadingDetails')} />
             )}
           </div>
         )}
@@ -1116,14 +1108,16 @@ export function AdminDocumentsPage() {
       <ConfirmDialog
         isLoading={isDeleting}
         isOpen={deleteTarget !== null}
-        message={`Delete document ${deleteTarget?.fileName ?? ''}? This action cannot be undone.`}
+        message={t('admin.documents.deleteConfirm', {
+          fileName: deleteTarget?.fileName ?? '',
+        })}
         onCancel={() => {
           if (!isDeleting) {
             setDeleteTarget(null)
           }
         }}
         onConfirm={() => void handleDelete()}
-        title="Delete document"
+        title={t('admin.documents.deleteTitle')}
       />
     </div>
   )

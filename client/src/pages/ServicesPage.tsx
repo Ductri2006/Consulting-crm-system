@@ -1,12 +1,16 @@
 import { ArrowUpRight, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Card } from '../components/common/Card'
 import { Container } from '../components/common/Container'
 import { SectionHeading } from '../components/common/SectionHeading'
 import { CTASection } from '../components/home/CTASection'
 import { services } from '../data/services'
+import { getLocalizedService } from '../i18n/staticContent'
 
 export function ServicesPage() {
+  const { t } = useTranslation()
+
   return (
     <>
       <section className="relative overflow-hidden bg-slate-950 py-20 text-white sm:py-24">
@@ -16,14 +20,13 @@ export function ServicesPage() {
         />
         <Container className="relative">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
-            Advisora expertise
+            {t('public.servicesPage.eyebrow')}
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">
-            Our Consulting Services
+            {t('public.servicesPage.title')}
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            Multidisciplinary guidance for consequential decisions—delivered
-            with rigor, context, and a practical focus on what happens next.
+            {t('public.servicesPage.description')}
           </p>
         </Container>
       </section>
@@ -31,13 +34,14 @@ export function ServicesPage() {
       <section className="bg-white py-20 sm:py-24">
         <Container>
           <SectionHeading
-            eyebrow="Four focused practices"
-            title="Choose the expertise your decision needs"
-            description="Each practice follows the same Advisora standard: clear scope, transparent analysis, and recommendations built to be acted on."
+            eyebrow={t('public.servicesPage.sectionEyebrow')}
+            title={t('public.servicesPage.sectionTitle')}
+            description={t('public.servicesPage.sectionDescription')}
           />
 
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
             {services.map((service, index) => {
+              const localizedService = getLocalizedService(t, service)
               const Icon = service.icon
 
               return (
@@ -54,13 +58,13 @@ export function ServicesPage() {
                     </span>
                   </div>
                   <h2 className="mt-6 text-2xl font-bold text-slate-950">
-                    {service.title}
+                    {localizedService.title}
                   </h2>
                   <p className="mt-3 leading-7 text-slate-600">
-                    {service.shortDescription}
+                    {localizedService.shortDescription}
                   </p>
                   <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-                    {service.benefits.slice(0, 2).map((benefit) => (
+                    {localizedService.benefits.slice(0, 2).map((benefit) => (
                       <li
                         key={benefit}
                         className="flex gap-2.5 text-sm leading-6 text-slate-700"
@@ -71,10 +75,10 @@ export function ServicesPage() {
                     ))}
                   </ul>
                   <Link
-                    to={`/services/${service.slug}`}
+                    to={`/services/${localizedService.slug}`}
                     className="mt-7 inline-flex items-center gap-2 self-start font-semibold text-blue-700 transition group-hover:gap-3"
                   >
-                    Explore this service
+                    {t('public.servicesPage.exploreService')}
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 </Card>

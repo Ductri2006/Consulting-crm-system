@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Target,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Card } from '../components/common/Card'
 import { Container } from '../components/common/Container'
@@ -16,39 +17,33 @@ import { SectionHeading } from '../components/common/SectionHeading'
 
 const values = [
   {
-    title: 'Trust',
-    description:
-      'We earn confidence through honest analysis, discretion, and consistent follow-through.',
+    key: 'trust',
     icon: ShieldCheck,
   },
   {
-    title: 'Clarity',
-    description:
-      'We turn complex information into language, choices, and actions people can understand.',
+    key: 'clarity',
     icon: Lightbulb,
   },
   {
-    title: 'Responsibility',
-    description:
-      'We own the quality of our work and remain attentive to the impact of every recommendation.',
+    key: 'responsibility',
     icon: Scale,
   },
   {
-    title: 'Long-term Partnership',
-    description:
-      'We optimize for durable outcomes and relationships—not quick answers that create future problems.',
+    key: 'partnership',
     icon: Handshake,
   },
-]
+] as const
 
 const reasons = [
-  'Multidisciplinary perspective across high-stakes business decisions',
-  'Independent analysis grounded in evidence and commercial reality',
-  'Visible process, clear communication, and practical deliverables',
-  'Recommendations designed around your organization’s capacity to act',
-]
+  'multidisciplinary',
+  'independent',
+  'visible',
+  'practical',
+] as const
 
 export function AboutPage() {
+  const { t } = useTranslation()
+
   return (
     <>
       <section className="relative overflow-hidden bg-slate-950 py-20 text-white sm:py-24">
@@ -58,15 +53,13 @@ export function AboutPage() {
         />
         <Container className="relative">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
-            About Advisora
+            {t('public.about.eyebrow')}
           </p>
           <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">
-            Clear thinking for organizations building what comes next.
+            {t('public.about.title')}
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            We are a multidisciplinary consulting team helping decision-makers
-            navigate complex property, legal, investment, and construction
-            challenges with confidence.
+            {t('public.about.description')}
           </p>
         </Container>
       </section>
@@ -75,22 +68,13 @@ export function AboutPage() {
         <Container className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
           <div>
             <SectionHeading
-              eyebrow="Our business"
-              title="Advice designed to be understood—and used"
-              description="Advisora exists to close the distance between expert analysis and practical action."
+              eyebrow={t('public.about.businessEyebrow')}
+              title={t('public.about.businessTitle')}
+              description={t('public.about.businessDescription')}
             />
             <div className="mt-6 space-y-4 leading-7 text-slate-600">
-              <p>
-                Business decisions rarely fit into a single discipline. A
-                property choice can involve investment assumptions, legal
-                requirements, delivery constraints, and long-term operational
-                consequences.
-              </p>
-              <p>
-                We bring those perspectives into one structured engagement. Our
-                role is to make the important questions visible, test the
-                evidence, and give leaders a path they can act on.
-              </p>
+              <p>{t('public.about.businessParagraph1')}</p>
+              <p>{t('public.about.businessParagraph2')}</p>
             </div>
           </div>
 
@@ -102,11 +86,10 @@ export function AboutPage() {
             <div className="relative ml-auto w-[82%] rounded-2xl bg-slate-950 p-6 text-white shadow-2xl">
               <Compass className="h-8 w-8 text-amber-300" />
               <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">
-                Our point of view
+                {t('public.about.pointOfView')}
               </p>
               <p className="mt-3 text-xl font-bold leading-8">
-                The best advice makes a difficult decision easier to see, own,
-                and execute.
+                {t('public.about.pointOfViewQuote')}
               </p>
             </div>
             <div className="relative -mt-3 w-[76%] rounded-2xl border border-slate-200 bg-white p-5 shadow-lg">
@@ -116,10 +99,10 @@ export function AboutPage() {
                 </span>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Our standard
+                    {t('public.about.standard')}
                   </p>
                   <p className="font-bold text-slate-950">
-                    Clear, practical, accountable
+                    {t('public.about.standardValue')}
                   </p>
                 </div>
               </div>
@@ -134,28 +117,25 @@ export function AboutPage() {
             <Card className="relative overflow-hidden border-0 bg-blue-700 p-8 text-white sm:p-10">
               <Target className="h-8 w-8 text-amber-300" />
               <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-blue-100">
-                Our mission
+                {t('public.about.missionEyebrow')}
               </p>
               <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
-                Make expert guidance more useful at the moment decisions matter.
+                {t('public.about.missionTitle')}
               </h2>
               <p className="mt-4 leading-7 text-blue-100">
-                We equip clients with clear evidence, balanced recommendations,
-                and a realistic route from intent to implementation.
+                {t('public.about.missionDescription')}
               </p>
             </Card>
             <Card className="p-8 sm:p-10">
               <Eye className="h-8 w-8 text-blue-700" />
               <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-blue-700">
-                Our vision
+                {t('public.about.visionEyebrow')}
               </p>
               <h2 className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">
-                A business landscape where complexity never prevents good
-                decisions.
+                {t('public.about.visionTitle')}
               </h2>
               <p className="mt-4 leading-7 text-slate-600">
-                We envision advisory relationships built on transparency,
-                shared understanding, and outcomes that endure.
+                {t('public.about.visionDescription')}
               </p>
             </Card>
           </div>
@@ -165,25 +145,25 @@ export function AboutPage() {
       <section className="bg-white py-20 sm:py-24">
         <Container>
           <SectionHeading
-            eyebrow="What guides us"
-            title="Values visible in the way we work"
-            description="These principles shape our analysis, our communication, and every client relationship."
+            eyebrow={t('public.about.valuesEyebrow')}
+            title={t('public.about.valuesTitle')}
+            description={t('public.about.valuesDescription')}
             center
           />
           <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {values.map(({ title, description, icon: Icon }) => (
+            {values.map(({ key, icon: Icon }) => (
               <Card
-                key={title}
+                key={key}
                 className="p-6 transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg"
               >
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-700">
                   <Icon className="h-6 w-6" />
                 </span>
                 <h3 className="mt-5 text-xl font-bold text-slate-950">
-                  {title}
+                  {t(`public.about.values.${key}.title`)}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {description}
+                  {t(`public.about.values.${key}.description`)}
                 </p>
               </Card>
             ))}
@@ -195,20 +175,19 @@ export function AboutPage() {
         <Container className="grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
-              Why choose us
+              {t('public.about.chooseEyebrow')}
             </p>
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Senior attention. Structured thinking. No unnecessary noise.
+              {t('public.about.chooseTitle')}
             </h2>
             <p className="mt-5 leading-7 text-slate-400">
-              We combine specialist knowledge with the discipline to keep every
-              engagement focused on the decision in front of you.
+              {t('public.about.chooseDescription')}
             </p>
             <Link
               to="/consultation"
               className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold transition hover:bg-blue-500"
             >
-              Talk with our team
+              {t('public.about.talkWithTeam')}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -219,7 +198,7 @@ export function AboutPage() {
                 className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm leading-6 text-slate-300"
               >
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
-                {reason}
+                {t(`public.about.reasons.${reason}`)}
               </li>
             ))}
           </ul>

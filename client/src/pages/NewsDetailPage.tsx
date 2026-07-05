@@ -1,28 +1,26 @@
 import { ArrowLeft, CalendarDays, Clock3 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 
 import { Badge } from '../components/common/Badge'
 import { Button } from '../components/common/Button'
 import { Container } from '../components/common/Container'
 import { newsArticles } from '../data/news'
+import { formatDate } from '../i18n/format'
+import { getNewsCategoryLabel, getNewsReadTimeLabel } from '../i18n/news'
+import { getLocalizedNewsArticle } from '../i18n/staticContent'
 import { NotFoundPage } from './NotFoundPage'
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat('en', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${date}T00:00:00Z`))
-}
 
 export function NewsDetailPage() {
   const { slug } = useParams()
+  const { t } = useTranslation()
   const article = newsArticles.find((item) => item.slug === slug)
 
   if (!article) {
     return <NotFoundPage />
   }
+
+  const localizedArticle = getLocalizedNewsArticle(t, article)
 
   return (
     <article>
@@ -33,24 +31,24 @@ export function NewsDetailPage() {
             className="inline-flex items-center gap-2 rounded-sm text-sm font-semibold text-slate-600 transition hover:text-blue-700"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Back to insights
+            {t('public.news.backToInsights')}
           </Link>
           <div className="mt-10 max-w-4xl">
-            <Badge>{article.category}</Badge>
+            <Badge>{getNewsCategoryLabel(t, article.category)}</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-slate-950 sm:text-5xl">
-              {article.title}
+              {localizedArticle.title}
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-              {article.excerpt}
+              {localizedArticle.excerpt}
             </p>
             <div className="mt-7 flex flex-wrap gap-5 text-sm font-medium text-slate-500">
               <span className="inline-flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" aria-hidden="true" />
-                {formatDate(article.publishedAt)}
+                {formatDate(localizedArticle.publishedAt)}
               </span>
               <span className="inline-flex items-center gap-2">
                 <Clock3 className="h-4 w-4" aria-hidden="true" />
-                {article.readTime}
+                {getNewsReadTimeLabel(t, localizedArticle.readTime)}
               </span>
             </div>
           </div>
@@ -61,7 +59,7 @@ export function NewsDetailPage() {
         <Container>
           <div className="mx-auto max-w-3xl">
             <div className="space-y-6">
-              {article.content.map((paragraph) => (
+              {localizedArticle.content.map((paragraph) => (
                 <p
                   key={paragraph}
                   className="text-lg leading-8 text-slate-700"
@@ -73,17 +71,16 @@ export function NewsDetailPage() {
 
             <aside className="mt-14 rounded-2xl bg-slate-950 p-8 text-white sm:p-10">
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-300">
-                Put insight into action
+                {t('public.news.ctaEyebrow')}
               </p>
               <h2 className="mt-3 text-2xl font-bold">
-                Need a clear view of your next decision?
+                {t('public.news.ctaTitle')}
               </h2>
               <p className="mt-3 leading-7 text-slate-300">
-                Share the challenge with our team and start with a focused,
-                no-obligation consultation.
+                {t('public.news.ctaDescription')}
               </p>
               <Button to="/consultation" className="mt-6" size="lg">
-                Get consultation
+                {t('public.news.ctaButton')}
               </Button>
             </aside>
           </div>

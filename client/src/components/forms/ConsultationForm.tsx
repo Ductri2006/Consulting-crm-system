@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Send } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 import { apiClient } from '../../lib/apiClient'
 
 const consultationSchema = z.object({
@@ -24,13 +26,26 @@ const consultationSchema = z.object({
 type ConsultationFormValues = z.infer<typeof consultationSchema>
 
 const serviceOptions = [
-  'Real Estate Consulting',
-  'Legal Consulting',
-  'Investment Consulting',
-  'Construction Consulting',
-]
+  {
+    labelKey: 'public.forms.services.realEstate',
+    value: 'Real Estate Consulting',
+  },
+  {
+    labelKey: 'public.forms.services.legal',
+    value: 'Legal Consulting',
+  },
+  {
+    labelKey: 'public.forms.services.investment',
+    value: 'Investment Consulting',
+  },
+  {
+    labelKey: 'public.forms.services.construction',
+    value: 'Construction Consulting',
+  },
+] as const
 
 export function ConsultationForm() {
+  const { t } = useTranslation()
   const [isSuccessful, setIsSuccessful] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const {
@@ -62,7 +77,7 @@ export function ConsultationForm() {
       reset()
       setIsSuccessful(true)
     } catch {
-      setSubmitError('We could not submit your request. Please try again.')
+      setSubmitError(t('public.forms.consultation.submitError'))
     }
   }
 
@@ -77,18 +92,17 @@ export function ConsultationForm() {
           aria-hidden="true"
         />
         <h2 className="mt-4 text-xl font-bold text-slate-950">
-          Your request is in
+          {t('public.forms.consultation.successTitle')}
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          We have recorded your consultation request and will contact you to
-          discuss the next step.
+          {t('public.forms.consultation.successDescription')}
         </p>
         <button
           type="button"
           className="mt-5 rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
           onClick={() => setIsSuccessful(false)}
         >
-          Submit another request
+          {t('public.forms.consultation.submitAnother')}
         </button>
       </div>
     )
@@ -103,14 +117,14 @@ export function ConsultationForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label className="field-label" htmlFor="consultation-full-name">
-            Full name
+            {t('public.forms.fields.fullName')}
           </label>
           <input
             id="consultation-full-name"
             className="field-input"
             type="text"
             autoComplete="name"
-            placeholder="Your full name"
+            placeholder={t('public.forms.placeholders.fullName')}
             aria-invalid={Boolean(errors.fullName)}
             aria-describedby={
               errors.fullName ? 'consultation-full-name-error' : undefined
@@ -123,14 +137,14 @@ export function ConsultationForm() {
               className="field-error"
               role="alert"
             >
-              {errors.fullName.message}
+              {translateValidationMessage(t, errors.fullName.message)}
             </p>
           )}
         </div>
 
         <div>
           <label className="field-label" htmlFor="consultation-phone">
-            Phone
+            {t('public.forms.fields.phone')}
           </label>
           <input
             id="consultation-phone"
@@ -150,7 +164,7 @@ export function ConsultationForm() {
               className="field-error"
               role="alert"
             >
-              {errors.phone.message}
+              {translateValidationMessage(t, errors.phone.message)}
             </p>
           )}
         </div>
@@ -159,7 +173,10 @@ export function ConsultationForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label className="field-label" htmlFor="consultation-email">
-            Email <span className="font-normal text-slate-400">(optional)</span>
+            {t('common.email')}{' '}
+            <span className="font-normal text-slate-400">
+              ({t('common.optional')})
+            </span>
           </label>
           <input
             id="consultation-email"
@@ -179,14 +196,14 @@ export function ConsultationForm() {
               className="field-error"
               role="alert"
             >
-              {errors.email.message}
+              {translateValidationMessage(t, errors.email.message)}
             </p>
           )}
         </div>
 
         <div>
           <label className="field-label" htmlFor="consultation-service">
-            Service type
+            {t('public.forms.consultation.serviceType')}
           </label>
           <select
             id="consultation-service"
@@ -197,10 +214,10 @@ export function ConsultationForm() {
             }
             {...register('serviceType')}
           >
-            <option value="">Select a service</option>
+            <option value="">{t('public.forms.consultation.selectService')}</option>
             {serviceOptions.map((service) => (
-              <option key={service} value={service}>
-                {service}
+              <option key={service.value} value={service.value}>
+                {t(service.labelKey)}
               </option>
             ))}
           </select>
@@ -210,7 +227,7 @@ export function ConsultationForm() {
               className="field-error"
               role="alert"
             >
-              {errors.serviceType.message}
+              {translateValidationMessage(t, errors.serviceType.message)}
             </p>
           )}
         </div>
@@ -218,12 +235,12 @@ export function ConsultationForm() {
 
       <div>
         <label className="field-label" htmlFor="consultation-message">
-          How can we help?
+          {t('public.forms.consultation.helpLabel')}
         </label>
         <textarea
           id="consultation-message"
           className="field-input min-h-36 resize-y"
-          placeholder="Describe your situation, priorities, and desired outcome."
+          placeholder={t('public.forms.consultation.messagePlaceholder')}
           aria-invalid={Boolean(errors.message)}
           aria-describedby={
             errors.message ? 'consultation-message-error' : undefined
@@ -236,7 +253,7 @@ export function ConsultationForm() {
             className="field-error"
             role="alert"
           >
-            {errors.message.message}
+            {translateValidationMessage(t, errors.message.message)}
           </p>
         )}
       </div>
@@ -253,7 +270,7 @@ export function ConsultationForm() {
         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
         <Send className="h-4 w-4" aria-hidden="true" />
-        Request consultation
+        {t('public.forms.consultation.button')}
       </button>
     </form>
   )

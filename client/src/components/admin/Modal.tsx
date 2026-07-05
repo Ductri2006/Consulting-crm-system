@@ -6,6 +6,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
 
 export interface ModalProps {
@@ -36,6 +37,7 @@ export function Modal({
   role = 'dialog',
   isDismissible = true,
 }: ModalProps) {
+  const { t } = useTranslation()
   const titleId = useId()
   const descriptionId = useId()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -104,7 +106,7 @@ export function Modal({
             ) : null}
           </div>
           <button
-            aria-label="Close dialog"
+            aria-label={t('common.close')}
             className="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!isDismissible}
             onClick={onClose}

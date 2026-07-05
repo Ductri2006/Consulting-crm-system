@@ -1,4 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout, LoadingState } from '../components/admin'
 import { PublicLayout } from '../components/layout/PublicLayout'
@@ -162,10 +163,11 @@ const AdminUsersPage = lazy(() =>
 )
 
 function AdminIndexRoute() {
+  const { t } = useTranslation()
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
-    return <LoadingState label="Restoring your session" />
+    return <LoadingState label={t('common.restoringSession')} />
   }
 
   return (
@@ -177,10 +179,11 @@ function AdminIndexRoute() {
 }
 
 function PortalIndexRoute() {
+  const { t } = useTranslation()
   const { isAuthenticated, isLoading } = usePortalAuth()
 
   if (isLoading) {
-    return <LoadingState label="Restoring your portal session" />
+    return <LoadingState label={t('common.restoringPortalSession')} />
   }
 
   return (

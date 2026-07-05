@@ -36,6 +36,10 @@ import {
   type EditableConsultationRequestStatus,
   type PaginationMeta,
 } from '../../features/consultationRequests/consultationRequests.types'
+import {
+  formatDate as formatLocalizedDate,
+  formatDateTime as formatLocalizedDateTime,
+} from '../../i18n/format'
 import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
 
@@ -48,23 +52,10 @@ const statusStyles: Record<ConsultationRequestStatus, string> = {
   CLOSED: 'bg-slate-100 text-slate-600 ring-slate-500/20',
 }
 
-function formatStatus(status: ConsultationRequestStatus): string {
-  return `${status.charAt(0)}${status.slice(1).toLowerCase()}`
-}
-
 function formatDate(value: string, includeTime = false): string {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {}),
-  }).format(date)
+  return includeTime
+    ? formatLocalizedDateTime(value)
+    : formatLocalizedDate(value)
 }
 
 function StatusBadge({ status }: { status: ConsultationRequestStatus }) {
@@ -153,19 +144,19 @@ function RequestDetailModal({
 
   return (
     <Modal
-      description="Review the enquiry and keep its follow-up status current."
+      description={t('admin.consultationRequests.detailDescription')}
       isDismissible={!isUpdating}
       isOpen={isOpen}
       onClose={onClose}
       size="lg"
-      title={request?.fullName ?? 'Consultation request'}
+      title={request?.fullName ?? t('admin.consultationRequests.detailTitle')}
     >
       <div className="max-h-[75vh] overflow-y-auto p-5 sm:p-6">
           {isLoading ? (
             <div className="grid min-h-64 place-items-center">
               <div className="text-center text-sm font-semibold text-slate-500">
                 <LoaderCircle className="mx-auto mb-3 h-7 w-7 animate-spin text-blue-600" />
-                Loading request details…
+                {t('admin.consultationRequests.loadingDetails')}
               </div>
             </div>
           ) : error && !request ? (
@@ -180,7 +171,7 @@ function RequestDetailModal({
                 onClick={onRetry}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           ) : request ? (
@@ -194,45 +185,45 @@ function RequestDetailModal({
                 </div>
               ) : null}
               <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-                <DetailItem label="Full name">{request.fullName}</DetailItem>
-                <DetailItem label="Status">
+                <DetailItem label={t('admin.users.fields.fullName')}>{request.fullName}</DetailItem>
+                <DetailItem label={t('admin.cases.fields.status')}>
                   <StatusBadge status={request.status} />
                 </DetailItem>
-                <DetailItem label="Phone">{request.phone}</DetailItem>
-                <DetailItem label="Email">
-                  {request.email ?? <span className="text-slate-400">Not provided</span>}
+                <DetailItem label={t('admin.users.fields.phone')}>{request.phone}</DetailItem>
+                <DetailItem label={t('common.email')}>
+                  {request.email ?? <span className="text-slate-400">{t('common.notProvided')}</span>}
                 </DetailItem>
-                <DetailItem label="Service">
+                <DetailItem label={t('admin.cases.fields.service')}>
                   {request.service?.name ?? (
-                    <span className="text-slate-400">Not selected</span>
+                    <span className="text-slate-400">{t('admin.consultationRequests.notSelected')}</span>
                   )}
                 </DetailItem>
-                <DetailItem label="Submitted">
+                <DetailItem label={t('admin.consultationRequests.submitted')}>
                   <time dateTime={request.createdAt}>
                     {formatDate(request.createdAt, true)}
                   </time>
                 </DetailItem>
-                <DetailItem label="Message" wide>
+                <DetailItem label={t('admin.consultationRequests.message')} wide>
                   {request.message ?? (
-                    <span className="text-slate-400">No message provided</span>
+                    <span className="text-slate-400">{t('admin.consultationRequests.noMessage')}</span>
                   )}
                 </DetailItem>
                 {request.convertedAt ? (
-                  <DetailItem label="Converted at">
+                  <DetailItem label={t('admin.consultationRequests.convertedAt')}>
                     <time dateTime={request.convertedAt}>
                       {formatDate(request.convertedAt, true)}
                     </time>
                   </DetailItem>
                 ) : null}
                 {request.convertedCustomerId ? (
-                  <DetailItem label="Converted customer ID">
+                  <DetailItem label={t('admin.consultationRequests.convertedCustomerId')}>
                     <span className="font-mono text-xs">
                       {request.convertedCustomerId}
                     </span>
                   </DetailItem>
                 ) : null}
                 {request.convertedCaseProfileId ? (
-                  <DetailItem label="Converted case ID" wide>
+                  <DetailItem label={t('admin.consultationRequests.convertedCaseId')} wide>
                     <span className="font-mono text-xs">
                       {request.convertedCaseProfileId}
                     </span>
@@ -248,7 +239,7 @@ function RequestDetailModal({
                   className="text-sm font-bold text-slate-800"
                   htmlFor="consultation-request-status"
                 >
-                  Update status
+                  {t('admin.consultationRequests.updateStatus')}
                 </label>
                 <div className="mt-2 flex flex-col gap-3 sm:flex-row">
                   <select
@@ -263,7 +254,7 @@ function RequestDetailModal({
                     value={selectedStatus}
                   >
                     {selectedStatus === '' ? (
-                      <option value="">Select a new status</option>
+                      <option value="">{t('admin.consultationRequests.selectNewStatus')}</option>
                     ) : null}
                     {editableConsultationRequestStatuses.map((status) => (
                       <option key={status} value={status}>
@@ -283,12 +274,11 @@ function RequestDetailModal({
                     {isUpdating ? (
                       <LoaderCircle className="h-4 w-4 animate-spin" />
                     ) : null}
-                    Save status
+                    {t('admin.consultationRequests.saveStatus')}
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-slate-500">
-                  Conversion is handled by a separate workflow and cannot be
-                  selected here.
+                  {t('admin.consultationRequests.conversionNote')}
                 </p>
               </form>
             </>
@@ -370,7 +360,7 @@ export function AdminConsultationRequestsPage() {
         setError(
           requestError instanceof Error
             ? requestError.message
-            : 'Unable to load consultation requests.',
+            : t('admin.consultationRequests.loadError'),
         )
       }
     } finally {
@@ -378,7 +368,7 @@ export function AdminConsultationRequestsPage() {
         setIsLoading(false)
       }
     }
-  }, [debouncedSearch, page, status])
+  }, [debouncedSearch, page, status, t])
 
   useEffect(() => {
     void loadRequests()
@@ -400,7 +390,7 @@ export function AdminConsultationRequestsPage() {
         setDetailError(
           requestError instanceof Error
             ? requestError.message
-            : 'Unable to load this consultation request.',
+            : t('admin.consultationRequests.detailLoadError'),
         )
       }
     } finally {
@@ -408,7 +398,7 @@ export function AdminConsultationRequestsPage() {
         setIsDetailLoading(false)
       }
     }
-  }, [])
+  }, [t])
 
   const openDetail = (id: string) => {
     setDetailId(id)
@@ -445,13 +435,17 @@ export function AdminConsultationRequestsPage() {
           request.id === updatedRequest.id ? updatedRequest : request,
         ),
       )
-      setNotice(`Status updated to ${formatStatus(updatedRequest.status)}.`)
+      setNotice(
+        t('admin.consultationRequests.statusFeedback', {
+          status: getStatusLabel(t, 'request', updatedRequest.status),
+        }),
+      )
       void loadRequests()
     } catch (requestError) {
       setDetailError(
-        requestError instanceof Error
-          ? requestError.message
-          : 'Unable to update the request status.',
+          requestError instanceof Error
+            ? requestError.message
+          : t('admin.consultationRequests.statusUpdateError'),
       )
     } finally {
       setIsUpdating(false)
@@ -461,43 +455,44 @@ export function AdminConsultationRequestsPage() {
   const tableColumns: readonly DataTableColumn<ConsultationRequest>[] = [
     {
       key: 'fullName',
-      header: 'Full name',
+      header: t('admin.users.fields.fullName'),
       render: (request) => (
         <span className="font-semibold text-slate-900">{request.fullName}</span>
       ),
     },
     {
       key: 'phone',
-      header: 'Phone',
+      header: t('admin.users.fields.phone'),
       render: (request) => request.phone,
     },
     {
       key: 'email',
-      header: 'Email',
+      header: t('common.email'),
       className: 'max-w-52 truncate',
-      render: (request) => request.email ?? '—',
+      render: (request) => request.email ?? t('common.notProvided'),
     },
     {
       key: 'service',
-      header: 'Service',
+      header: t('admin.cases.fields.service'),
       className: 'max-w-52 truncate',
-      render: (request) => request.service?.name ?? '—',
+      render: (request) =>
+        request.service?.name ?? t('admin.consultationRequests.notSelected'),
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('admin.cases.fields.status'),
       render: (request) => <StatusBadge status={request.status} />,
     },
     {
       key: 'createdAt',
-      header: 'Created',
+      header: t('common.created'),
       render: (request) => (
         <time dateTime={request.createdAt}>{formatDate(request.createdAt)}</time>
       ),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
       className: 'text-right',
       render: (request) => (
@@ -507,7 +502,7 @@ export function AdminConsultationRequestsPage() {
           type="button"
         >
           <Eye className="h-4 w-4" aria-hidden="true" />
-          View / Update
+          {t('admin.consultationRequests.viewUpdate')}
         </button>
       ),
     },
@@ -517,12 +512,14 @@ export function AdminConsultationRequestsPage() {
     <div className="mx-auto max-w-[1600px]">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-blue-600">Inbox</p>
+          <p className="text-sm font-semibold text-blue-600">
+            {t('admin.consultationRequests.eyebrow')}
+          </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Consultation Requests
+            {t('navigation.consultationRequests')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Review incoming enquiries and keep their follow-up status current.
+            {t('admin.consultationRequests.description')}
           </p>
         </div>
         <button
@@ -532,7 +529,7 @@ export function AdminConsultationRequestsPage() {
           type="button"
         >
           <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-          Refresh
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -549,17 +546,17 @@ export function AdminConsultationRequestsPage() {
         <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:p-5">
           <SearchInput
             isDisabled={isLoading}
-            label="Search consultation requests"
+            label={t('admin.consultationRequests.searchLabel')}
             onChange={setSearchInput}
             onSubmit={() => {
               setPage(1)
               setDebouncedSearch(searchInput.trim())
             }}
-            placeholder="Search name, phone, email or message…"
+            placeholder={t('admin.consultationRequests.searchPlaceholder')}
             value={searchInput}
           />
           <label className="relative sm:w-56">
-            <span className="sr-only">Filter by status</span>
+            <span className="sr-only">{t('admin.consultationRequests.filterStatus')}</span>
             <SlidersHorizontal className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <select
               className="min-h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
@@ -569,7 +566,7 @@ export function AdminConsultationRequestsPage() {
               }}
               value={status}
             >
-              <option value="">All statuses</option>
+              <option value="">{t('admin.cases.allStatuses')}</option>
               {consultationRequestStatuses.map((requestStatus) => (
                 <option key={requestStatus} value={requestStatus}>
                   {getStatusLabel(t, 'request', requestStatus)}
@@ -586,7 +583,7 @@ export function AdminConsultationRequestsPage() {
                 <AlertCircle className="h-6 w-6" />
               </span>
               <h2 className="mt-4 font-bold text-slate-900">
-                Couldn&apos;t load consultation requests
+                {t('admin.consultationRequests.loadErrorTitle')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
                 {error}
@@ -596,7 +593,7 @@ export function AdminConsultationRequestsPage() {
                 onClick={() => void loadRequests()}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           </div>
@@ -604,14 +601,14 @@ export function AdminConsultationRequestsPage() {
           <div className="grid min-h-80 place-items-center p-8">
             <div className="text-center text-sm font-semibold text-slate-500">
               <LoaderCircle className="mx-auto mb-3 h-7 w-7 animate-spin text-blue-600" />
-              Loading consultation requests…
+              {t('admin.consultationRequests.loading')}
             </div>
           </div>
         ) : requests.length === 0 ? (
           <EmptyState
-            description="Try changing the search or status filter."
+            description={t('admin.consultationRequests.emptyDescription')}
             icon={<Inbox className="h-6 w-6" aria-hidden="true" />}
-            title="No consultation requests found"
+            title={t('admin.consultationRequests.emptyTitle')}
           />
         ) : (
           <>
@@ -620,18 +617,22 @@ export function AdminConsultationRequestsPage() {
                 className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
                 role="alert"
               >
-                <span>Refresh failed: {error}. Showing the latest data.</span>
+                <span>
+                  {t('admin.consultationRequests.refreshFailed', {
+                    message: error,
+                  })}
+                </span>
                 <button
                   className="shrink-0 font-bold underline"
                   onClick={() => void loadRequests()}
                   type="button"
                 >
-                  Retry
+                  {t('admin.appointments.retry')}
                 </button>
               </div>
             ) : null}
             <DataTable
-              caption="Consultation requests"
+              caption={t('navigation.consultationRequests')}
               columns={tableColumns}
               getRowKey={(request) => request.id}
               items={requests}

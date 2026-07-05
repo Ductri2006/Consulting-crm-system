@@ -17,6 +17,7 @@ import {
   useState,
 } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   ConfirmDialog,
   DataTable,
@@ -58,6 +59,9 @@ import {
   type TaskStatusUpdateValues,
   type UserOption,
 } from '../../features/tasks'
+import { formatDateTime as formatLocalizedDateTime } from '../../i18n/format'
+import { getStatusLabel } from '../../i18n/statusLabels'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -93,35 +97,8 @@ const EMPTY_LOOKUPS: LookupState = {
   users: [],
 }
 
-const formatLabel = (value: string): string =>
-  value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
-
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
-
-const formatDateTime = (value: string | null): string => {
-  if (!value) {
-    return 'None'
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
 
 const isTaskOverdue = (task: Task): boolean =>
   Boolean(
@@ -138,9 +115,11 @@ function FieldError({
   id: string
   message?: string
 }) {
+  const { t } = useTranslation()
+
   return message ? (
     <p className="field-error" id={id}>
-      {message}
+      {translateValidationMessage(t, message)}
     </p>
   ) : null
 }
@@ -163,6 +142,7 @@ function FeedbackBanner({
   feedback: Feedback
   onDismiss: () => void
 }) {
+  const { t } = useTranslation()
   const isSuccess = feedback.type === 'success'
 
   return (
@@ -188,7 +168,7 @@ function FeedbackBanner({
         onClick={onDismiss}
         type="button"
       >
-        Dismiss
+        {t('common.close')}
       </button>
     </div>
   )
@@ -198,13 +178,15 @@ function ModalActions({
   isSubmitting,
   onCancel,
   submitLabel,
-  submittingLabel = 'Saving...',
+  submittingLabel,
 }: {
   isSubmitting: boolean
   onCancel: () => void
   submitLabel: string
   submittingLabel?: string
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
       <button
@@ -213,20 +195,21 @@ function ModalActions({
         onClick={onCancel}
         type="button"
       >
-        Cancel
+        {t('common.cancel')}
       </button>
       <button
         className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? submittingLabel : submitLabel}
+        {isSubmitting ? (submittingLabel ?? t('admin.workspaceSettings.saving')) : submitLabel}
       </button>
     </div>
   )
 }
 
 function PriorityBadge({ priority }: { priority: Priority }) {
+  const { t } = useTranslation()
   const styles: Record<Priority, string> = {
     LOW: 'bg-slate-100 text-slate-600 ring-slate-500/20',
     MEDIUM: 'bg-blue-50 text-blue-700 ring-blue-600/20',
@@ -241,7 +224,7 @@ function PriorityBadge({ priority }: { priority: Priority }) {
         styles[priority],
       )}
     >
-      {formatLabel(priority)}
+      {getStatusLabel(t, 'priority', priority)}
     </span>
   )
 }
@@ -267,6 +250,7 @@ function TaskForm({
   onSubmit: (values: TaskFormValues) => Promise<void>
   submitLabel: string
 }) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -295,14 +279,14 @@ function TaskForm({
         ) : null}
         {isLoadingLookups ? (
           <div className="mb-5 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-            Loading task options...
+            {t('admin.tasks.loadingOptions')}
           </div>
         ) : null}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="task-title">
-              Title <span aria-hidden="true">*</span>
+              {t('admin.tasks.titleField')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={errors.title ? 'task-title-error' : undefined}
@@ -316,7 +300,7 @@ function TaskForm({
 
           <div>
             <label className="field-label" htmlFor="task-case">
-              Case
+              {t('navigation.cases')}
             </label>
             <select
               className="field-input"
@@ -324,7 +308,7 @@ function TaskForm({
               id="task-case"
               {...register('caseProfileId')}
             >
-              <option value="">No linked case</option>
+              <option value="">{t('admin.appointments.noLinkedCase')}</option>
               {lookups.cases.map((caseProfile) => (
                 <option key={caseProfile.id} value={caseProfile.id}>
                   {caseProfile.caseCode} - {caseProfile.title}
@@ -336,7 +320,7 @@ function TaskForm({
           {canAssign ? (
             <div>
               <label className="field-label" htmlFor="task-assignee">
-                Assigned to
+                {t('admin.tasks.assignedTo')}
               </label>
               <select
                 className="field-input"
@@ -344,10 +328,10 @@ function TaskForm({
                 id="task-assignee"
                 {...register('assignedToId')}
               >
-                <option value="">Unassigned</option>
+                <option value="">{t('common.notAssigned')}</option>
                 {lookups.users.map((staff) => (
                   <option key={staff.id} value={staff.id}>
-                    {staff.fullName} - {formatLabel(staff.role)}
+                    {staff.fullName} - {getStatusLabel(t, 'role', staff.role)}
                   </option>
                 ))}
               </select>
@@ -358,7 +342,7 @@ function TaskForm({
 
           <div>
             <label className="field-label" htmlFor="task-priority">
-              Priority
+              {t('admin.tasks.priority')}
             </label>
             <select
               className="field-input"
@@ -367,7 +351,7 @@ function TaskForm({
             >
               {priorities.map((priority) => (
                 <option key={priority} value={priority}>
-                  {formatLabel(priority)}
+                  {getStatusLabel(t, 'priority', priority)}
                 </option>
               ))}
             </select>
@@ -375,7 +359,7 @@ function TaskForm({
 
           <div>
             <label className="field-label" htmlFor="task-deadline">
-              Deadline
+              {t('admin.tasks.deadline')}
             </label>
             <input
               aria-describedby={
@@ -395,7 +379,7 @@ function TaskForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="task-description">
-              Description
+              {t('admin.tasks.descriptionField')}
             </label>
             <textarea
               className="field-input min-h-28 resize-y"
@@ -431,6 +415,7 @@ function StatusForm({
   onSubmit: (values: TaskStatusUpdateValues) => Promise<void>
   task: Task
 }) {
+  const { t } = useTranslation()
   const defaultStatus =
     taskStatusTransitions[task.status][0] ??
     taskStatuses.find((status) => status !== task.status) ??
@@ -451,13 +436,13 @@ function StatusForm({
       <div className="p-5 sm:p-6">
         <FormError message={error} />
         <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
-          <p className="font-bold">Current status</p>
+          <p className="font-bold">{t('admin.appointments.currentStatus')}</p>
           <div className="mt-2">
             <StatusBadge namespace="task" status={task.status} />
           </div>
         </div>
         <label className="field-label" htmlFor="task-status">
-          New status
+          {t('admin.appointments.newStatus')}
         </label>
         <select
           aria-describedby={errors.status ? 'task-status-error' : undefined}
@@ -470,7 +455,7 @@ function StatusForm({
             .filter((status) => status !== task.status)
             .map((status) => (
               <option key={status} value={status}>
-                {formatLabel(status)}
+                {getStatusLabel(t, 'task', status)}
               </option>
             ))}
         </select>
@@ -480,13 +465,14 @@ function StatusForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Update status"
+        submitLabel={t('admin.appointments.updateStatus')}
       />
     </form>
   )
 }
 
 export function AdminTasksPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
   const [tasks, setTasks] = useState<Task[]>([])
@@ -545,14 +531,14 @@ export function AdminTasksPage() {
       }
     } catch (error) {
       if (sequence === listSequence.current) {
-        setLoadError(getErrorMessage(error, 'Tasks could not be loaded.'))
+        setLoadError(getErrorMessage(error, t('admin.tasks.loadError')))
       }
     } finally {
       if (sequence === listSequence.current) {
         setIsLoading(false)
       }
     }
-  }, [assignedToId, overdueOnly, page, priority, search, status])
+  }, [assignedToId, overdueOnly, page, priority, search, status, t])
 
   useEffect(() => {
     void loadTasks()
@@ -584,10 +570,10 @@ export function AdminTasksPage() {
 
     const warnings = [
       casesResult.status === 'rejected'
-        ? getErrorMessage(casesResult.reason, 'Cases could not load.')
+        ? getErrorMessage(casesResult.reason, t('admin.appointments.casesLoadError'))
         : '',
       usersResult.status === 'rejected'
-        ? getErrorMessage(usersResult.reason, 'Assignees could not load.')
+        ? getErrorMessage(usersResult.reason, t('admin.tasks.assigneesLoadError'))
         : '',
     ].filter(Boolean)
 
@@ -626,7 +612,7 @@ export function AdminTasksPage() {
       }
     } catch (error) {
       if (sequence === detailSequence.current) {
-        setDetailError(getErrorMessage(error, 'Task details could not load.'))
+        setDetailError(getErrorMessage(error, t('admin.tasks.detailsLoadError')))
       }
     } finally {
       if (sequence === detailSequence.current) {
@@ -659,11 +645,11 @@ export function AdminTasksPage() {
       closeCreate()
       setFeedback({
         type: 'success',
-        message: `${created.title} created successfully.`,
+        message: t('admin.tasks.createdFeedback', { title: created.title }),
       })
       await refreshAfterMutation()
     } catch (error) {
-      setCreateError(getErrorMessage(error, 'The task could not be created.'))
+      setCreateError(getErrorMessage(error, t('admin.tasks.createError')))
     }
   }
 
@@ -682,11 +668,11 @@ export function AdminTasksPage() {
       setTaskDetail(updated)
       setFeedback({
         type: 'success',
-        message: `${updated.title} updated successfully.`,
+        message: t('admin.tasks.updatedFeedback', { title: updated.title }),
       })
       await refreshAfterMutation()
     } catch (error) {
-      setDetailError(getErrorMessage(error, 'The task could not be updated.'))
+      setDetailError(getErrorMessage(error, t('admin.tasks.updateError')))
     }
   }
 
@@ -705,12 +691,15 @@ export function AdminTasksPage() {
       setStatusTarget(null)
       setFeedback({
         type: 'success',
-        message: `${updated.title} moved to ${formatLabel(updated.status)}.`,
+        message: t('admin.tasks.statusFeedback', {
+          status: getStatusLabel(t, 'task', updated.status),
+          title: updated.title,
+        }),
       })
       await refreshAfterMutation()
     } catch (error) {
       setStatusError(
-        getErrorMessage(error, 'The task status could not be updated.'),
+        getErrorMessage(error, t('admin.tasks.statusUpdateError')),
       )
     }
   }
@@ -729,7 +718,7 @@ export function AdminTasksPage() {
       setDeleteTarget(null)
       setFeedback({
         type: 'success',
-        message: `${title} deleted successfully.`,
+        message: t('admin.tasks.deletedFeedback', { title }),
       })
 
       if (tasks.length === 1 && page > 1) {
@@ -741,7 +730,7 @@ export function AdminTasksPage() {
       setDeleteTarget(null)
       setFeedback({
         type: 'error',
-        message: getErrorMessage(error, 'The task could not be deleted.'),
+        message: getErrorMessage(error, t('admin.tasks.deleteError')),
       })
     } finally {
       setIsDeleting(false)
@@ -788,7 +777,7 @@ export function AdminTasksPage() {
   const columns: readonly DataTableColumn<Task>[] = [
     {
       key: 'title',
-      header: 'Title',
+      header: t('admin.tasks.titleField'),
       className: 'max-w-72',
       render: (task) => (
         <div>
@@ -796,7 +785,7 @@ export function AdminTasksPage() {
           {isTaskOverdue(task) ? (
             <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-rose-700">
               <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-              Overdue
+              {t('admin.tasks.overdue')}
             </span>
           ) : null}
         </div>
@@ -804,7 +793,7 @@ export function AdminTasksPage() {
     },
     {
       key: 'case',
-      header: 'Case',
+      header: t('navigation.cases'),
       className: 'max-w-56',
       render: (task) =>
         task.caseProfile ? (
@@ -817,69 +806,69 @@ export function AdminTasksPage() {
             </p>
           </div>
         ) : (
-          'No case'
+          t('admin.appointments.noCase')
         ),
     },
     {
       key: 'assignedTo',
-      header: 'Assigned to',
-      render: (task) => task.assignedTo?.fullName ?? 'Unassigned',
+      header: t('admin.tasks.assignedTo'),
+      render: (task) => task.assignedTo?.fullName ?? t('common.notAssigned'),
     },
     {
       key: 'priority',
-      header: 'Priority',
+      header: t('admin.tasks.priority'),
       render: (task) => <PriorityBadge priority={task.priority} />,
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('portal.dashboard.status'),
       render: (task) => <StatusBadge namespace="task" status={task.status} />,
     },
     {
       key: 'deadline',
-      header: 'Deadline',
+      header: t('admin.tasks.deadline'),
       render: (task) => (
         <span
           className={cn(isTaskOverdue(task) && 'font-bold text-rose-700')}
         >
-          {formatDateTime(task.deadline)}
+          {formatLocalizedDateTime(task.deadline)}
         </span>
       ),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
       className: 'text-right',
       render: (task) => (
         <div className="flex justify-end gap-1">
           <button
-            aria-label={`View and edit ${task.title}`}
+            aria-label={t('admin.tasks.viewEditAria', { title: task.title })}
             className="rounded-lg p-2 text-blue-700 transition hover:bg-blue-50"
             onClick={() => openDetail(task)}
-            title="View / Edit"
+            title={t('admin.customers.actions.viewEdit')}
             type="button"
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
-            aria-label={`Update status for ${task.title}`}
+            aria-label={t('admin.tasks.updateStatusAria', { title: task.title })}
             className="rounded-lg p-2 text-violet-700 transition hover:bg-violet-50"
             onClick={() => {
               setStatusError(null)
               setStatusTarget(task)
             }}
-            title="Update status"
+            title={t('admin.appointments.updateStatus')}
             type="button"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
           </button>
           {canManage ? (
             <button
-              aria-label={`Delete ${task.title}`}
+              aria-label={t('admin.tasks.deleteAria', { title: task.title })}
               className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"
               onClick={() => setDeleteTarget(task)}
-              title="Delete"
+              title={t('common.delete')}
               type="button"
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -895,13 +884,13 @@ export function AdminTasksPage() {
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            Team execution
+            {t('admin.tasks.eyebrow')}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Tasks
+            {t('navigation.tasks')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Manage operational work, owners, priorities and deadlines.
+            {t('admin.tasks.pageDescription')}
           </p>
         </div>
         <button
@@ -910,7 +899,7 @@ export function AdminTasksPage() {
           type="button"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Create Task
+          {t('admin.tasks.createTask')}
         </button>
       </header>
 
@@ -925,14 +914,14 @@ export function AdminTasksPage() {
         <div className="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem_13rem_auto_auto]">
           <SearchInput
             isDisabled={isLoading || overdueOnly}
-            label="Search tasks"
+            label={t('admin.tasks.searchLabel')}
             onChange={setSearchInput}
             onSubmit={submitSearch}
-            placeholder="Search title, description or case..."
+            placeholder={t('admin.tasks.searchPlaceholder')}
             value={searchInput}
           />
           <select
-            aria-label="Filter task status"
+            aria-label={t('admin.tasks.filterStatus')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
             disabled={overdueOnly}
             onChange={(event) => {
@@ -941,15 +930,15 @@ export function AdminTasksPage() {
             }}
             value={status}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('admin.appointments.allStatuses')}</option>
             {taskStatuses.map((taskStatus) => (
               <option key={taskStatus} value={taskStatus}>
-                {formatLabel(taskStatus)}
+                {getStatusLabel(t, 'task', taskStatus)}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter task priority"
+            aria-label={t('admin.tasks.filterPriority')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
             disabled={overdueOnly}
             onChange={(event) => {
@@ -958,16 +947,16 @@ export function AdminTasksPage() {
             }}
             value={priority}
           >
-            <option value="">All priorities</option>
+            <option value="">{t('admin.tasks.allPriorities')}</option>
             {priorities.map((taskPriority) => (
               <option key={taskPriority} value={taskPriority}>
-                {formatLabel(taskPriority)}
+                {getStatusLabel(t, 'priority', taskPriority)}
               </option>
             ))}
           </select>
           {canManage ? (
             <select
-              aria-label="Filter task assignee"
+              aria-label={t('admin.tasks.filterAssignee')}
               className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               onChange={(event) => {
                 setPage(1)
@@ -980,7 +969,7 @@ export function AdminTasksPage() {
               }}
               value={assignedToId}
             >
-              <option value="">All assignees</option>
+              <option value="">{t('admin.tasks.allAssignees')}</option>
               {lookups.users.map((staff) => (
                 <option key={staff.id} value={staff.id}>
                   {staff.fullName}
@@ -1003,7 +992,7 @@ export function AdminTasksPage() {
             type="button"
           >
             <Clock3 className="h-4 w-4" aria-hidden="true" />
-            Overdue
+            {t('admin.tasks.overdue')}
           </button>
           <button
             className="min-h-11 rounded-xl px-3 text-sm font-bold text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1011,7 +1000,7 @@ export function AdminTasksPage() {
             onClick={clearFilters}
             type="button"
           >
-            Clear filters
+            {t('admin.appointments.clearFilters')}
           </button>
         </div>
 
@@ -1027,7 +1016,7 @@ export function AdminTasksPage() {
         {overdueOnly ? (
           <div className="flex items-center gap-2 border-b border-rose-100 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-800">
             <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-            Showing unfinished tasks whose deadline has passed.
+            {t('admin.tasks.overdueBanner')}
           </div>
         ) : null}
 
@@ -1036,7 +1025,7 @@ export function AdminTasksPage() {
             <div>
               <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
               <h2 className="mt-4 font-bold text-slate-900">
-                Couldn&apos;t load tasks
+                {t('admin.tasks.loadErrorTitle')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
                 {loadError}
@@ -1046,21 +1035,23 @@ export function AdminTasksPage() {
                 onClick={() => void loadTasks()}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           </div>
         ) : isLoading && tasks.length === 0 ? (
-          <LoadingState label="Loading tasks..." />
+          <LoadingState label={t('admin.tasks.loading')} />
         ) : tasks.length === 0 ? (
           <EmptyState
             description={
               hasFilters
-                ? 'Try changing or clearing the current filters.'
-                : 'Create the first task to start assigning operational work.'
+                ? t('admin.appointments.emptyFiltered')
+                : t('admin.tasks.emptyDefault')
             }
             icon={<SearchX className="h-6 w-6" aria-hidden="true" />}
-            title={overdueOnly ? 'No overdue tasks' : 'No tasks found'}
+            title={
+              overdueOnly ? t('admin.tasks.noOverdue') : t('admin.tasks.emptyTitle')
+            }
           />
         ) : (
           <>
@@ -1069,18 +1060,24 @@ export function AdminTasksPage() {
                 className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
                 role="alert"
               >
-                <span>Refresh failed: {loadError}. Showing cached data.</span>
+                <span>
+                  {t('admin.appointments.refreshFailed', {
+                    message: loadError,
+                  })}
+                </span>
                 <button
                   className="shrink-0 font-bold underline"
                   onClick={() => void loadTasks()}
                   type="button"
                 >
-                  Retry
+                  {t('admin.appointments.retry')}
                 </button>
               </div>
             ) : null}
             <DataTable
-              caption={overdueOnly ? 'Overdue tasks' : 'Tasks'}
+              caption={
+                overdueOnly ? t('admin.tasks.overdueTasks') : t('navigation.tasks')
+              }
               columns={columns}
               getRowKey={(task) => task.id}
               items={tasks}
@@ -1101,7 +1098,7 @@ export function AdminTasksPage() {
         isOpen={isCreateOpen}
         onClose={closeCreate}
         size="lg"
-        title="Create Task"
+        title={t('admin.tasks.createTask')}
       >
         <TaskForm
           canAssign={canManage}
@@ -1112,7 +1109,7 @@ export function AdminTasksPage() {
           lookups={lookups}
           onCancel={closeCreate}
           onSubmit={handleCreate}
-          submitLabel="Create task"
+          submitLabel={t('admin.tasks.createTask')}
         />
       </Modal>
 
@@ -1121,7 +1118,11 @@ export function AdminTasksPage() {
         isOpen={detailTarget !== null}
         onClose={closeDetail}
         size="lg"
-        title={detailTarget ? `View / Edit ${detailTarget.title}` : 'Task details'}
+        title={
+          detailTarget
+            ? t('admin.tasks.viewEditTitle', { title: detailTarget.title })
+            : t('admin.tasks.detailsTitle')
+        }
       >
         {taskDetail ? (
           <TaskForm
@@ -1133,7 +1134,7 @@ export function AdminTasksPage() {
             lookups={lookups}
             onCancel={closeDetail}
             onSubmit={handleEdit}
-            submitLabel="Save changes"
+            submitLabel={t('common.saveChanges')}
           />
         ) : (
           <div className="p-6">
@@ -1142,7 +1143,7 @@ export function AdminTasksPage() {
                 {detailError}
               </div>
             ) : (
-              <LoadingState label="Loading task details..." />
+              <LoadingState label={t('admin.tasks.loadingDetails')} />
             )}
           </div>
         )}
@@ -1155,7 +1156,7 @@ export function AdminTasksPage() {
           setStatusError(null)
         }}
         size="sm"
-        title="Update Task Status"
+        title={t('admin.tasks.updateStatusTitle')}
       >
         {statusTarget ? (
           <StatusForm
@@ -1173,14 +1174,16 @@ export function AdminTasksPage() {
       <ConfirmDialog
         isLoading={isDeleting}
         isOpen={deleteTarget !== null}
-        message={`Delete task ${deleteTarget?.title ?? ''}? This action cannot be undone.`}
+        message={t('admin.tasks.deleteConfirm', {
+          title: deleteTarget?.title ?? '',
+        })}
         onCancel={() => {
           if (!isDeleting) {
             setDeleteTarget(null)
           }
         }}
         onConfirm={() => void handleDelete()}
-        title="Delete task"
+        title={t('admin.tasks.deleteTitle')}
       />
     </div>
   )

@@ -12,9 +12,11 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Container } from '../components/common/Container'
 import { LoadingState } from '../components/admin'
+import { LanguageSwitcher } from '../components/common/LanguageSwitcher'
 import { useAuth } from '../features/auth'
 import {
   acceptInvitation,
@@ -23,6 +25,9 @@ import {
   type AcceptInvitationFormValues,
   type InvitationPreview,
 } from '../features/invitations'
+import { formatDateTime } from '../i18n/format'
+import { getStatusLabel } from '../i18n/statusLabels'
+import { translateValidationMessage } from '../i18n/validationMessages'
 
 const defaultValues: AcceptInvitationFormValues = {
   fullName: '',
@@ -31,34 +36,8 @@ const defaultValues: AcceptInvitationFormValues = {
   confirmPassword: '',
 }
 
-const formatLabel = (value: string): string =>
-  value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
-
-const formatDateTime = (value: string): string => {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
-
-const staleInvitationMessage =
-  'This invitation link is no longer active. It may have expired, been used, or been replaced by a newer invitation. Ask your workspace admin for a fresh link.'
 
 function FieldError({
   message,
@@ -73,15 +52,20 @@ function InvalidInviteState({
 }: {
   message: string
 }) {
+  const { t } = useTranslation()
+
   return (
     <section className="bg-slate-50 py-16">
       <Container>
+        <div className="mb-8 flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <div className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-7 text-center shadow-sm">
           <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-rose-600">
             <Mail className="h-6 w-6" aria-hidden="true" />
           </span>
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-            Invitation unavailable
+            {t('auth.inviteAccept.unavailableTitle')}
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-600">{message}</p>
         </div>
@@ -95,27 +79,30 @@ function AuthenticatedInviteBlock({
 }: {
   onLogout: () => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <section className="bg-slate-50 py-16">
       <Container>
+        <div className="mb-8 flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <div className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-7 text-center shadow-sm">
           <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-amber-50 text-amber-700">
             <ShieldCheck className="h-6 w-6" aria-hidden="true" />
           </span>
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-            Please log out before accepting an invitation
+            {t('auth.inviteAccept.logoutTitle')}
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Invitations create a new workspace account for the invited email.
-            Finish your current session first so the invite is accepted by the
-            right person.
+            {t('auth.inviteAccept.logoutDescription')}
           </p>
           <button
             className="mt-6 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
             onClick={onLogout}
             type="button"
           >
-            Log out
+            {t('common.logout')}
           </button>
         </div>
       </Container>
@@ -124,6 +111,7 @@ function AuthenticatedInviteBlock({
 }
 
 export function InviteAcceptPage() {
+  const { t } = useTranslation()
   const { token } = useParams()
   const navigate = useNavigate()
   const {
@@ -154,7 +142,7 @@ export function InviteAcceptPage() {
 
     if (!token) {
       setPreview(null)
-      setPreviewError('This invitation link is missing a token.')
+      setPreviewError(t('auth.inviteAccept.missingToken'))
       setIsPreviewLoading(false)
       return
     }
@@ -175,7 +163,7 @@ export function InviteAcceptPage() {
           setPreviewError(
             getErrorMessage(
               error,
-              staleInvitationMessage,
+              t('auth.inviteAccept.staleInvitation'),
             ),
           )
         }
@@ -189,10 +177,10 @@ export function InviteAcceptPage() {
     return () => {
       isActive = false
     }
-  }, [isAuthenticated, isAuthLoading, token])
+  }, [isAuthenticated, isAuthLoading, t, token])
 
   if (isAuthLoading) {
-    return <LoadingState label="Checking session..." />
+    return <LoadingState label={t('auth.inviteAccept.checkingSession')} />
   }
 
   if (isAuthenticated) {
@@ -200,7 +188,7 @@ export function InviteAcceptPage() {
   }
 
   if (isPreviewLoading) {
-    return <LoadingState label="Loading invitation..." />
+    return <LoadingState label={t('auth.inviteAccept.loading')} />
   }
 
   if (previewError || !preview || !token) {
@@ -208,7 +196,7 @@ export function InviteAcceptPage() {
       <InvalidInviteState
         message={
           previewError ??
-          staleInvitationMessage
+          t('auth.inviteAccept.staleInvitation')
         }
       />
     )
@@ -223,7 +211,7 @@ export function InviteAcceptPage() {
       navigate('/admin/dashboard', { replace: true })
     } catch (error) {
       setSubmitError(
-        getErrorMessage(error, 'Invitation could not be accepted.'),
+        getErrorMessage(error, t('auth.inviteAccept.acceptError')),
       )
     }
   })
@@ -235,19 +223,23 @@ export function InviteAcceptPage() {
         className="absolute inset-x-0 top-0 -z-10 h-80 bg-gradient-to-b from-blue-50 to-transparent"
       />
       <Container>
+        <div className="mb-8 flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <div className="mx-auto max-w-3xl text-center">
           <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
             <Mail className="h-6 w-6" aria-hidden="true" />
           </span>
           <p className="mt-6 text-sm font-bold uppercase tracking-[0.2em] text-blue-600">
-            Workspace invitation
+            {t('auth.inviteAccept.eyebrow')}
           </p>
           <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-            Join {preview.organization.name}
+            {t('auth.inviteAccept.title', {
+              workspace: preview.organization.name,
+            })}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600">
-            Complete your account for the invited email and enter the CRM
-            workspace.
+            {t('auth.inviteAccept.description')}
           </p>
         </div>
 
@@ -259,35 +251,43 @@ export function InviteAcceptPage() {
               </span>
               <div>
                 <h2 className="text-xl font-bold text-slate-950">
-                  Invitation details
+                  {t('auth.inviteAccept.detailsTitle')}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Access is scoped to this workspace.
+                  {t('auth.inviteAccept.detailsDescription')}
                 </p>
               </div>
             </div>
 
             <dl className="mt-7 divide-y divide-slate-100 text-sm">
               <div className="flex items-center justify-between gap-4 py-3">
-                <dt className="font-semibold text-slate-500">Workspace</dt>
+                <dt className="font-semibold text-slate-500">
+                  {t('navigation.workspace')}
+                </dt>
                 <dd className="text-right font-bold text-slate-950">
                   {preview.organization.name}
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-4 py-3">
-                <dt className="font-semibold text-slate-500">Email</dt>
+                <dt className="font-semibold text-slate-500">
+                  {t('common.email')}
+                </dt>
                 <dd className="max-w-72 truncate text-right font-bold text-slate-950">
                   {preview.email}
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-4 py-3">
-                <dt className="font-semibold text-slate-500">Role</dt>
+                <dt className="font-semibold text-slate-500">
+                  {t('auth.inviteAccept.role')}
+                </dt>
                 <dd className="font-bold text-slate-950">
-                  {formatLabel(preview.role)}
+                  {getStatusLabel(t, 'role', preview.role)}
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-4 py-3">
-                <dt className="font-semibold text-slate-500">Expires</dt>
+                <dt className="font-semibold text-slate-500">
+                  {t('auth.inviteAccept.expires')}
+                </dt>
                 <dd className="text-right font-bold text-slate-950">
                   {formatDateTime(preview.expiresAt)}
                 </dd>
@@ -297,10 +297,10 @@ export function InviteAcceptPage() {
             <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-xs leading-5 text-blue-900">
               <p className="flex items-center gap-2 font-bold">
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                Invitation-scoped access
+                {t('auth.inviteAccept.scopedAccess')}
               </p>
               <p className="mt-1">
-                Your role and workspace come from the invitation.
+                {t('auth.inviteAccept.scopedAccessDescription')}
               </p>
             </div>
           </section>
@@ -316,10 +316,10 @@ export function InviteAcceptPage() {
               </span>
               <div>
                 <h2 className="text-xl font-bold text-slate-950">
-                  Account setup
+                  {t('auth.inviteAccept.accountSetup')}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Create the login attached to the invited email.
+                  {t('auth.inviteAccept.accountSetupDescription')}
                 </p>
               </div>
             </div>
@@ -327,7 +327,7 @@ export function InviteAcceptPage() {
             <div className="mt-7 space-y-5">
               <div>
                 <label className="field-label" htmlFor="invite-full-name">
-                  Full name
+                  {t('admin.customers.fields.fullName')}
                 </label>
                 <input
                   autoComplete="name"
@@ -336,12 +336,17 @@ export function InviteAcceptPage() {
                   type="text"
                   {...register('fullName')}
                 />
-                <FieldError message={errors.fullName?.message} />
+                <FieldError
+                  message={translateValidationMessage(t, errors.fullName?.message)}
+                />
               </div>
 
               <div>
                 <label className="field-label" htmlFor="invite-phone">
-                  Phone <span className="font-normal text-slate-400">(optional)</span>
+                  {t('admin.customers.fields.phone')}{' '}
+                  <span className="font-normal text-slate-400">
+                    ({t('common.optional')})
+                  </span>
                 </label>
                 <div className="relative">
                   <Phone
@@ -356,12 +361,14 @@ export function InviteAcceptPage() {
                     {...register('phone')}
                   />
                 </div>
-                <FieldError message={errors.phone?.message} />
+                <FieldError
+                  message={translateValidationMessage(t, errors.phone?.message)}
+                />
               </div>
 
               <div>
                 <label className="field-label" htmlFor="invite-password">
-                  Password
+                  {t('common.password')}
                 </label>
                 <div className="relative">
                   <LockKeyhole
@@ -376,7 +383,11 @@ export function InviteAcceptPage() {
                     {...register('password')}
                   />
                   <button
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showPassword
+                        ? t('auth.adminLogin.hidePassword')
+                        : t('auth.adminLogin.showPassword')
+                    }
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                     onClick={() => setShowPassword((current) => !current)}
                     type="button"
@@ -388,12 +399,14 @@ export function InviteAcceptPage() {
                     )}
                   </button>
                 </div>
-                <FieldError message={errors.password?.message} />
+                <FieldError
+                  message={translateValidationMessage(t, errors.password?.message)}
+                />
               </div>
 
               <div>
                 <label className="field-label" htmlFor="invite-confirm-password">
-                  Confirm password
+                  {t('auth.workspaceSignup.fields.confirmPassword')}
                 </label>
                 <div className="relative">
                   <LockKeyhole
@@ -409,7 +422,9 @@ export function InviteAcceptPage() {
                   />
                   <button
                     aria-label={
-                      showConfirmPassword ? 'Hide password' : 'Show password'
+                      showConfirmPassword
+                        ? t('auth.adminLogin.hidePassword')
+                        : t('auth.adminLogin.showPassword')
                     }
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                     onClick={() =>
@@ -424,7 +439,12 @@ export function InviteAcceptPage() {
                     )}
                   </button>
                 </div>
-                <FieldError message={errors.confirmPassword?.message} />
+                <FieldError
+                  message={translateValidationMessage(
+                    t,
+                    errors.confirmPassword?.message,
+                  )}
+                />
               </div>
 
               {submitError ? (
@@ -441,7 +461,9 @@ export function InviteAcceptPage() {
                 disabled={isSubmitting}
                 type="submit"
               >
-                {isSubmitting ? 'Accepting invitation...' : 'Accept invitation'}
+                {isSubmitting
+                  ? t('auth.inviteAccept.accepting')
+                  : t('auth.inviteAccept.accept')}
                 {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
               </button>
             </div>

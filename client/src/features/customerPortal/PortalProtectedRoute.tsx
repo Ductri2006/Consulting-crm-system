@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation } from 'react-router-dom'
 import { usePortalAuth } from './portalAuth.context'
 
@@ -11,6 +12,7 @@ export function PortalProtectedRoute({
   children,
   loadingFallback,
 }: PortalProtectedRouteProps) {
+  const { t } = useTranslation()
   const { isAuthenticated, isLoading } = usePortalAuth()
   const location = useLocation()
 
@@ -21,7 +23,7 @@ export function PortalProtectedRoute({
           className="flex min-h-screen items-center justify-center bg-slate-950 text-sm font-medium text-slate-200"
           role="status"
         >
-          Restoring your portal session...
+          {t('common.restoringPortalSession')}
         </div>
       )
     )

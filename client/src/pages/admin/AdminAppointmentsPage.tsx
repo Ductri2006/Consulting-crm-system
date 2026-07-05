@@ -18,6 +18,7 @@ import {
   useState,
 } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   ConfirmDialog,
   DataTable,
@@ -60,6 +61,9 @@ import {
   type UserOption,
 } from '../../features/appointments'
 import { useAuth } from '../../features/auth'
+import { formatDate as formatLocalizedDate } from '../../i18n/format'
+import { getStatusLabel } from '../../i18n/statusLabels'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -99,13 +103,6 @@ const EMPTY_LOOKUPS: LookupState = {
   users: [],
 }
 
-const formatLabel = (value: string): string =>
-  value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
-
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
 
@@ -124,20 +121,6 @@ const getTodayDateInputValue = (): string => {
   return new Date(now.getTime() - offset).toISOString().slice(0, 10)
 }
 
-const formatDate = (value: string): string => {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
 const formatTimeRange = (appointment: Appointment): string =>
   appointment.endTime
     ? `${appointment.startTime} - ${appointment.endTime}`
@@ -150,9 +133,11 @@ function FieldError({
   id: string
   message?: string
 }) {
+  const { t } = useTranslation()
+
   return message ? (
     <p className="field-error" id={id}>
-      {message}
+      {translateValidationMessage(t, message)}
     </p>
   ) : null
 }
@@ -175,6 +160,7 @@ function FeedbackBanner({
   feedback: Feedback
   onDismiss: () => void
 }) {
+  const { t } = useTranslation()
   const isSuccess = feedback.type === 'success'
 
   return (
@@ -200,7 +186,7 @@ function FeedbackBanner({
         onClick={onDismiss}
         type="button"
       >
-        Dismiss
+        {t('common.close')}
       </button>
     </div>
   )
@@ -210,13 +196,15 @@ function ModalActions({
   isSubmitting,
   onCancel,
   submitLabel,
-  submittingLabel = 'Saving...',
+  submittingLabel,
 }: {
   isSubmitting: boolean
   onCancel: () => void
   submitLabel: string
   submittingLabel?: string
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
       <button
@@ -225,14 +213,14 @@ function ModalActions({
         onClick={onCancel}
         type="button"
       >
-        Cancel
+        {t('common.cancel')}
       </button>
       <button
         className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? submittingLabel : submitLabel}
+        {isSubmitting ? (submittingLabel ?? t('admin.workspaceSettings.saving')) : submitLabel}
       </button>
     </div>
   )
@@ -243,6 +231,7 @@ function AppointmentMethodBadge({
 }: {
   method: AppointmentMethod
 }) {
+  const { t } = useTranslation()
   const styles: Record<AppointmentMethod, string> = {
     OFFLINE: 'bg-slate-100 text-slate-700 ring-slate-500/20',
     ONLINE: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
@@ -256,7 +245,7 @@ function AppointmentMethodBadge({
         styles[method],
       )}
     >
-      {formatLabel(method)}
+      {getStatusLabel(t, 'method', method)}
     </span>
   )
 }
@@ -284,6 +273,7 @@ function AppointmentForm({
   onSubmit: (values: AppointmentFormValues) => Promise<void>
   submitLabel: string
 }) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -326,14 +316,14 @@ function AppointmentForm({
         ) : null}
         {isLoadingLookups ? (
           <div className="mb-5 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-            Loading appointment options...
+            {t('admin.appointments.loadingOptions')}
           </div>
         ) : null}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="appointment-customer">
-              Customer <span aria-hidden="true">*</span>
+              {t('navigation.customers')} <span aria-hidden="true">*</span>
             </label>
             {isCustomerLocked ? (
               <>
@@ -362,7 +352,7 @@ function AppointmentForm({
                 id="appointment-customer"
                 {...register('customerId')}
               >
-                <option value="">Select a customer</option>
+                <option value="">{t('admin.appointments.selectCustomer')}</option>
                 {lookups.customers.map((customer) => (
                   <option key={customer.id} value={customer.id}>
                     {customer.fullName} - {customer.phone}
@@ -378,7 +368,7 @@ function AppointmentForm({
 
           <div>
             <label className="field-label" htmlFor="appointment-case">
-              Case
+              {t('navigation.cases')}
             </label>
             <select
               className="field-input"
@@ -386,7 +376,7 @@ function AppointmentForm({
               id="appointment-case"
               {...register('caseProfileId')}
             >
-              <option value="">No linked case</option>
+              <option value="">{t('admin.appointments.noLinkedCase')}</option>
               {caseOptions.map((caseProfile) => (
                 <option key={caseProfile.id} value={caseProfile.id}>
                   {caseProfile.caseCode} - {caseProfile.title}
@@ -398,7 +388,7 @@ function AppointmentForm({
           {canAssign ? (
             <div>
               <label className="field-label" htmlFor="appointment-staff">
-                Staff
+                {t('status.role.STAFF')}
               </label>
               <select
                 className="field-input"
@@ -406,10 +396,10 @@ function AppointmentForm({
                 id="appointment-staff"
                 {...register('staffId')}
               >
-                <option value="">Unassigned</option>
+                <option value="">{t('common.notAssigned')}</option>
                 {lookups.users.map((staff) => (
                   <option key={staff.id} value={staff.id}>
-                    {staff.fullName} - {formatLabel(staff.role)}
+                    {staff.fullName} - {getStatusLabel(t, 'role', staff.role)}
                   </option>
                 ))}
               </select>
@@ -420,7 +410,7 @@ function AppointmentForm({
 
           <div>
             <label className="field-label" htmlFor="appointment-method">
-              Method
+              {t('admin.appointments.method')}
             </label>
             <select
               className="field-input"
@@ -429,7 +419,7 @@ function AppointmentForm({
             >
               {appointmentMethods.map((method) => (
                 <option key={method} value={method}>
-                  {formatLabel(method)}
+                  {getStatusLabel(t, 'method', method)}
                 </option>
               ))}
             </select>
@@ -437,7 +427,7 @@ function AppointmentForm({
 
           <div>
             <label className="field-label" htmlFor="appointment-date">
-              Date <span aria-hidden="true">*</span>
+              {t('admin.appointments.date')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -460,7 +450,7 @@ function AppointmentForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="field-label" htmlFor="appointment-start">
-                Start <span aria-hidden="true">*</span>
+                {t('admin.appointments.start')} <span aria-hidden="true">*</span>
               </label>
               <input
                 aria-describedby={
@@ -479,7 +469,7 @@ function AppointmentForm({
             </div>
             <div>
               <label className="field-label" htmlFor="appointment-end">
-                End
+                {t('admin.appointments.end')}
               </label>
               <input
                 aria-describedby={
@@ -500,7 +490,7 @@ function AppointmentForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="appointment-note">
-              Note
+              {t('admin.customers.fields.note')}
             </label>
             <textarea
               className="field-input min-h-24 resize-y"
@@ -536,6 +526,7 @@ function StatusForm({
   onCancel: () => void
   onSubmit: (values: AppointmentStatusUpdateValues) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const defaultStatus =
     appointmentStatusTransitions[appointment.status][0] ??
     appointmentStatuses.find((status) => status !== appointment.status) ??
@@ -556,13 +547,13 @@ function StatusForm({
       <div className="p-5 sm:p-6">
         <FormError message={error} />
         <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
-          <p className="font-bold">Current status</p>
+          <p className="font-bold">{t('admin.appointments.currentStatus')}</p>
           <div className="mt-2">
             <StatusBadge namespace="appointment" status={appointment.status} />
           </div>
         </div>
         <label className="field-label" htmlFor="appointment-status">
-          New status
+          {t('admin.appointments.newStatus')}
         </label>
         <select
           aria-describedby={
@@ -577,7 +568,7 @@ function StatusForm({
             .filter((status) => status !== appointment.status)
             .map((status) => (
               <option key={status} value={status}>
-                {formatLabel(status)}
+                {getStatusLabel(t, 'appointment', status)}
               </option>
             ))}
         </select>
@@ -590,13 +581,14 @@ function StatusForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Update status"
+        submitLabel={t('admin.appointments.updateStatus')}
       />
     </form>
   )
 }
 
 export function AdminAppointmentsPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -669,7 +661,7 @@ export function AdminAppointmentsPage() {
     } catch (error) {
       if (sequence === listSequence.current) {
         setLoadError(
-          getErrorMessage(error, 'Appointments could not be loaded.'),
+          getErrorMessage(error, t('admin.appointments.loadError')),
         )
       }
     } finally {
@@ -677,7 +669,7 @@ export function AdminAppointmentsPage() {
         setIsLoading(false)
       }
     }
-  }, [date, method, page, search, staffId, status, todayOnly])
+  }, [date, method, page, search, staffId, status, t, todayOnly])
 
   useEffect(() => {
     void loadAppointments()
@@ -716,13 +708,13 @@ export function AdminAppointmentsPage() {
 
     const warnings = [
       customersResult.status === 'rejected'
-        ? getErrorMessage(customersResult.reason, 'Customers could not load.')
+        ? getErrorMessage(customersResult.reason, t('admin.appointments.customersLoadError'))
         : '',
       casesResult.status === 'rejected'
-        ? getErrorMessage(casesResult.reason, 'Cases could not load.')
+        ? getErrorMessage(casesResult.reason, t('admin.appointments.casesLoadError'))
         : '',
       usersResult.status === 'rejected'
-        ? getErrorMessage(usersResult.reason, 'Staff options could not load.')
+        ? getErrorMessage(usersResult.reason, t('admin.appointments.staffLoadError'))
         : '',
     ].filter(Boolean)
 
@@ -762,7 +754,7 @@ export function AdminAppointmentsPage() {
     } catch (error) {
       if (sequence === detailSequence.current) {
         setDetailError(
-          getErrorMessage(error, 'Appointment details could not be loaded.'),
+          getErrorMessage(error, t('admin.appointments.detailsLoadError')),
         )
       }
     } finally {
@@ -798,12 +790,14 @@ export function AdminAppointmentsPage() {
       closeCreate()
       setFeedback({
         type: 'success',
-        message: `Appointment for ${created.customer.fullName} created.`,
+        message: t('admin.appointments.createdFeedback', {
+          name: created.customer.fullName,
+        }),
       })
       await refreshAfterMutation()
     } catch (error) {
       setCreateError(
-        getErrorMessage(error, 'The appointment could not be created.'),
+        getErrorMessage(error, t('admin.appointments.createError')),
       )
     }
   }
@@ -823,12 +817,14 @@ export function AdminAppointmentsPage() {
       setAppointmentDetail(updated)
       setFeedback({
         type: 'success',
-        message: `Appointment for ${updated.customer.fullName} updated.`,
+        message: t('admin.appointments.updatedFeedback', {
+          name: updated.customer.fullName,
+        }),
       })
       await refreshAfterMutation()
     } catch (error) {
       setDetailError(
-        getErrorMessage(error, 'The appointment could not be updated.'),
+        getErrorMessage(error, t('admin.appointments.updateError')),
       )
     }
   }
@@ -850,14 +846,16 @@ export function AdminAppointmentsPage() {
       setStatusTarget(null)
       setFeedback({
         type: 'success',
-        message: `Appointment moved to ${formatLabel(updated.status)}.`,
+        message: t('admin.appointments.statusFeedback', {
+          status: getStatusLabel(t, 'appointment', updated.status),
+        }),
       })
       await refreshAfterMutation()
     } catch (error) {
       setStatusError(
         getErrorMessage(
           error,
-          'The appointment status could not be updated.',
+          t('admin.appointments.statusUpdateError'),
         ),
       )
     }
@@ -877,7 +875,9 @@ export function AdminAppointmentsPage() {
       setDeleteTarget(null)
       setFeedback({
         type: 'success',
-        message: `Appointment for ${customerName} deleted.`,
+        message: t('admin.appointments.deletedFeedback', {
+          name: customerName,
+        }),
       })
 
       if (!todayOnly && appointments.length === 1 && page > 1) {
@@ -891,7 +891,7 @@ export function AdminAppointmentsPage() {
         type: 'error',
         message: getErrorMessage(
           error,
-          'The appointment could not be deleted.',
+          t('admin.appointments.deleteError'),
         ),
       })
     } finally {
@@ -943,21 +943,21 @@ export function AdminAppointmentsPage() {
   const columns: readonly DataTableColumn<Appointment>[] = [
     {
       key: 'date',
-      header: 'Date',
+      header: t('admin.appointments.date'),
       render: (appointment) => (
         <span className="font-semibold text-slate-800">
-          {formatDate(appointment.appointmentDate)}
+          {formatLocalizedDate(appointment.appointmentDate)}
         </span>
       ),
     },
     {
       key: 'time',
-      header: 'Time',
+      header: t('admin.appointments.time'),
       render: (appointment) => formatTimeRange(appointment),
     },
     {
       key: 'customer',
-      header: 'Customer',
+      header: t('navigation.customers'),
       render: (appointment) => (
         <div>
           <p className="font-semibold text-slate-800">
@@ -971,7 +971,7 @@ export function AdminAppointmentsPage() {
     },
     {
       key: 'case',
-      header: 'Case',
+      header: t('navigation.cases'),
       className: 'max-w-56',
       render: (appointment) =>
         appointment.caseProfile ? (
@@ -984,62 +984,68 @@ export function AdminAppointmentsPage() {
             </p>
           </div>
         ) : (
-          'No case'
+          t('admin.appointments.noCase')
         ),
     },
     {
       key: 'staff',
-      header: 'Staff',
-      render: (appointment) => appointment.staff?.fullName ?? 'Unassigned',
+      header: t('status.role.STAFF'),
+      render: (appointment) => appointment.staff?.fullName ?? t('common.notAssigned'),
     },
     {
       key: 'method',
-      header: 'Method',
+      header: t('admin.appointments.method'),
       render: (appointment) => (
         <AppointmentMethodBadge method={appointment.method} />
       ),
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('portal.dashboard.status'),
       render: (appointment) => (
         <StatusBadge namespace="appointment" status={appointment.status} />
       ),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
       className: 'text-right',
       render: (appointment) => (
         <div className="flex justify-end gap-1">
           <button
-            aria-label={`View and edit appointment for ${appointment.customer.fullName}`}
+            aria-label={t('admin.appointments.viewEditAria', {
+              name: appointment.customer.fullName,
+            })}
             className="rounded-lg p-2 text-blue-700 transition hover:bg-blue-50"
             onClick={() => openDetail(appointment)}
-            title="View / Edit"
+            title={t('admin.customers.actions.viewEdit')}
             type="button"
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
-            aria-label={`Update status for appointment with ${appointment.customer.fullName}`}
+            aria-label={t('admin.appointments.updateStatusAria', {
+              name: appointment.customer.fullName,
+            })}
             className="rounded-lg p-2 text-violet-700 transition hover:bg-violet-50"
             onClick={() => {
               setStatusError(null)
               setStatusTarget(appointment)
             }}
-            title="Update status"
+            title={t('admin.appointments.updateStatus')}
             type="button"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
           </button>
           {canManage ? (
             <button
-              aria-label={`Delete appointment for ${appointment.customer.fullName}`}
+              aria-label={t('admin.appointments.deleteAria', {
+                name: appointment.customer.fullName,
+              })}
               className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"
               onClick={() => setDeleteTarget(appointment)}
-              title="Delete"
+              title={t('common.delete')}
               type="button"
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -1055,13 +1061,13 @@ export function AdminAppointmentsPage() {
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            Appointment schedule
+            {t('admin.appointments.eyebrow')}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Appointments
+            {t('navigation.appointments')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Coordinate consultation dates, meeting channels and team ownership.
+            {t('admin.appointments.description')}
           </p>
         </div>
         <button
@@ -1070,7 +1076,7 @@ export function AdminAppointmentsPage() {
           type="button"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Create Appointment
+          {t('admin.appointments.createAppointment')}
         </button>
       </header>
 
@@ -1085,14 +1091,14 @@ export function AdminAppointmentsPage() {
         <div className="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[minmax(16rem,1fr)_11rem_11rem_12rem_12rem_auto_auto]">
           <SearchInput
             isDisabled={isLoading || todayOnly}
-            label="Search appointments"
+            label={t('admin.appointments.searchLabel')}
             onChange={setSearchInput}
             onSubmit={submitSearch}
-            placeholder="Search customer, phone or note..."
+            placeholder={t('admin.appointments.searchPlaceholder')}
             value={searchInput}
           />
           <input
-            aria-label="Filter appointment date"
+            aria-label={t('admin.appointments.filterDate')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
             disabled={todayOnly}
             onChange={(event) => {
@@ -1103,7 +1109,7 @@ export function AdminAppointmentsPage() {
             value={date}
           />
           <select
-            aria-label="Filter appointment status"
+            aria-label={t('admin.appointments.filterStatus')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
             disabled={todayOnly}
             onChange={(event) => {
@@ -1112,15 +1118,15 @@ export function AdminAppointmentsPage() {
             }}
             value={status}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('admin.appointments.allStatuses')}</option>
             {appointmentStatuses.map((appointmentStatus) => (
               <option key={appointmentStatus} value={appointmentStatus}>
-                {formatLabel(appointmentStatus)}
+                {getStatusLabel(t, 'appointment', appointmentStatus)}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter appointment method"
+            aria-label={t('admin.appointments.filterMethod')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
             disabled={todayOnly}
             onChange={(event) => {
@@ -1129,15 +1135,15 @@ export function AdminAppointmentsPage() {
             }}
             value={method}
           >
-            <option value="">All methods</option>
+            <option value="">{t('admin.appointments.allMethods')}</option>
             {appointmentMethods.map((appointmentMethod) => (
               <option key={appointmentMethod} value={appointmentMethod}>
-                {formatLabel(appointmentMethod)}
+                {getStatusLabel(t, 'method', appointmentMethod)}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter appointment staff"
+            aria-label={t('admin.appointments.filterStaff')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             onChange={(event) => {
               setPage(1)
@@ -1150,7 +1156,7 @@ export function AdminAppointmentsPage() {
             }}
             value={staffId}
           >
-            <option value="">All staff</option>
+            <option value="">{t('admin.appointments.allStaff')}</option>
             {lookups.users.map((staff) => (
               <option key={staff.id} value={staff.id}>
                 {staff.fullName}
@@ -1173,7 +1179,7 @@ export function AdminAppointmentsPage() {
             type="button"
           >
             <CalendarDays className="h-4 w-4" aria-hidden="true" />
-            Today
+            {t('admin.appointments.today')}
           </button>
           <button
             className="min-h-11 rounded-xl px-3 text-sm font-bold text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1181,7 +1187,7 @@ export function AdminAppointmentsPage() {
             onClick={clearFilters}
             type="button"
           >
-            Clear filters
+            {t('admin.appointments.clearFilters')}
           </button>
         </div>
 
@@ -1197,7 +1203,7 @@ export function AdminAppointmentsPage() {
         {todayOnly ? (
           <div className="flex items-center gap-2 border-b border-blue-100 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-800">
             <CalendarClock className="h-4 w-4" aria-hidden="true" />
-            Showing active appointments scheduled for today.
+            {t('admin.appointments.todayBanner')}
           </div>
         ) : null}
 
@@ -1206,7 +1212,7 @@ export function AdminAppointmentsPage() {
             <div>
               <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
               <h2 className="mt-4 font-bold text-slate-900">
-                Couldn&apos;t load appointments
+                {t('admin.appointments.loadErrorTitle')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
                 {loadError}
@@ -1216,21 +1222,21 @@ export function AdminAppointmentsPage() {
                 onClick={() => void loadAppointments()}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           </div>
         ) : isLoading && appointments.length === 0 ? (
-          <LoadingState label="Loading appointments..." />
+          <LoadingState label={t('admin.appointments.loading')} />
         ) : appointments.length === 0 ? (
           <EmptyState
             description={
               hasFilters
-                ? 'Try changing or clearing the current filters.'
-                : 'Create the first appointment to start coordinating schedules.'
+                ? t('admin.appointments.emptyFiltered')
+                : t('admin.appointments.emptyDefault')
             }
             icon={<SearchX className="h-6 w-6" aria-hidden="true" />}
-            title="No appointments found"
+            title={t('admin.appointments.emptyTitle')}
           />
         ) : (
           <>
@@ -1239,18 +1245,22 @@ export function AdminAppointmentsPage() {
                 className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
                 role="alert"
               >
-                <span>Refresh failed: {loadError}. Showing cached data.</span>
+                <span>
+                  {t('admin.appointments.refreshFailed', {
+                    message: loadError,
+                  })}
+                </span>
                 <button
                   className="shrink-0 font-bold underline"
                   onClick={() => void loadAppointments()}
                   type="button"
                 >
-                  Retry
+                  {t('admin.appointments.retry')}
                 </button>
               </div>
             ) : null}
             <DataTable
-              caption="Appointments"
+              caption={t('navigation.appointments')}
               columns={columns}
               getRowKey={(appointment) => appointment.id}
               items={appointments}
@@ -1271,7 +1281,7 @@ export function AdminAppointmentsPage() {
         isOpen={isCreateOpen}
         onClose={closeCreate}
         size="lg"
-        title="Create Appointment"
+        title={t('admin.appointments.createAppointment')}
       >
         <AppointmentForm
           canAssign={canManage}
@@ -1283,7 +1293,7 @@ export function AdminAppointmentsPage() {
           lookups={lookups}
           onCancel={closeCreate}
           onSubmit={handleCreate}
-          submitLabel="Create appointment"
+          submitLabel={t('admin.appointments.createAppointment')}
         />
       </Modal>
 
@@ -1294,8 +1304,10 @@ export function AdminAppointmentsPage() {
         size="lg"
         title={
           detailTarget
-            ? `View / Edit ${detailTarget.customer.fullName}`
-            : 'Appointment details'
+            ? t('admin.appointments.viewEditTitle', {
+                name: detailTarget.customer.fullName,
+              })
+            : t('admin.appointments.detailsTitle')
         }
       >
         {appointmentDetail ? (
@@ -1309,7 +1321,7 @@ export function AdminAppointmentsPage() {
             lookups={lookups}
             onCancel={closeDetail}
             onSubmit={handleEdit}
-            submitLabel="Save changes"
+            submitLabel={t('common.saveChanges')}
           />
         ) : (
           <div className="p-6">
@@ -1318,7 +1330,7 @@ export function AdminAppointmentsPage() {
                 {detailError}
               </div>
             ) : (
-              <LoadingState label="Loading appointment details..." />
+              <LoadingState label={t('admin.appointments.loadingDetails')} />
             )}
           </div>
         )}
@@ -1331,7 +1343,7 @@ export function AdminAppointmentsPage() {
           setStatusError(null)
         }}
         size="sm"
-        title="Update Appointment Status"
+        title={t('admin.appointments.updateStatusTitle')}
       >
         {statusTarget ? (
           <StatusForm
@@ -1349,14 +1361,16 @@ export function AdminAppointmentsPage() {
       <ConfirmDialog
         isLoading={isDeleting}
         isOpen={deleteTarget !== null}
-        message={`Delete appointment for ${deleteTarget?.customer.fullName ?? ''}? This action cannot be undone.`}
+        message={t('admin.appointments.deleteConfirm', {
+          name: deleteTarget?.customer.fullName ?? '',
+        })}
         onCancel={() => {
           if (!isDeleting) {
             setDeleteTarget(null)
           }
         }}
         onConfirm={() => void handleDelete()}
-        title="Delete appointment"
+        title={t('admin.appointments.deleteTitle')}
       />
     </div>
   )

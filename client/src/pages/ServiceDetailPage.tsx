@@ -1,17 +1,21 @@
 import { ArrowLeft, ArrowRight, Check, CheckCircle2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { Container } from '../components/common/Container'
 import { services } from '../data/services'
+import { getLocalizedService } from '../i18n/staticContent'
 import { NotFoundPage } from './NotFoundPage'
 
 export function ServiceDetailPage() {
   const { slug } = useParams<{ slug: string }>()
+  const { t } = useTranslation()
   const service = services.find((item) => item.slug === slug)
 
   if (!service) {
     return <NotFoundPage />
   }
 
+  const localizedService = getLocalizedService(t, service)
   const Icon = service.icon
 
   return (
@@ -27,7 +31,7 @@ export function ServiceDetailPage() {
             className="inline-flex items-center gap-2 text-sm font-semibold text-blue-300 transition hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            All services
+            {t('public.serviceDetail.allServices')}
           </Link>
           <div className="mt-10 grid items-end gap-10 lg:grid-cols-[1fr_auto]">
             <div>
@@ -35,17 +39,17 @@ export function ServiceDetailPage() {
                 <Icon className="h-8 w-8" />
               </span>
               <h1 className="mt-7 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">
-                {service.title}
+                {localizedService.title}
               </h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">
-                {service.shortDescription}
+                {localizedService.shortDescription}
               </p>
             </div>
             <Link
               to="/consultation"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-500"
             >
-              Book a consultation
+              {t('public.serviceDetail.bookConsultation')}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -56,22 +60,22 @@ export function ServiceDetailPage() {
         <Container className="grid gap-14 lg:grid-cols-[1fr_.8fr] lg:gap-20">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-700">
-              Service overview
+              {t('public.serviceDetail.overviewEyebrow')}
             </p>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-              Advice grounded in your operating reality
+              {t('public.serviceDetail.overviewTitle')}
             </h2>
             <p className="mt-6 text-lg leading-8 text-slate-600">
-              {service.description}
+              {localizedService.description}
             </p>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
             <h2 className="text-xl font-bold text-slate-950">
-              What this engagement brings
+              {t('public.serviceDetail.benefitsTitle')}
             </h2>
             <ul className="mt-6 space-y-4">
-              {service.benefits.map((benefit) => (
+              {localizedService.benefits.map((benefit) => (
                 <li
                   key={benefit}
                   className="flex gap-3 text-sm leading-6 text-slate-700"
@@ -91,19 +95,18 @@ export function ServiceDetailPage() {
         <Container>
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-700">
-              Engagement process
+              {t('public.serviceDetail.processEyebrow')}
             </p>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-              A focused route from question to action
+              {t('public.serviceDetail.processTitle')}
             </h2>
             <p className="mt-4 leading-7 text-slate-600">
-              We adapt the detail to your situation while keeping every stage
-              clear and accountable.
+              {t('public.serviceDetail.processDescription')}
             </p>
           </div>
 
           <ol className="mt-12 grid gap-5 md:grid-cols-2">
-            {service.process.map((step, index) => (
+            {localizedService.process.map((step, index) => (
               <li
                 key={step}
                 className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-6"
@@ -113,7 +116,7 @@ export function ServiceDetailPage() {
                 </span>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
-                    Stage {index + 1}
+                    {t('public.serviceDetail.stage', { number: index + 1 })}
                   </p>
                   <p className="mt-1 font-semibold leading-7 text-slate-950">
                     {step}
@@ -136,21 +139,22 @@ export function ServiceDetailPage() {
               <div>
                 <span className="inline-flex items-center gap-2 text-sm font-semibold text-blue-100">
                   <CheckCircle2 className="h-4 w-4 text-amber-300" />
-                  Start with a confidential conversation
+                  {t('public.serviceDetail.ctaEyebrow')}
                 </span>
                 <h2 className="mt-4 text-3xl font-bold">
-                  Ready to discuss {service.title.toLowerCase()}?
+                  {t('public.serviceDetail.ctaTitle', {
+                    service: localizedService.title.toLowerCase(),
+                  })}
                 </h2>
                 <p className="mt-4 max-w-2xl leading-7 text-blue-100">
-                  Share your objectives and immediate concerns. We will help you
-                  frame the right scope and next step.
+                  {t('public.serviceDetail.ctaDescription')}
                 </p>
               </div>
               <Link
                 to="/consultation"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-800 transition hover:bg-amber-50"
               >
-                Request consultation
+                {t('public.serviceDetail.ctaButton')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

@@ -1,10 +1,12 @@
 import { ArrowLeft, Home } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '../components/common/Button'
 import { Container } from '../components/common/Container'
 
 export function NotFoundPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   return (
@@ -19,19 +21,18 @@ export function NotFoundPage() {
             404
           </p>
           <p className="-mt-5 text-sm font-bold uppercase tracking-[0.2em] text-blue-600">
-            Page not found
+            {t('public.notFound.eyebrow')}
           </p>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            This page is not part of the map
+            {t('public.notFound.title')}
           </h1>
           <p className="mx-auto mt-4 max-w-lg leading-7 text-slate-600">
-            The address may be incorrect, or the content may have moved. Return
-            home or go back to the previous page.
+            {t('public.notFound.description')}
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Button to="/" size="lg">
               <Home className="h-4 w-4" aria-hidden="true" />
-              Back to home
+              {t('public.notFound.backHome')}
             </Button>
             <Button
               variant="outline"
@@ -39,7 +40,7 @@ export function NotFoundPage() {
               onClick={() => navigate(-1)}
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Previous page
+              {t('public.notFound.previousPage')}
             </Button>
           </div>
         </div>

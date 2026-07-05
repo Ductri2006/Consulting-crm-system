@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './auth.context'
 import type { UserRole } from './auth.types'
@@ -16,6 +17,7 @@ export function ProtectedRoute({
   loadingFallback,
   forbiddenFallback,
 }: ProtectedRouteProps) {
+  const { t } = useTranslation()
   const { isAuthenticated, isLoading, user } = useAuth()
   const location = useLocation()
 
@@ -26,7 +28,7 @@ export function ProtectedRoute({
           className="flex min-h-screen items-center justify-center bg-slate-50 text-sm font-medium text-slate-600"
           role="status"
         >
-          Restoring your session...
+          {t('common.restoringSession')}
         </div>
       )
     )

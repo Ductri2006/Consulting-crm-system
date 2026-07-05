@@ -52,6 +52,23 @@ export const formatDateTime = (
   }).format(date)
 }
 
+export const formatMonthYear = (
+  value: string,
+  language?: SupportedLanguage | string,
+): string => {
+  const [year, month] = value.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, 1))
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat(getLocaleTag(language), {
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+}
+
 export const formatNumber = (
   value: number,
   language?: SupportedLanguage | string,

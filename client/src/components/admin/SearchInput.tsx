@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react'
 import { useId } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export interface SearchInputProps {
   value: string
@@ -14,11 +15,14 @@ export function SearchInput({
   value,
   onChange,
   onSubmit,
-  placeholder = 'Search',
-  label = 'Search',
+  placeholder,
+  label,
   isDisabled = false,
 }: SearchInputProps) {
+  const { t } = useTranslation()
   const inputId = useId()
+  const resolvedLabel = label ?? t('common.search')
+  const resolvedPlaceholder = placeholder ?? t('common.search')
 
   return (
     <form
@@ -30,7 +34,7 @@ export function SearchInput({
       role="search"
     >
       <label className="sr-only" htmlFor={inputId}>
-        {label}
+        {resolvedLabel}
       </label>
       <Search
         aria-hidden="true"
@@ -41,14 +45,14 @@ export function SearchInput({
         disabled={isDisabled}
         id={inputId}
         onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         type="search"
         value={value}
       />
       <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
         {value ? (
           <button
-            aria-label="Clear search"
+            aria-label={t('common.clearSearch')}
             className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             onClick={() => {
               onChange('')
@@ -63,7 +67,7 @@ export function SearchInput({
           disabled={isDisabled}
           type="submit"
         >
-          Search
+          {t('common.search')}
         </button>
       </div>
     </form>

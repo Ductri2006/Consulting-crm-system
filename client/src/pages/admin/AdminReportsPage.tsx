@@ -19,6 +19,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   EmptyState,
   LoadingState,
@@ -41,6 +42,13 @@ import {
   type StaffPerformanceItem,
   type UpcomingDeadlineItem,
 } from '../../features/reports'
+import {
+  formatDate as formatLocalizedDate,
+  formatDateTime as formatLocalizedDateTime,
+  formatMonthYear,
+  formatNumber,
+} from '../../i18n/format'
+import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
 
 const DEADLINE_LIMIT = 10
@@ -69,73 +77,53 @@ const EMPTY_OVERVIEW: DashboardOverview = {
 const overviewCards = [
   {
     key: 'totalCustomers',
-    label: 'Total Customers',
     icon: UsersRound,
     iconClassName: 'bg-blue-50 text-blue-600',
-    description: 'Customer records',
   },
   {
     key: 'totalCases',
-    label: 'Total Cases',
     icon: FolderKanban,
     iconClassName: 'bg-indigo-50 text-indigo-600',
-    description: 'All case profiles',
   },
   {
     key: 'casesInProgress',
-    label: 'Cases In Progress',
     icon: Clock3,
     iconClassName: 'bg-amber-50 text-amber-600',
-    description: 'Active processing',
   },
   {
     key: 'completedCases',
-    label: 'Completed Cases',
     icon: CheckCircle2,
     iconClassName: 'bg-emerald-50 text-emerald-600',
-    description: 'Successfully completed',
   },
   {
     key: 'overdueCases',
-    label: 'Overdue Cases',
     icon: AlertTriangle,
     iconClassName: 'bg-rose-50 text-rose-600',
-    description: 'Require attention',
   },
   {
     key: 'todayAppointments',
-    label: 'Today Appointments',
     icon: CalendarCheck2,
     iconClassName: 'bg-cyan-50 text-cyan-600',
-    description: 'Scheduled today',
   },
   {
     key: 'pendingTasks',
-    label: 'Pending Tasks',
     icon: ClipboardList,
     iconClassName: 'bg-violet-50 text-violet-600',
-    description: 'Open team tasks',
   },
   {
     key: 'overdueTasks',
-    label: 'Overdue Tasks',
     icon: AlertTriangle,
     iconClassName: 'bg-orange-50 text-orange-600',
-    description: 'Past deadline',
   },
   {
     key: 'totalDocuments',
-    label: 'Total Documents',
     icon: FileStack,
     iconClassName: 'bg-slate-100 text-slate-600',
-    description: 'Files on record',
   },
   {
     key: 'newConsultationRequests',
-    label: 'New Consultations',
     icon: Inbox,
     iconClassName: 'bg-fuchsia-50 text-fuchsia-600',
-    description: 'Awaiting contact',
   },
 ] as const
 
@@ -153,6 +141,12 @@ const deadlineTypeStyles: Record<UpcomingDeadlineItem['type'], string> = {
   TASK: 'bg-amber-50 text-amber-700',
   APPOINTMENT: 'bg-cyan-50 text-cyan-700',
 }
+
+const deadlineStatusNamespaces = {
+  CASE: 'case',
+  TASK: 'task',
+  APPOINTMENT: 'appointment',
+} as const
 
 const toDateInputValue = (date: Date): string => {
   const timezoneOffset = date.getTimezoneOffset() * 60_000
@@ -181,9 +175,12 @@ const getThisMonthRange = (): ReportDateRange => {
   }
 }
 
-const getDateRangeError = (range: ReportDateRange): string | null => {
+const getDateRangeError = (
+  range: ReportDateRange,
+  message: string,
+): string | null => {
   if (range.fromDate && range.toDate && range.fromDate > range.toDate) {
-    return 'From date must be on or before to date.'
+    return message
   }
 
   return null
@@ -191,42 +188,6 @@ const getDateRangeError = (range: ReportDateRange): string | null => {
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
-
-const formatLabel = (value: string): string =>
-  value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
-
-const formatDateTime = (value: string, includeTime = false): string => {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {}),
-  }).format(date)
-}
-
-const formatMonth = (value: string): string => {
-  const [year, month] = value.split('-').map(Number)
-  const date = new Date(Date.UTC(year, month - 1, 1))
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
 
 function SectionShell({
   children,
@@ -268,11 +229,15 @@ function SectionError({
   message: string
   onRetry?: () => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid min-h-64 place-items-center p-8 text-center">
       <div className="max-w-md">
         <AlertTriangle className="mx-auto h-8 w-8 text-rose-600" />
-        <h3 className="mt-4 font-bold text-slate-900">Report unavailable</h3>
+        <h3 className="mt-4 font-bold text-slate-900">
+          {t('admin.reports.unavailable')}
+        </h3>
         <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
         {onRetry ? (
           <button
@@ -281,7 +246,7 @@ function SectionError({
             type="button"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
-            Retry
+            {t('admin.appointments.retry')}
           </button>
         ) : null}
       </div>
@@ -310,13 +275,14 @@ function CasesByStatusChart({
 }: {
   items: CaseStatusReportItem[]
 }) {
+  const { i18n, t } = useTranslation()
   const maxCount = Math.max(1, ...items.map((item) => item.count))
 
   if (items.every((item) => item.count === 0)) {
     return (
       <EmptyReport
-        description="Case workflow counts will appear once cases exist."
-        title="No case status data"
+        description={t('admin.reports.empty.caseStatusDescription')}
+        title={t('admin.reports.empty.caseStatusTitle')}
       />
     )
   }
@@ -328,7 +294,7 @@ function CasesByStatusChart({
           <div className="mb-2 flex items-center justify-between gap-4">
             <StatusBadge status={item.status} />
             <span className="text-sm font-bold tabular-nums text-slate-700">
-              {item.count.toLocaleString()}
+              {formatNumber(item.count, i18n.language)}
             </span>
           </div>
           <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
@@ -352,6 +318,7 @@ function CasesByStatusChart({
 }
 
 function CasesByMonthChart({ items }: { items: CasesByMonthItem[] }) {
+  const { i18n, t } = useTranslation()
   const maxCount = Math.max(
     1,
     ...items.flatMap((item) => [item.created, item.completed]),
@@ -360,8 +327,8 @@ function CasesByMonthChart({ items }: { items: CasesByMonthItem[] }) {
   if (items.length === 0) {
     return (
       <EmptyReport
-        description="Try selecting a wider date range."
-        title="No monthly case data"
+        description={t('admin.reports.empty.monthlyDescription')}
+        title={t('admin.reports.empty.monthlyTitle')}
       />
     )
   }
@@ -371,11 +338,11 @@ function CasesByMonthChart({ items }: { items: CasesByMonthItem[] }) {
       <div className="mb-4 flex items-center gap-5 text-xs font-bold uppercase tracking-wide text-slate-400">
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded bg-blue-500" />
-          Created
+          {t('common.created')}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded bg-emerald-500" />
-          Completed
+          {t('common.completed')}
         </span>
       </div>
       <div className="space-y-5">
@@ -385,7 +352,7 @@ function CasesByMonthChart({ items }: { items: CasesByMonthItem[] }) {
             key={item.month}
           >
             <span className="text-sm font-bold text-slate-700">
-              {formatMonth(item.month)}
+              {formatMonthYear(item.month, i18n.language)}
             </span>
             <div className="space-y-2">
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
@@ -412,7 +379,8 @@ function CasesByMonthChart({ items }: { items: CasesByMonthItem[] }) {
               </div>
             </div>
             <span className="text-right text-sm font-bold tabular-nums text-slate-700">
-              {item.created}/{item.completed}
+              {formatNumber(item.created, i18n.language)}/
+              {formatNumber(item.completed, i18n.language)}
             </span>
           </div>
         ))}
@@ -426,11 +394,13 @@ function UpcomingDeadlinesList({
 }: {
   items: UpcomingDeadlineItem[]
 }) {
+  const { i18n, t } = useTranslation()
+
   if (items.length === 0) {
     return (
       <EmptyReport
-        description="No open cases, tasks or appointments are due in this window."
-        title="No upcoming deadlines"
+        description={t('admin.reports.empty.deadlinesDescription')}
+        title={t('admin.reports.empty.deadlinesTitle')}
       />
     )
   }
@@ -450,11 +420,13 @@ function UpcomingDeadlinesList({
                   deadlineTypeStyles[item.type],
                 )}
               >
-                {item.type}
+                {t(`admin.dashboard.deadlineType.${item.type}`)}
               </span>
               {item.priority ? (
                 <span className="text-xs font-semibold text-slate-400">
-                  {formatLabel(item.priority)} priority
+                  {t('admin.dashboard.priority', {
+                    priority: getStatusLabel(t, 'priority', item.priority),
+                  })}
                 </span>
               ) : null}
             </div>
@@ -465,7 +437,7 @@ function UpcomingDeadlinesList({
           <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
             <div className="text-right">
               <p className="text-sm font-semibold text-slate-700">
-                {formatDateTime(item.date)}
+                {formatLocalizedDate(item.date, i18n.language)}
               </p>
               {item.startTime ? (
                 <p className="mt-0.5 text-xs text-slate-400">
@@ -473,7 +445,10 @@ function UpcomingDeadlinesList({
                 </p>
               ) : null}
             </div>
-            <StatusBadge status={item.status} />
+            <StatusBadge
+              namespace={deadlineStatusNamespaces[item.type]}
+              status={item.status}
+            />
           </div>
         </li>
       ))}
@@ -486,11 +461,13 @@ function StaffPerformanceList({
 }: {
   items: StaffPerformanceItem[]
 }) {
+  const { i18n, t } = useTranslation()
+
   if (items.length === 0) {
     return (
       <EmptyReport
-        description="No staff activity was found for the selected date range."
-        title="No staff performance data"
+        description={t('admin.reports.empty.staffDescription')}
+        title={t('admin.reports.empty.staffTitle')}
       />
     )
   }
@@ -501,11 +478,11 @@ function StaffPerformanceList({
         <thead className="bg-slate-50/80">
           <tr>
             {[
-              'Staff',
-              'Assigned cases',
-              'Completed cases',
-              'Completed tasks',
-              'Appointments',
+              t('status.role.STAFF'),
+              t('admin.reports.staff.assignedCases'),
+              t('admin.reports.staff.completedCases'),
+              t('admin.reports.staff.completedTasks'),
+              t('navigation.appointments'),
             ].map((header) => (
               <th
                 className="whitespace-nowrap px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
@@ -529,16 +506,16 @@ function StaffPerformanceList({
                 </div>
               </td>
               <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-slate-700">
-                {item.assignedCases.toLocaleString()}
+                {formatNumber(item.assignedCases, i18n.language)}
               </td>
               <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-emerald-700">
-                {item.completedCases.toLocaleString()}
+                {formatNumber(item.completedCases, i18n.language)}
               </td>
               <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-blue-700">
-                {item.completedTasks.toLocaleString()}
+                {formatNumber(item.completedTasks, i18n.language)}
               </td>
               <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-violet-700">
-                {item.appointmentsCompleted.toLocaleString()}
+                {formatNumber(item.appointmentsCompleted, i18n.language)}
               </td>
             </tr>
           ))}
@@ -549,11 +526,13 @@ function StaffPerformanceList({
 }
 
 function RecentActivitiesList({ items }: { items: RecentActivityItem[] }) {
+  const { i18n, t } = useTranslation()
+
   if (items.length === 0) {
     return (
       <EmptyReport
-        description="Case updates will appear here as the team works."
-        title="No recent activities"
+        description={t('admin.reports.empty.activitiesDescription')}
+        title={t('admin.reports.empty.activitiesTitle')}
       />
     )
   }
@@ -569,7 +548,7 @@ function RecentActivitiesList({ items }: { items: RecentActivityItem[] }) {
             <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-start sm:gap-4">
               <p className="text-sm leading-6 text-slate-700">
                 <span className="font-bold text-slate-900">
-                  {activity.user?.fullName ?? 'System'}
+                  {activity.user?.fullName ?? t('admin.dashboard.system')}
                 </span>{' '}
                 {activity.description}
               </p>
@@ -577,7 +556,7 @@ function RecentActivitiesList({ items }: { items: RecentActivityItem[] }) {
                 className="shrink-0 text-xs text-slate-400"
                 dateTime={activity.createdAt}
               >
-                {formatDateTime(activity.createdAt, true)}
+                {formatLocalizedDateTime(activity.createdAt, i18n.language)}
               </time>
             </div>
             <p className="mt-1 truncate text-xs text-slate-400">
@@ -589,7 +568,9 @@ function RecentActivitiesList({ items }: { items: RecentActivityItem[] }) {
                   <StatusBadge status={activity.oldStatus} />
                 ) : null}
                 {activity.oldStatus ? (
-                  <span className="text-xs text-slate-300">to</span>
+                  <span className="text-xs text-slate-300">
+                    {t('admin.reports.toStatus')}
+                  </span>
                 ) : null}
                 <StatusBadge status={activity.newStatus} />
               </div>
@@ -602,6 +583,7 @@ function RecentActivitiesList({ items }: { items: RecentActivityItem[] }) {
 }
 
 export function AdminReportsPage() {
+  const { i18n, t } = useTranslation()
   const { user } = useAuth()
   const canViewStaffPerformance =
     user?.role === 'ADMIN' || user?.role === 'MANAGER'
@@ -649,7 +631,10 @@ export function AdminReportsPage() {
     isLoading: true,
     error: null,
   })
-  const rangeError = getDateRangeError(dateRange)
+  const rangeError = getDateRangeError(
+    dateRange,
+    t('admin.reports.rangeError'),
+  )
 
   const loadStaticReports = useCallback(async () => {
     setOverview((current) => ({ ...current, isLoading: true, error: null }))
@@ -679,7 +664,7 @@ export function AdminReportsPage() {
       isLoading: false,
       error:
         overviewResult.status === 'rejected'
-          ? getErrorMessage(overviewResult.reason, 'Overview could not load.')
+          ? getErrorMessage(overviewResult.reason, t('admin.reports.errors.overview'))
           : null,
     })
     setCasesByStatus({
@@ -689,7 +674,7 @@ export function AdminReportsPage() {
         statusResult.status === 'rejected'
           ? getErrorMessage(
               statusResult.reason,
-              'Case status report could not load.',
+              t('admin.reports.errors.caseStatus'),
             )
           : null,
     })
@@ -701,11 +686,11 @@ export function AdminReportsPage() {
         activitiesResult.status === 'rejected'
           ? getErrorMessage(
               activitiesResult.reason,
-              'Recent activities could not load.',
+              t('admin.reports.errors.activities'),
             )
           : null,
     })
-  }, [])
+  }, [t])
 
   const loadRangeReports = useCallback(async () => {
     if (rangeError) {
@@ -754,7 +739,7 @@ export function AdminReportsPage() {
         monthResult.status === 'rejected'
           ? getErrorMessage(
               monthResult.reason,
-              'Monthly case report could not load.',
+              t('admin.reports.errors.monthly'),
             )
           : null,
     })
@@ -768,11 +753,11 @@ export function AdminReportsPage() {
         performanceResult.status === 'rejected'
           ? getErrorMessage(
               performanceResult.reason,
-              'Staff performance report could not load.',
+              t('admin.reports.errors.staff'),
             )
           : null,
     })
-  }, [canViewStaffPerformance, dateRange, rangeError])
+  }, [canViewStaffPerformance, dateRange, rangeError, t])
 
   const loadUpcomingDeadlines = useCallback(async () => {
     setUpcomingDeadlines((current) => ({
@@ -790,11 +775,11 @@ export function AdminReportsPage() {
         isLoading: false,
         error: getErrorMessage(
           error,
-          'Upcoming deadlines could not be loaded.',
+          t('admin.reports.errors.deadlines'),
         ),
       })
     }
-  }, [deadlineDays])
+  }, [deadlineDays, t])
 
   useEffect(() => {
     void loadStaticReports()
@@ -833,14 +818,14 @@ export function AdminReportsPage() {
   )
 
   if (isInitialLoading) {
-    return <LoadingState label="Loading reports..." />
+    return <LoadingState label={t('admin.reports.loading')} />
   }
 
   if (hasInitialErrors) {
     return (
       <div className="mx-auto max-w-[1600px]">
         <SectionError
-          message="The reports page could not load any report sections."
+          message={t('admin.reports.errors.page')}
           onRetry={() => {
             void loadStaticReports()
             void loadRangeReports()
@@ -856,20 +841,20 @@ export function AdminReportsPage() {
       <header className="flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            Operational insight
+            {t('admin.reports.eyebrow')}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Reports
+            {t('navigation.reports')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Operational insights across CRM activity.
+            {t('admin.reports.description')}
           </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
           <div className="grid gap-2 sm:grid-cols-[10rem_10rem_auto]">
             <label>
-              <span className="sr-only">From date</span>
+              <span className="sr-only">{t('admin.reports.fromDate')}</span>
               <input
                 className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 onChange={(event) =>
@@ -883,7 +868,7 @@ export function AdminReportsPage() {
               />
             </label>
             <label>
-              <span className="sr-only">To date</span>
+              <span className="sr-only">{t('admin.reports.toDate')}</span>
               <input
                 className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 onChange={(event) =>
@@ -898,9 +883,9 @@ export function AdminReportsPage() {
             </label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
-                { label: 'Last 7 days', range: getLastDaysRange(7) },
-                { label: 'Last 30 days', range: getLastDaysRange(30) },
-                { label: 'This month', range: getThisMonthRange() },
+                { label: t('admin.reports.last7Days'), range: getLastDaysRange(7) },
+                { label: t('admin.reports.last30Days'), range: getLastDaysRange(30) },
+                { label: t('admin.reports.thisMonth'), range: getThisMonthRange() },
               ].map((item) => (
                 <button
                   className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
@@ -916,7 +901,7 @@ export function AdminReportsPage() {
                 onClick={() => setDateRange({ fromDate: '', toDate: '' })}
                 type="button"
               >
-                Clear
+                {t('common.clear')}
               </button>
             </div>
           </div>
@@ -929,7 +914,7 @@ export function AdminReportsPage() {
       </header>
 
       <section
-        aria-label="Overview summary"
+        aria-label={t('admin.reports.overviewSummary')}
         className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
       >
         {overview.error ? (
@@ -941,13 +926,13 @@ export function AdminReportsPage() {
           </div>
         ) : (
           overviewCards.map(
-            ({ key, label, icon: Icon, iconClassName, description }) => (
+            ({ key, icon: Icon, iconClassName }) => (
               <StatCard
-                description={description}
+                description={t(`admin.dashboard.stats.${key}.description`)}
                 icon={<Icon className="h-5 w-5" aria-hidden="true" />}
                 iconClassName={iconClassName}
                 key={key}
-                label={label}
+                label={t(`admin.dashboard.stats.${key}.label`)}
                 value={overview.data[key]}
               />
             ),
@@ -957,11 +942,11 @@ export function AdminReportsPage() {
 
       <section className="mt-6 grid gap-6 xl:grid-cols-2">
         <SectionShell
-          description="Distribution across the case workflow."
-          title="Cases by Status"
+          description={t('admin.dashboard.casesByStatusDescription')}
+          title={t('admin.dashboard.casesByStatus')}
         >
           {casesByStatus.isLoading ? (
-            <SectionLoading label="Loading case status report..." />
+            <SectionLoading label={t('admin.reports.loadingCaseStatus')} />
           ) : casesByStatus.error ? (
             <SectionError
               message={casesByStatus.error}
@@ -975,17 +960,25 @@ export function AdminReportsPage() {
         <SectionShell
           action={
             <div className="text-right text-xs font-semibold text-slate-400">
-              <p>{monthTotals.created.toLocaleString()} created</p>
-              <p>{monthTotals.completed.toLocaleString()} completed</p>
+              <p>
+                {t('admin.reports.createdCount', {
+                  count: formatNumber(monthTotals.created, i18n.language),
+                })}
+              </p>
+              <p>
+                {t('admin.reports.completedCount', {
+                  count: formatNumber(monthTotals.completed, i18n.language),
+                })}
+              </p>
             </div>
           }
-          description="Created and completed cases in the selected range."
-          title="Cases by Month"
+          description={t('admin.reports.casesByMonthDescription')}
+          title={t('admin.reports.casesByMonth')}
         >
           {rangeError ? (
             <SectionError message={rangeError} />
           ) : casesByMonth.isLoading ? (
-            <SectionLoading label="Loading monthly case report..." />
+            <SectionLoading label={t('admin.reports.loadingMonthly')} />
           ) : casesByMonth.error ? (
             <SectionError
               message={casesByMonth.error}
@@ -1001,23 +994,23 @@ export function AdminReportsPage() {
         <SectionShell
           action={
             <select
-              aria-label="Upcoming deadline window"
+              aria-label={t('admin.reports.deadlineWindow')}
               className="min-h-10 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               onChange={(event) => setDeadlineDays(Number(event.target.value))}
               value={deadlineDays}
             >
               {[7, 14, 30].map((days) => (
                 <option key={days} value={days}>
-                  {days} days
+                  {t('admin.reports.days', { count: days })}
                 </option>
               ))}
             </select>
           }
-          description="Open cases, tasks and appointments due soon."
-          title="Upcoming Deadlines"
+          description={t('admin.reports.deadlinesDescription')}
+          title={t('admin.dashboard.upcomingDeadlines')}
         >
           {upcomingDeadlines.isLoading ? (
-            <SectionLoading label="Loading upcoming deadlines..." />
+            <SectionLoading label={t('admin.reports.loadingDeadlines')} />
           ) : upcomingDeadlines.error ? (
             <SectionError
               message={upcomingDeadlines.error}
@@ -1029,8 +1022,8 @@ export function AdminReportsPage() {
         </SectionShell>
 
         <SectionShell
-          description="Completed work and ownership metrics for active CRM users."
-          title="Staff Performance"
+          description={t('admin.reports.staffDescription')}
+          title={t('admin.reports.staffTitle')}
         >
           {!canViewStaffPerformance ? (
             <div className="grid min-h-64 place-items-center p-8 text-center">
@@ -1039,18 +1032,17 @@ export function AdminReportsPage() {
                   <LockKeyhole className="h-6 w-6" aria-hidden="true" />
                 </span>
                 <h3 className="mt-4 font-bold text-slate-900">
-                  Staff performance locked
+                  {t('admin.reports.staffLockedTitle')}
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Staff performance reports are available to managers and
-                  administrators.
+                  {t('admin.reports.staffLockedDescription')}
                 </p>
               </div>
             </div>
           ) : rangeError ? (
             <SectionError message={rangeError} />
           ) : staffPerformance.isLoading ? (
-            <SectionLoading label="Loading staff performance..." />
+            <SectionLoading label={t('admin.reports.loadingStaff')} />
           ) : staffPerformance.error ? (
             <SectionError
               message={staffPerformance.error}
@@ -1064,11 +1056,11 @@ export function AdminReportsPage() {
 
       <section className="mt-6">
         <SectionShell
-          description="Latest case history activity across visible cases."
-          title="Recent Activities"
+          description={t('admin.reports.activitiesDescription')}
+          title={t('admin.dashboard.recentActivities')}
         >
           {recentActivities.isLoading ? (
-            <SectionLoading label="Loading recent activities..." />
+            <SectionLoading label={t('admin.reports.loadingActivities')} />
           ) : recentActivities.error ? (
             <SectionError
               message={recentActivities.error}

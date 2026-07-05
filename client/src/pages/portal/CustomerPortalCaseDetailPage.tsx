@@ -356,10 +356,7 @@ export function CustomerPortalCaseDetailPage() {
                   </p>
                   <p className="mt-1 text-xs font-semibold text-slate-500">
                     {getStatusLabel(t, 'document', document.fileType)} -{' '}
-                    {document.mimeType ??
-                      t('portal.caseDetail.unknownType', {
-                        defaultValue: 'Unknown type',
-                      })}{' '}
+                    {document.mimeType ?? t('portal.caseDetail.unknownType')}{' '}
                     -{' '}
                     {formatPortalFileSize(document.size)}
                   </p>

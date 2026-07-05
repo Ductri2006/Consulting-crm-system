@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Send } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 
 const contactSchema = z.object({
   fullName: z.string().trim().min(2, 'Please enter your full name.'),
@@ -17,6 +19,7 @@ const contactSchema = z.object({
 type ContactFormValues = z.infer<typeof contactSchema>
 
 export function ContactForm() {
+  const { t } = useTranslation()
   const [isSuccessful, setIsSuccessful] = useState(false)
   const {
     register,
@@ -49,17 +52,17 @@ export function ContactForm() {
           aria-hidden="true"
         />
         <h2 className="mt-4 text-xl font-bold text-slate-950">
-          Thank you for reaching out
+          {t('public.forms.contact.successTitle')}
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Your message has been recorded. Our team will get back to you soon.
+          {t('public.forms.contact.successDescription')}
         </p>
         <button
           type="button"
           className="mt-5 rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
           onClick={() => setIsSuccessful(false)}
         >
-          Send another message
+          {t('public.forms.contact.sendAnother')}
         </button>
       </div>
     )
@@ -73,14 +76,14 @@ export function ContactForm() {
     >
       <div>
         <label className="field-label" htmlFor="contact-full-name">
-          Full name
+          {t('public.forms.fields.fullName')}
         </label>
         <input
           id="contact-full-name"
           className="field-input"
           type="text"
           autoComplete="name"
-          placeholder="Your full name"
+          placeholder={t('public.forms.placeholders.fullName')}
           aria-invalid={Boolean(errors.fullName)}
           aria-describedby={
             errors.fullName ? 'contact-full-name-error' : undefined
@@ -93,7 +96,7 @@ export function ContactForm() {
             className="field-error"
             role="alert"
           >
-            {errors.fullName.message}
+            {translateValidationMessage(t, errors.fullName.message)}
           </p>
         )}
       </div>
@@ -101,7 +104,7 @@ export function ContactForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label className="field-label" htmlFor="contact-email">
-            Email
+            {t('common.email')}
           </label>
           <input
             id="contact-email"
@@ -115,14 +118,14 @@ export function ContactForm() {
           />
           {errors.email && (
             <p id="contact-email-error" className="field-error" role="alert">
-              {errors.email.message}
+              {translateValidationMessage(t, errors.email.message)}
             </p>
           )}
         </div>
 
         <div>
           <label className="field-label" htmlFor="contact-phone">
-            Phone
+            {t('public.forms.fields.phone')}
           </label>
           <input
             id="contact-phone"
@@ -136,7 +139,7 @@ export function ContactForm() {
           />
           {errors.phone && (
             <p id="contact-phone-error" className="field-error" role="alert">
-              {errors.phone.message}
+              {translateValidationMessage(t, errors.phone.message)}
             </p>
           )}
         </div>
@@ -144,12 +147,12 @@ export function ContactForm() {
 
       <div>
         <label className="field-label" htmlFor="contact-message">
-          Message
+          {t('public.forms.contact.messageLabel')}
         </label>
         <textarea
           id="contact-message"
           className="field-input min-h-36 resize-y"
-          placeholder="Tell us about your goals or current challenge."
+          placeholder={t('public.forms.contact.messagePlaceholder')}
           aria-invalid={Boolean(errors.message)}
           aria-describedby={
             errors.message ? 'contact-message-error' : undefined
@@ -158,7 +161,7 @@ export function ContactForm() {
         />
         {errors.message && (
           <p id="contact-message-error" className="field-error" role="alert">
-            {errors.message.message}
+            {translateValidationMessage(t, errors.message.message)}
           </p>
         )}
       </div>
@@ -169,7 +172,7 @@ export function ContactForm() {
         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
         <Send className="h-4 w-4" aria-hidden="true" />
-        Send message
+        {t('public.forms.contact.button')}
       </button>
     </form>
   )

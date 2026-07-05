@@ -2,6 +2,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { services } from '../../data/services'
+import { getLocalizedService } from '../../i18n/staticContent'
 import { Card } from '../common/Card'
 import { Container } from '../common/Container'
 import { SectionHeading } from '../common/SectionHeading'
@@ -29,6 +30,7 @@ export function ServicesPreview() {
 
         <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {services.map((service, index) => {
+            const localizedService = getLocalizedService(t, service)
             const Icon = service.icon
 
             return (
@@ -43,13 +45,13 @@ export function ServicesPreview() {
                   <Icon className="h-6 w-6" />
                 </span>
                 <h3 className="relative mt-6 text-xl font-bold text-slate-950">
-                  {service.title}
+                  {localizedService.title}
                 </h3>
                 <p className="relative mt-3 flex-1 text-sm leading-6 text-slate-600">
-                  {service.shortDescription}
+                  {localizedService.shortDescription}
                 </p>
                 <Link
-                  to={`/services/${service.slug}`}
+                  to={`/services/${localizedService.slug}`}
                   className="relative mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 transition group-hover:gap-3"
                 >
                   {t('public.viewService')}

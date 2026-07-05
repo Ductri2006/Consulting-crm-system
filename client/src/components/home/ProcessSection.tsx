@@ -1,16 +1,19 @@
 import { Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { processSteps } from '../../data/processSteps'
 import { Container } from '../common/Container'
 import { SectionHeading } from '../common/SectionHeading'
 
 export function ProcessSection() {
+  const { t } = useTranslation()
+
   return (
     <section className="overflow-hidden bg-slate-50 py-20 sm:py-24">
       <Container>
         <SectionHeading
-          eyebrow="How it works"
-          title="A clear process from request to resolution"
-          description="Every engagement follows a visible, accountable workflow—so you always know what happens next."
+          eyebrow={t('public.process.eyebrow')}
+          title={t('public.process.title')}
+          description={t('public.process.description')}
           center
         />
 
@@ -33,9 +36,11 @@ export function ProcessSection() {
                   )}
                 </span>
                 <div className="md:mt-3">
-                  <h3 className="font-bold text-slate-950">{step.title}</h3>
+                  <h3 className="font-bold text-slate-950">
+                    {t(`public.process.steps.${step.id}.title`)}
+                  </h3>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {step.description}
+                    {t(`public.process.steps.${step.id}.description`)}
                   </p>
                 </div>
               </div>

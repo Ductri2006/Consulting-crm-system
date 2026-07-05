@@ -15,13 +15,16 @@ const quickLinks = [
 
 const serviceLinks = [
   {
-    label: 'Real Estate Consulting',
+    labelKey: 'public.forms.services.realEstate',
     href: '/services/real-estate-consulting',
   },
-  { label: 'Legal Consulting', href: '/services/legal-consulting' },
-  { label: 'Investment Consulting', href: '/services/investment-consulting' },
+  { labelKey: 'public.forms.services.legal', href: '/services/legal-consulting' },
   {
-    label: 'Construction Consulting',
+    labelKey: 'public.forms.services.investment',
+    href: '/services/investment-consulting',
+  },
+  {
+    labelKey: 'public.forms.services.construction',
     href: '/services/construction-consulting',
   },
 ]
@@ -79,7 +82,7 @@ export function Footer() {
               {serviceLinks.map((item) => (
                 <li key={item.href}>
                   <Link className={footerLinkClasses} to={item.href}>
-                    {item.label}
+                    {t(item.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -107,7 +110,7 @@ export function Footer() {
               </a>
               <p className="flex items-start gap-3 text-sm text-slate-400">
                 <MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-blue-400" />
-                Ho Chi Minh City, Vietnam
+                {t('public.contactPage.locationValue')}
               </p>
             </address>
           </div>

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { LoadingState } from '../../components/admin'
 import { useAuth } from '../../features/auth'
 import {
@@ -20,6 +21,8 @@ import {
   type WorkspaceProfile,
   type WorkspaceSettingsFormValues,
 } from '../../features/workspaces'
+import { formatDateTime as formatLocalizedDateTime } from '../../i18n/format'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 import { cn } from '../../utils/cn'
 
 const EMPTY_FORM: WorkspaceSettingsFormValues = {
@@ -72,26 +75,6 @@ const toUpdateInput = (
   logoUrl: optionalValue(values.logoUrl),
 })
 
-const formatDateTime = (value?: string): string => {
-  if (!value) {
-    return 'None'
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
 function FieldError({
   id,
   message,
@@ -99,9 +82,11 @@ function FieldError({
   id: string
   message?: string
 }) {
+  const { t } = useTranslation()
+
   return message ? (
     <p className="field-error" id={id}>
-      {message}
+      {translateValidationMessage(t, message)}
     </p>
   ) : null
 }
@@ -113,6 +98,7 @@ function FeedbackBanner({
   feedback: Feedback
   onDismiss: () => void
 }) {
+  const { t } = useTranslation()
   const isSuccess = feedback.type === 'success'
 
   return (
@@ -138,7 +124,7 @@ function FeedbackBanner({
         onClick={onDismiss}
         type="button"
       >
-        Dismiss
+        {t('common.close')}
       </button>
     </div>
   )
@@ -151,19 +137,22 @@ function MetadataItem({
   label: string
   value: string
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
       <dt className="text-xs font-bold uppercase tracking-wide text-slate-400">
         {label}
       </dt>
       <dd className="mt-1 break-all text-sm font-semibold text-slate-800">
-        {value || 'None'}
+        {value || t('common.notProvided')}
       </dd>
     </div>
   )
 }
 
 export function AdminWorkspaceSettingsPage() {
+  const { t } = useTranslation()
   const { refreshCurrentUser } = useAuth()
   const [workspace, setWorkspace] = useState<WorkspaceProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -194,14 +183,14 @@ export function AdminWorkspaceSettingsPage() {
       }
     } catch (error) {
       if (sequence === loadSequence.current) {
-        setLoadError(getErrorMessage(error, 'Workspace settings could not load.'))
+        setLoadError(getErrorMessage(error, t('admin.workspaceSettings.loadError')))
       }
     } finally {
       if (sequence === loadSequence.current) {
         setIsLoading(false)
       }
     }
-  }, [reset])
+  }, [reset, t])
 
   useEffect(() => {
     void loadWorkspace()
@@ -222,18 +211,18 @@ export function AdminWorkspaceSettingsPage() {
       await refreshCurrentUser()
       setFeedback({
         type: 'success',
-        message: 'Workspace settings updated successfully.',
+        message: t('admin.workspaceSettings.updatedFeedback'),
       })
     } catch (error) {
       setFeedback({
         type: 'error',
-        message: getErrorMessage(error, 'Workspace settings could not be updated.'),
+        message: getErrorMessage(error, t('admin.workspaceSettings.updateError')),
       })
     }
   }
 
   if (isLoading && !workspace) {
-    return <LoadingState label="Loading workspace settings..." />
+    return <LoadingState label={t('admin.workspaceSettings.loading')} />
   }
 
   if (loadError && !workspace) {
@@ -242,7 +231,7 @@ export function AdminWorkspaceSettingsPage() {
         <div>
           <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
           <h1 className="mt-4 text-xl font-bold text-slate-950">
-            Workspace settings could not load
+            {t('admin.workspaceSettings.loadErrorTitle')}
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">{loadError}</p>
           <button
@@ -251,7 +240,7 @@ export function AdminWorkspaceSettingsPage() {
             type="button"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
-            Try again
+            {t('common.tryAgain')}
           </button>
         </div>
       </div>
@@ -263,13 +252,13 @@ export function AdminWorkspaceSettingsPage() {
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            Workspace administration
+            {t('admin.workspaceSettings.eyebrow')}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Workspace Settings
+            {t('admin.workspaceSettings.title')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Update the organization profile used by the CRM workspace.
+            {t('admin.workspaceSettings.description')}
           </p>
         </div>
         <button
@@ -282,7 +271,7 @@ export function AdminWorkspaceSettingsPage() {
             className={cn('h-4 w-4', isLoading && 'animate-spin')}
             aria-hidden="true"
           />
-          Refresh
+          {t('common.refresh')}
         </button>
       </header>
 
@@ -298,7 +287,9 @@ export function AdminWorkspaceSettingsPage() {
           className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
           role="alert"
         >
-          Refresh failed: {loadError}. Showing cached settings.
+          {t('admin.workspaceSettings.refreshFailed', {
+            message: loadError,
+          })}
         </div>
       ) : null}
 
@@ -314,10 +305,10 @@ export function AdminWorkspaceSettingsPage() {
             </span>
             <div>
               <h2 className="text-xl font-bold text-slate-950">
-                Workspace profile
+                {t('admin.workspaceSettings.profileTitle')}
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Edit the visible identity and contact details for this workspace.
+                {t('admin.workspaceSettings.profileDescription')}
               </p>
             </div>
           </div>
@@ -325,7 +316,8 @@ export function AdminWorkspaceSettingsPage() {
           <div className="mt-7 grid gap-5 md:grid-cols-2">
             <div>
               <label className="field-label" htmlFor="workspace-settings-name">
-                Workspace name <span aria-hidden="true">*</span>
+                {t('auth.workspaceSignup.fields.workspaceName')}{' '}
+                <span aria-hidden="true">*</span>
               </label>
               <input
                 aria-describedby={
@@ -345,7 +337,8 @@ export function AdminWorkspaceSettingsPage() {
 
             <div>
               <label className="field-label" htmlFor="workspace-settings-slug">
-                Workspace slug <span aria-hidden="true">*</span>
+                {t('auth.workspaceSignup.fields.workspaceSlug')}{' '}
+                <span aria-hidden="true">*</span>
               </label>
               <input
                 aria-describedby={
@@ -365,7 +358,7 @@ export function AdminWorkspaceSettingsPage() {
 
             <div>
               <label className="field-label" htmlFor="workspace-settings-industry">
-                Industry
+                {t('auth.workspaceSignup.fields.industry')}
               </label>
               <input
                 aria-describedby={
@@ -386,7 +379,7 @@ export function AdminWorkspaceSettingsPage() {
 
             <div>
               <label className="field-label" htmlFor="workspace-settings-website">
-                Website
+                {t('auth.workspaceSignup.fields.website')}
               </label>
               <input
                 aria-describedby={
@@ -410,7 +403,7 @@ export function AdminWorkspaceSettingsPage() {
 
             <div>
               <label className="field-label" htmlFor="workspace-settings-email">
-                Contact email
+                {t('auth.workspaceSignup.fields.contactEmail')}
               </label>
               <input
                 aria-describedby={
@@ -432,7 +425,7 @@ export function AdminWorkspaceSettingsPage() {
 
             <div>
               <label className="field-label" htmlFor="workspace-settings-phone">
-                Phone
+                {t('admin.customers.fields.phone')}
               </label>
               <input
                 aria-describedby={
@@ -453,7 +446,7 @@ export function AdminWorkspaceSettingsPage() {
 
             <div className="md:col-span-2">
               <label className="field-label" htmlFor="workspace-settings-address">
-                Address
+                {t('admin.customers.fields.address')}
               </label>
               <input
                 aria-describedby={
@@ -475,7 +468,7 @@ export function AdminWorkspaceSettingsPage() {
 
             <div className="md:col-span-2">
               <label className="field-label" htmlFor="workspace-settings-logo-url">
-                Logo URL
+                {t('admin.workspaceSettings.logoUrl')}
               </label>
               <input
                 aria-describedby={
@@ -505,7 +498,7 @@ export function AdminWorkspaceSettingsPage() {
               type="button"
             >
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              Discard changes
+              {t('admin.workspaceSettings.discardChanges')}
             </button>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -517,7 +510,7 @@ export function AdminWorkspaceSettingsPage() {
               ) : (
                 <Save className="h-4 w-4" aria-hidden="true" />
               )}
-              {isSubmitting ? 'Saving...' : 'Save changes'}
+              {isSubmitting ? t('admin.workspaceSettings.saving') : t('common.saveChanges')}
             </button>
           </div>
         </section>
@@ -525,21 +518,24 @@ export function AdminWorkspaceSettingsPage() {
         <aside className="space-y-6">
           <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
             <h2 className="text-base font-bold text-slate-950">
-              Metadata / Read-only info
+              {t('admin.workspaceSettings.metadataTitle')}
             </h2>
             <dl className="mt-4 grid gap-3">
-              <MetadataItem label="Workspace ID" value={workspace?.id ?? ''} />
               <MetadataItem
-                label="Current slug"
+                label={t('admin.workspaceSettings.workspaceId')}
+                value={workspace?.id ?? ''}
+              />
+              <MetadataItem
+                label={t('admin.workspaceSettings.currentSlug')}
                 value={workspace?.slug ?? ''}
               />
               <MetadataItem
-                label="Created at"
-                value={formatDateTime(workspace?.createdAt)}
+                label={t('admin.workspaceSettings.createdAt')}
+                value={formatLocalizedDateTime(workspace?.createdAt ?? null)}
               />
               <MetadataItem
-                label="Updated at"
-                value={formatDateTime(workspace?.updatedAt)}
+                label={t('admin.workspaceSettings.updatedAt')}
+                value={formatLocalizedDateTime(workspace?.updatedAt ?? null)}
               />
             </dl>
           </section>
@@ -548,14 +544,14 @@ export function AdminWorkspaceSettingsPage() {
             <div className="flex items-start gap-3">
               <Info className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
               <div>
-                <h2 className="font-bold text-amber-950">Workspace notes</h2>
+                <h2 className="font-bold text-amber-950">
+                  {t('admin.workspaceSettings.notesTitle')}
+                </h2>
                 <p className="mt-2">
-                  Workspace slug is used as an internal identifier. Changing it
-                  does not change existing data ownership.
+                  {t('admin.workspaceSettings.slugNote')}
                 </p>
                 <p className="mt-2">
-                  Public consultation requests still use the default organization
-                  configured by the backend.
+                  {t('admin.workspaceSettings.defaultOrgNote')}
                 </p>
               </div>
             </div>

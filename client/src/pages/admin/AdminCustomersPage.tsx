@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   ConfirmDialog,
   DataTable,
@@ -48,6 +49,10 @@ import {
   customerFormSchema,
   type CustomerFormValues,
 } from '../../features/customers/customers.validation'
+import {
+  formatDate as formatLocalizedDate,
+  formatDateTime as formatLocalizedDateTime,
+} from '../../i18n/format'
 import { ApiError } from '../../lib/apiClient'
 
 const PAGE_SIZE = 10
@@ -80,40 +85,6 @@ interface CustomerFormProps {
   error: string | null
   onCancel: () => void
   onSubmit: (values: CustomerFormValues) => Promise<void>
-}
-
-const formatDate = (value: string): string => {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
-const formatDateTime = (value: string | null): string => {
-  if (!value) {
-    return 'Not yet'
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
 }
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
@@ -196,6 +167,7 @@ function CustomerForm({
   onCancel,
   onSubmit,
 }: CustomerFormProps) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -215,25 +187,29 @@ function CustomerForm({
       <div className="max-h-[calc(100vh-13rem)] overflow-y-auto p-5 sm:p-6">
         {customer ? (
           <section
-            aria-label="Related records"
+            aria-label={t('admin.customers.relatedRecords')}
             className="mb-6 grid gap-3 rounded-xl bg-slate-50 p-4 sm:grid-cols-3"
           >
             <div>
-              <p className="text-xs font-semibold text-slate-500">Cases</p>
+              <p className="text-xs font-semibold text-slate-500">
+                {t('navigation.cases')}
+              </p>
               <p className="mt-1 text-xl font-bold text-slate-900">
                 {customer.relatedCounts.cases}
               </p>
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-500">
-                Appointments
+                {t('navigation.appointments')}
               </p>
               <p className="mt-1 text-xl font-bold text-slate-900">
                 {customer.relatedCounts.appointments}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500">Documents</p>
+              <p className="text-xs font-semibold text-slate-500">
+                {t('navigation.documents')}
+              </p>
               <p className="mt-1 text-xl font-bold text-slate-900">
                 {customer.relatedCounts.documents}
               </p>
@@ -253,7 +229,8 @@ function CustomerForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="customer-full-name">
-              Full name <span aria-hidden="true">*</span>
+              {t('admin.customers.fields.fullName')}{' '}
+              <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -272,7 +249,8 @@ function CustomerForm({
 
           <div>
             <label className="field-label" htmlFor="customer-phone">
-              Phone <span aria-hidden="true">*</span>
+              {t('admin.customers.fields.phone')}{' '}
+              <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -293,7 +271,7 @@ function CustomerForm({
 
           <div>
             <label className="field-label" htmlFor="customer-email">
-              Email
+              {t('common.email')}
             </label>
             <input
               aria-describedby={
@@ -314,7 +292,7 @@ function CustomerForm({
 
           <div>
             <label className="field-label" htmlFor="customer-birthday">
-              Birthday
+              {t('admin.customers.fields.birthday')}
             </label>
             <input
               aria-describedby={
@@ -334,7 +312,7 @@ function CustomerForm({
 
           <div>
             <label className="field-label" htmlFor="customer-identity">
-              Identity number
+              {t('admin.customers.fields.identityNumber')}
             </label>
             <input
               aria-describedby={
@@ -353,7 +331,7 @@ function CustomerForm({
 
           <div>
             <label className="field-label" htmlFor="customer-source">
-              Source
+              {t('admin.customers.fields.source')}
             </label>
             <input
               aria-describedby={
@@ -362,7 +340,7 @@ function CustomerForm({
               aria-invalid={Boolean(errors.source)}
               className="field-input"
               id="customer-source"
-              placeholder="Referral, website, event…"
+              placeholder={t('admin.customers.placeholders.source')}
               {...register('source')}
             />
             <FieldError
@@ -373,7 +351,7 @@ function CustomerForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="customer-address">
-              Address
+              {t('admin.customers.fields.address')}
             </label>
             <textarea
               aria-describedby={
@@ -393,7 +371,7 @@ function CustomerForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="customer-note">
-              Note
+              {t('admin.customers.fields.note')}
             </label>
             <textarea
               aria-describedby={
@@ -420,7 +398,7 @@ function CustomerForm({
           onClick={onCancel}
           type="button"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -428,10 +406,10 @@ function CustomerForm({
           type="submit"
         >
           {isSubmitting
-            ? 'Saving…'
+            ? t('admin.customers.actions.saving')
             : customer
-              ? 'Save changes'
-              : 'Create customer'}
+              ? t('common.saveChanges')
+              : t('admin.customers.actions.createCustomer')}
         </button>
       </div>
     </form>
@@ -447,6 +425,7 @@ function PortalAccessDialog({
   onClose: () => void
   onFeedback: (feedback: Feedback) => void
 }) {
+  const { t } = useTranslation()
   const [account, setAccount] = useState<CustomerPortalAccount | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -477,13 +456,13 @@ function PortalAccessDialog({
       setError(
         getErrorMessage(
           loadError,
-          'Customer portal account could not be loaded.',
+          t('admin.customers.portal.loadError'),
         ),
       )
     } finally {
       setIsLoading(false)
     }
-  }, [customer])
+  }, [customer, t])
 
   useEffect(() => {
     if (customer) {
@@ -526,13 +505,15 @@ function PortalAccessDialog({
       setTemporaryPassword(result.temporaryPassword ?? null)
       onFeedback({
         type: 'success',
-        message: `Portal access created for ${customer.fullName}.`,
+        message: t('admin.customers.portal.createdFeedback', {
+          name: customer.fullName,
+        }),
       })
     } catch (createError) {
       setError(
         getErrorMessage(
           createError,
-          'Customer portal account could not be created.',
+          t('admin.customers.portal.createError'),
         ),
       )
     } finally {
@@ -560,13 +541,15 @@ function PortalAccessDialog({
       setTemporaryPassword(result.temporaryPassword ?? null)
       onFeedback({
         type: 'success',
-        message: `Portal password reset for ${customer.fullName}.`,
+        message: t('admin.customers.portal.passwordResetFeedback', {
+          name: customer.fullName,
+        }),
       })
     } catch (resetError) {
       setError(
         getErrorMessage(
           resetError,
-          'Customer portal password could not be reset.',
+          t('admin.customers.portal.passwordResetError'),
         ),
       )
     } finally {
@@ -593,13 +576,18 @@ function PortalAccessDialog({
       setEmail(updatedAccount.email)
       onFeedback({
         type: 'success',
-        message: `Portal access ${nextIsActive ? 'activated' : 'deactivated'} for ${customer.fullName}.`,
+        message: t(
+          nextIsActive
+            ? 'admin.customers.portal.activatedFeedback'
+            : 'admin.customers.portal.deactivatedFeedback',
+          { name: customer.fullName },
+        ),
       })
     } catch (activeError) {
       setError(
         getErrorMessage(
           activeError,
-          'Customer portal account status could not be updated.',
+          t('admin.customers.portal.statusUpdateError'),
         ),
       )
     } finally {
@@ -614,9 +602,11 @@ function PortalAccessDialog({
 
     try {
       await copyText(temporaryPassword)
-      setCopyMessage('Temporary password copied.')
+      setCopyMessage(t('admin.customers.portal.copySuccess'))
     } catch (copyError) {
-      setCopyMessage(getErrorMessage(copyError, 'Password could not be copied.'))
+      setCopyMessage(
+        getErrorMessage(copyError, t('admin.customers.portal.copyError')),
+      )
     }
   }
 
@@ -626,18 +616,20 @@ function PortalAccessDialog({
     <Modal
       description={
         customer
-          ? `Manage customer portal access for ${customer.fullName}.`
+          ? t('admin.customers.portal.description', {
+              name: customer.fullName,
+            })
           : undefined
       }
       isDismissible={!action}
       isOpen={Boolean(customer)}
       onClose={handleClose}
       size="md"
-      title="Portal access"
+      title={t('admin.customers.portal.title')}
     >
       <div className="max-h-[calc(100vh-13rem)] overflow-y-auto p-5 sm:p-6">
         {isLoading ? (
-          <LoadingState label="Loading portal access" />
+          <LoadingState label={t('admin.customers.portal.loading')} />
         ) : (
           <div className="space-y-5">
             {error ? (
@@ -652,8 +644,7 @@ function PortalAccessDialog({
             {temporaryPassword ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 <p className="font-bold">
-                  This password is shown once. Share it securely and ask the
-                  customer to change it later.
+                  {t('admin.customers.portal.temporaryPasswordWarning')}
                 </p>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                   <code className="min-w-0 flex-1 break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-slate-900 ring-1 ring-amber-200">
@@ -665,7 +656,7 @@ function PortalAccessDialog({
                     type="button"
                   >
                     <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                    Copy
+                    {t('common.copy')}
                   </button>
                 </div>
                 {copyMessage ? (
@@ -679,7 +670,7 @@ function PortalAccessDialog({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                      Portal login email
+                      {t('admin.customers.portal.loginEmail')}
                     </p>
                     <p className="mt-1 break-all text-sm font-bold text-slate-900">
                       {account.email}
@@ -692,27 +683,31 @@ function PortalAccessDialog({
                         : 'bg-slate-100 text-slate-600 ring-slate-500/20'
                     }`}
                   >
-                    {account.isActive ? 'Active' : 'Inactive'}
+                    {account.isActive ? t('common.active') : t('common.inactive')}
                   </span>
                 </div>
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                   <div>
-                    <dt className="font-bold text-slate-400">Last login</dt>
+                    <dt className="font-bold text-slate-400">
+                      {t('admin.customers.portal.lastLogin')}
+                    </dt>
                     <dd className="mt-1 font-semibold text-slate-700">
-                      {formatDateTime(account.lastLoginAt)}
+                      {formatLocalizedDateTime(account.lastLoginAt)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="font-bold text-slate-400">Created</dt>
+                    <dt className="font-bold text-slate-400">
+                      {t('common.created')}
+                    </dt>
                     <dd className="mt-1 font-semibold text-slate-700">
-                      {formatDateTime(account.createdAt)}
+                      {formatLocalizedDateTime(account.createdAt)}
                     </dd>
                   </div>
                 </dl>
               </section>
             ) : (
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                No portal account exists for this customer yet.
+                {t('admin.customers.portal.empty')}
               </div>
             )}
 
@@ -720,14 +715,16 @@ function PortalAccessDialog({
               {!account ? (
                 <div>
                   <label className="field-label" htmlFor="portal-account-email">
-                    Login email
+                    {t('admin.customers.portal.loginEmail')}
                   </label>
                   <input
                     className="field-input"
                     disabled={isBusy}
                     id="portal-account-email"
                     onChange={(event) => setEmail(event.target.value)}
-                    placeholder={customer?.email ?? 'customer@example.com'}
+                    placeholder={
+                      customer?.email ?? t('admin.customers.placeholders.email')
+                    }
                     type="email"
                     value={email}
                   />
@@ -736,14 +733,16 @@ function PortalAccessDialog({
 
               <div>
                 <label className="field-label" htmlFor="portal-account-password">
-                  {account ? 'New password' : 'Password'}
+                  {account
+                    ? t('admin.customers.portal.newPassword')
+                    : t('common.password')}
                 </label>
                 <input
                   className="field-input"
                   disabled={isBusy}
                   id="portal-account-password"
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Leave blank to generate"
+                  placeholder={t('admin.customers.portal.passwordPlaceholder')}
                   type="password"
                   value={password}
                 />
@@ -760,7 +759,7 @@ function PortalAccessDialog({
           onClick={handleClose}
           type="button"
         >
-          Close
+          {t('common.close')}
         </button>
         {account ? (
           <>
@@ -772,7 +771,9 @@ function PortalAccessDialog({
                 type="button"
               >
                 <Power className="h-4 w-4" aria-hidden="true" />
-                {action === 'deactivate' ? 'Deactivating...' : 'Deactivate'}
+                {action === 'deactivate'
+                  ? t('admin.customers.portal.deactivating')
+                  : t('common.deactivate')}
               </button>
             ) : (
               <button
@@ -782,7 +783,9 @@ function PortalAccessDialog({
                 type="button"
               >
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                {action === 'activate' ? 'Activating...' : 'Activate'}
+                {action === 'activate'
+                  ? t('admin.customers.portal.activating')
+                  : t('common.activate')}
               </button>
             )}
             <button
@@ -792,7 +795,9 @@ function PortalAccessDialog({
               type="button"
             >
               <KeyRound className="h-4 w-4" aria-hidden="true" />
-              {action === 'reset' ? 'Resetting...' : 'Reset password'}
+              {action === 'reset'
+                ? t('admin.customers.portal.resetting')
+                : t('admin.customers.portal.resetPassword')}
             </button>
           </>
         ) : (
@@ -803,7 +808,9 @@ function PortalAccessDialog({
             type="button"
           >
             <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-            {action === 'create' ? 'Creating...' : 'Create portal access'}
+            {action === 'create'
+              ? t('admin.customers.portal.creating')
+              : t('admin.customers.portal.createAccess')}
           </button>
         )}
       </div>
@@ -812,6 +819,7 @@ function PortalAccessDialog({
 }
 
 export function AdminCustomersPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [meta, setMeta] = useState<PaginationMeta>(EMPTY_META)
@@ -863,14 +871,14 @@ export function AdminCustomersPage() {
       setLoadError(
         error instanceof Error
           ? error.message
-          : 'Customers could not be loaded. Please try again.',
+          : t('admin.customers.loadErrorFallback'),
       )
     } finally {
       if (requestSequence === listRequestSequence.current) {
         setIsLoading(false)
       }
     }
-  }, [page, search])
+  }, [page, search, t])
 
   useEffect(() => {
     void loadCustomers()
@@ -902,7 +910,7 @@ export function AdminCustomersPage() {
         setFormError(
           error instanceof Error
             ? error.message
-            : 'Customer details could not be loaded.',
+            : t('admin.customers.detailsLoadError'),
         )
       }
     } finally {
@@ -947,7 +955,7 @@ export function AdminCustomersPage() {
     try {
       if (formMode === 'edit') {
         if (!customerDetail) {
-          setFormError('Customer details are not ready. Please try again.')
+          setFormError(t('admin.customers.detailsNotReady'))
           return
         }
 
@@ -955,7 +963,7 @@ export function AdminCustomersPage() {
         closeForm()
         setFeedback({
           type: 'success',
-          message: 'Customer updated successfully.',
+          message: t('admin.customers.updatedFeedback'),
         })
         await loadCustomers()
         return
@@ -965,14 +973,14 @@ export function AdminCustomersPage() {
       closeForm()
       setFeedback({
         type: 'success',
-        message: 'Customer created successfully.',
+        message: t('admin.customers.createdFeedback'),
       })
       await refreshFromFirstPage()
     } catch (error) {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'The customer could not be saved. Please try again.',
+          : t('admin.customers.saveError'),
       )
     }
   }
@@ -990,7 +998,7 @@ export function AdminCustomersPage() {
       setDeleteTarget(null)
       setFeedback({
         type: 'success',
-        message: 'Customer deleted successfully.',
+        message: t('admin.customers.deletedFeedback'),
       })
 
       if (customers.length === 1 && page > 1) {
@@ -1004,10 +1012,10 @@ export function AdminCustomersPage() {
         type: 'error',
         message:
           error instanceof ApiError && error.status === 409
-            ? 'This customer cannot be deleted because related records exist.'
+            ? t('admin.customers.deleteConflict')
             : error instanceof Error
               ? error.message
-              : 'The customer could not be deleted. Please try again.',
+              : t('admin.customers.deleteError'),
       })
     } finally {
       setIsDeleting(false)
@@ -1029,7 +1037,7 @@ export function AdminCustomersPage() {
   const columns: DataTableColumn<Customer>[] = [
     {
       key: 'name',
-      header: 'Full name',
+      header: t('admin.customers.fields.fullName'),
       className: 'min-w-52',
       render: (customer) => (
         <div>
@@ -1044,12 +1052,12 @@ export function AdminCustomersPage() {
     },
     {
       key: 'phone',
-      header: 'Phone',
+      header: t('admin.customers.fields.phone'),
       render: (customer) => customer.phone,
     },
     {
       key: 'email',
-      header: 'Email',
+      header: t('common.email'),
       className: 'max-w-64',
       render: (customer) => (
         <span className="block truncate">{customer.email ?? '—'}</span>
@@ -1057,44 +1065,50 @@ export function AdminCustomersPage() {
     },
     {
       key: 'source',
-      header: 'Source',
+      header: t('admin.customers.fields.source'),
       render: (customer) => customer.source ?? '—',
     },
     {
       key: 'createdAt',
-      header: 'Created',
-      render: (customer) => formatDate(customer.createdAt),
+      header: t('common.created'),
+      render: (customer) => formatLocalizedDate(customer.createdAt),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
       className: 'text-right',
       render: (customer) => (
         <div className="flex justify-end gap-1">
           <button
-            aria-label={`View and edit ${customer.fullName}`}
+            aria-label={t('admin.customers.actions.viewEditAria', {
+              name: customer.fullName,
+            })}
             className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-50"
             onClick={() => openEditForm(customer)}
             type="button"
           >
             <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-            View / Edit
+            {t('admin.customers.actions.viewEdit')}
           </button>
           {canManagePortal ? (
             <button
-              aria-label={`Manage portal access for ${customer.fullName}`}
+              aria-label={t('admin.customers.actions.portalAria', {
+                name: customer.fullName,
+              })}
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50"
               onClick={() => setPortalTarget(customer)}
               type="button"
             >
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-              Portal
+              {t('admin.customers.actions.portal')}
             </button>
           ) : null}
           {canDelete ? (
             <button
-              aria-label={`Delete ${customer.fullName}`}
+              aria-label={t('admin.customers.actions.deleteAria', {
+                name: customer.fullName,
+              })}
               className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"
               onClick={() => setDeleteTarget(customer)}
               type="button"
@@ -1111,12 +1125,14 @@ export function AdminCustomersPage() {
     <div className="mx-auto max-w-[1600px]">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-blue-600">CRM records</p>
+          <p className="text-sm font-semibold text-blue-600">
+            {t('admin.customers.eyebrow')}
+          </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Customers
+            {t('navigation.customers')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Search, review and maintain customer profiles.
+            {t('admin.customers.description')}
           </p>
         </div>
         <button
@@ -1125,7 +1141,7 @@ export function AdminCustomersPage() {
           type="button"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Create Customer
+          {t('admin.customers.actions.createCustomer')}
         </button>
       </header>
 
@@ -1151,10 +1167,10 @@ export function AdminCustomersPage() {
         <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <SearchInput
             isDisabled={isLoading}
-            label="Search customers"
+            label={t('admin.customers.searchLabel')}
             onChange={setSearchInput}
             onSubmit={submitSearch}
-            placeholder="Name, phone, email or identity…"
+            placeholder={t('admin.customers.searchPlaceholder')}
             value={searchInput}
           />
           <button
@@ -1167,12 +1183,12 @@ export function AdminCustomersPage() {
               aria-hidden="true"
               className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
             />
-            Refresh
+            {t('common.refresh')}
           </button>
         </div>
 
         {isLoading && customers.length === 0 ? (
-          <LoadingState label="Loading customers" />
+          <LoadingState label={t('admin.customers.loading')} />
         ) : loadError && customers.length === 0 ? (
           <div className="grid min-h-72 place-items-center p-8 text-center">
             <div className="max-w-md">
@@ -1180,7 +1196,7 @@ export function AdminCustomersPage() {
                 <AlertTriangle className="h-6 w-6" aria-hidden="true" />
               </span>
               <h2 className="mt-4 font-bold text-slate-900">
-                Customers could not be loaded
+                {t('admin.customers.loadErrorTitle')}
               </h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
                 {loadError}
@@ -1191,7 +1207,7 @@ export function AdminCustomersPage() {
                 type="button"
               >
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           </div>
@@ -1208,7 +1224,7 @@ export function AdminCustomersPage() {
                   }}
                   type="button"
                 >
-                  Clear search
+                  {t('admin.customers.clearSearch')}
                 </button>
               ) : (
                 <button
@@ -1216,17 +1232,21 @@ export function AdminCustomersPage() {
                   onClick={openCreateForm}
                   type="button"
                 >
-                  Create the first customer
+                  {t('admin.customers.actions.createFirst')}
                 </button>
               )
             }
             description={
               search
-                ? `No customer matched “${search}”. Try another search.`
-                : 'Add a customer profile to begin tracking their work.'
+                ? t('admin.customers.empty.filtered', { search })
+                : t('admin.customers.empty.default')
             }
             icon={<UsersRound className="h-6 w-6" aria-hidden="true" />}
-            title={search ? 'No matching customers' : 'No customers yet'}
+            title={
+              search
+                ? t('admin.customers.empty.filteredTitle')
+                : t('admin.customers.empty.defaultTitle')
+            }
           />
         ) : (
           <>
@@ -1235,11 +1255,11 @@ export function AdminCustomersPage() {
                 className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
                 role="alert"
               >
-                Refresh failed: {loadError}. Showing the latest available data.
+                {t('admin.customers.refreshFailed', { message: loadError })}
               </div>
             ) : null}
             <DataTable
-              caption="Customer records"
+              caption={t('admin.customers.tableCaption')}
               columns={columns}
               getRowKey={(customer) => customer.id}
               items={customers}
@@ -1258,16 +1278,20 @@ export function AdminCustomersPage() {
       <Modal
         description={
           formMode === 'create'
-            ? 'Create a customer profile for future cases and appointments.'
-            : 'Review profile details and save any changes.'
+            ? t('admin.customers.modal.createDescription')
+            : t('admin.customers.modal.editDescription')
         }
         isOpen={isFormOpen}
         onClose={closeForm}
         size="lg"
-        title={formMode === 'create' ? 'Create customer' : 'Customer profile'}
+        title={
+          formMode === 'create'
+            ? t('admin.customers.modal.createTitle')
+            : t('admin.customers.modal.editTitle')
+        }
       >
         {formMode === 'edit' && isDetailLoading ? (
-          <LoadingState label="Loading customer details" />
+          <LoadingState label={t('admin.customers.modal.loadingDetails')} />
         ) : formMode === 'edit' && !customerDetail ? (
           <div className="p-6 text-center">
             <AlertTriangle
@@ -1275,7 +1299,7 @@ export function AdminCustomersPage() {
               className="mx-auto h-8 w-8 text-rose-500"
             />
             <p className="mt-3 text-sm text-rose-700">
-              {formError ?? 'Customer details could not be loaded.'}
+              {formError ?? t('admin.customers.detailsLoadError')}
             </p>
             {detailTarget ? (
               <button
@@ -1283,7 +1307,7 @@ export function AdminCustomersPage() {
                 onClick={() => void loadCustomerDetail(detailTarget)}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             ) : null}
           </div>
@@ -1302,7 +1326,9 @@ export function AdminCustomersPage() {
         isOpen={Boolean(deleteTarget)}
         message={
           deleteTarget
-            ? `Delete ${deleteTarget.fullName}? This action cannot be undone.`
+            ? t('admin.customers.deleteConfirm', {
+                name: deleteTarget.fullName,
+              })
             : ''
         }
         onCancel={() => {
@@ -1311,7 +1337,7 @@ export function AdminCustomersPage() {
           }
         }}
         onConfirm={() => void handleDelete()}
-        title="Delete customer"
+        title={t('admin.customers.deleteTitle')}
       />
 
       <PortalAccessDialog

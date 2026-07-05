@@ -1,4 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { formatNumber } from '../../i18n/format'
 
 export interface PaginationProps {
   page: number
@@ -15,19 +17,23 @@ export function Pagination({
   isDisabled = false,
   onPageChange,
 }: PaginationProps) {
+  const { i18n, t } = useTranslation()
   const displayTotalPages = Math.max(1, totalPages)
   const previousDisabled = isDisabled || page <= 1
   const nextDisabled = isDisabled || totalPages === 0 || page >= totalPages
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={t('common.pagination')}
       className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="text-sm text-slate-500">
         {typeof totalItems === 'number'
-          ? `${totalItems.toLocaleString()} total result${totalItems === 1 ? '' : 's'}`
-          : `Page ${page} of ${displayTotalPages}`}
+          ? t('common.totalResults', {
+              count: totalItems,
+              formattedCount: formatNumber(totalItems, i18n.language),
+            })
+          : t('common.pageOf', { page, totalPages: displayTotalPages })}
       </p>
       <div className="flex items-center gap-2">
         <button
@@ -37,7 +43,7 @@ export function Pagination({
           type="button"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          Previous
+          {t('common.previous')}
         </button>
         <span
           aria-current="page"
@@ -51,7 +57,7 @@ export function Pagination({
           onClick={() => onPageChange(page + 1)}
           type="button"
         >
-          Next
+          {t('common.next')}
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>

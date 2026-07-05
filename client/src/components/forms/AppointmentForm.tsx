@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarCheck2, CheckCircle2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 
 const appointmentSchema = z.object({
   fullName: z.string().trim().min(2, 'Please enter your full name.'),
@@ -26,6 +28,7 @@ type AppointmentFormValues = z.infer<typeof appointmentSchema>
 const consultationMethods = ['Offline', 'Online', 'Phone'] as const
 
 export function AppointmentForm() {
+  const { t } = useTranslation()
   const [isSuccessful, setIsSuccessful] = useState(false)
   const {
     register,
@@ -61,17 +64,17 @@ export function AppointmentForm() {
           aria-hidden="true"
         />
         <h2 className="mt-4 text-xl font-bold text-slate-950">
-          Appointment requested
+          {t('public.forms.appointment.successTitle')}
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          We will confirm availability using your preferred contact details.
+          {t('public.forms.appointment.successDescription')}
         </p>
         <button
           type="button"
           className="mt-5 rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
           onClick={() => setIsSuccessful(false)}
         >
-          Request another appointment
+          {t('public.forms.appointment.requestAnother')}
         </button>
       </div>
     )
@@ -86,14 +89,14 @@ export function AppointmentForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label className="field-label" htmlFor="appointment-full-name">
-            Full name
+            {t('public.forms.fields.fullName')}
           </label>
           <input
             id="appointment-full-name"
             className="field-input"
             type="text"
             autoComplete="name"
-            placeholder="Your full name"
+            placeholder={t('public.forms.placeholders.fullName')}
             aria-invalid={Boolean(errors.fullName)}
             aria-describedby={
               errors.fullName ? 'appointment-full-name-error' : undefined
@@ -106,14 +109,14 @@ export function AppointmentForm() {
               className="field-error"
               role="alert"
             >
-              {errors.fullName.message}
+              {translateValidationMessage(t, errors.fullName.message)}
             </p>
           )}
         </div>
 
         <div>
           <label className="field-label" htmlFor="appointment-phone">
-            Phone
+            {t('public.forms.fields.phone')}
           </label>
           <input
             id="appointment-phone"
@@ -133,7 +136,7 @@ export function AppointmentForm() {
               className="field-error"
               role="alert"
             >
-              {errors.phone.message}
+              {translateValidationMessage(t, errors.phone.message)}
             </p>
           )}
         </div>
@@ -141,7 +144,10 @@ export function AppointmentForm() {
 
       <div>
         <label className="field-label" htmlFor="appointment-email">
-          Email <span className="font-normal text-slate-400">(optional)</span>
+          {t('common.email')}{' '}
+          <span className="font-normal text-slate-400">
+            ({t('common.optional')})
+          </span>
         </label>
         <input
           id="appointment-email"
@@ -157,7 +163,7 @@ export function AppointmentForm() {
         />
         {errors.email && (
           <p id="appointment-email-error" className="field-error" role="alert">
-            {errors.email.message}
+            {translateValidationMessage(t, errors.email.message)}
           </p>
         )}
       </div>
@@ -165,7 +171,7 @@ export function AppointmentForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label className="field-label" htmlFor="appointment-date">
-            Preferred date
+            {t('public.forms.appointment.preferredDate')}
           </label>
           <input
             id="appointment-date"
@@ -183,14 +189,14 @@ export function AppointmentForm() {
               className="field-error"
               role="alert"
             >
-              {errors.preferredDate.message}
+              {translateValidationMessage(t, errors.preferredDate.message)}
             </p>
           )}
         </div>
 
         <div>
           <label className="field-label" htmlFor="appointment-time">
-            Preferred time
+            {t('public.forms.appointment.preferredTime')}
           </label>
           <input
             id="appointment-time"
@@ -208,14 +214,16 @@ export function AppointmentForm() {
               className="field-error"
               role="alert"
             >
-              {errors.preferredTime.message}
+              {translateValidationMessage(t, errors.preferredTime.message)}
             </p>
           )}
         </div>
       </div>
 
       <fieldset>
-        <legend className="field-label">Consultation method</legend>
+        <legend className="field-label">
+          {t('public.forms.appointment.method')}
+        </legend>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           {consultationMethods.map((method) => (
             <label
@@ -232,25 +240,28 @@ export function AppointmentForm() {
                 }
                 {...register('method')}
               />
-              {method}
+              {t(`public.forms.methods.${method}`)}
             </label>
           ))}
         </div>
         {errors.method && (
           <p id="appointment-method-error" className="field-error" role="alert">
-            {errors.method.message}
+            {translateValidationMessage(t, errors.method.message)}
           </p>
         )}
       </fieldset>
 
       <div>
         <label className="field-label" htmlFor="appointment-message">
-          Message <span className="font-normal text-slate-400">(optional)</span>
+          {t('public.forms.contact.messageLabel')}{' '}
+          <span className="font-normal text-slate-400">
+            ({t('common.optional')})
+          </span>
         </label>
         <textarea
           id="appointment-message"
           className="field-input min-h-28 resize-y"
-          placeholder="Add any details that will help us prepare."
+          placeholder={t('public.forms.appointment.messagePlaceholder')}
           {...register('message')}
         />
       </div>
@@ -261,7 +272,7 @@ export function AppointmentForm() {
         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
         <CalendarCheck2 className="h-4 w-4" aria-hidden="true" />
-        Request appointment
+        {t('public.forms.appointment.button')}
       </button>
     </form>
   )

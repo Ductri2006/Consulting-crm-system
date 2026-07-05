@@ -47,7 +47,9 @@ import {
   type TeamMemberRole,
   type UpdateTeamMemberInput,
 } from '../../features/users'
+import { formatDate as formatLocalizedDate } from '../../i18n/format'
 import { getStatusLabel } from '../../i18n/statusLabels'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -80,26 +82,7 @@ interface Feedback {
 
 type StatusFilter = '' | 'active' | 'inactive'
 
-const formatLabel = (value: string): string =>
-  value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
-
-const formatDate = (value: string): string => {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
+const formatDate = (value: string): string => formatLocalizedDate(value)
 
 const optionalValue = (value: string): string | undefined => {
   const trimmed = value.trim()
@@ -145,9 +128,12 @@ function FieldError({
   id: string
   message?: string
 }) {
+  const { t } = useTranslation()
+  const translatedMessage = translateValidationMessage(t, message)
+
   return message ? (
     <p className="field-error" id={id}>
-      {message}
+      {translatedMessage}
     </p>
   ) : null
 }
@@ -170,6 +156,7 @@ function FeedbackBanner({
   feedback: Feedback
   onDismiss: () => void
 }) {
+  const { t } = useTranslation()
   const isSuccess = feedback.type === 'success'
 
   return (
@@ -195,7 +182,7 @@ function FeedbackBanner({
         onClick={onDismiss}
         type="button"
       >
-        Dismiss
+        {t('common.close')}
       </button>
     </div>
   )
@@ -205,13 +192,15 @@ function ModalActions({
   isSubmitting,
   onCancel,
   submitLabel,
-  submittingLabel = 'Saving...',
+  submittingLabel,
 }: {
   isSubmitting: boolean
   onCancel: () => void
   submitLabel: string
   submittingLabel?: string
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
       <button
@@ -220,14 +209,16 @@ function ModalActions({
         onClick={onCancel}
         type="button"
       >
-        Cancel
+        {t('common.cancel')}
       </button>
       <button
         className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? submittingLabel : submitLabel}
+        {isSubmitting
+          ? (submittingLabel ?? t('admin.users.saving'))
+          : submitLabel}
       </button>
     </div>
   )
@@ -279,6 +270,7 @@ function CreateUserForm({
   onCancel: () => void
   onSubmit: (values: CreateUserFormValues) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -295,7 +287,7 @@ function CreateUserForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="create-user-full-name">
-              Full name <span aria-hidden="true">*</span>
+              {t('admin.users.fields.fullName')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -314,7 +306,7 @@ function CreateUserForm({
 
           <div>
             <label className="field-label" htmlFor="create-user-email">
-              Email <span aria-hidden="true">*</span>
+              {t('common.email')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -335,7 +327,7 @@ function CreateUserForm({
 
           <div>
             <label className="field-label" htmlFor="create-user-phone">
-              Phone
+              {t('admin.users.fields.phone')}
             </label>
             <input
               aria-describedby={
@@ -356,7 +348,7 @@ function CreateUserForm({
 
           <div>
             <label className="field-label" htmlFor="create-user-role">
-              Role <span aria-hidden="true">*</span>
+              {t('admin.users.fields.role')} <span aria-hidden="true">*</span>
             </label>
             <select
               className="field-input"
@@ -365,7 +357,7 @@ function CreateUserForm({
             >
               {userRoles.map((role) => (
                 <option key={role} value={role}>
-                  {formatLabel(role)}
+                  {getStatusLabel(t, 'role', role)}
                 </option>
               ))}
             </select>
@@ -373,7 +365,7 @@ function CreateUserForm({
 
           <div>
             <label className="field-label" htmlFor="create-user-password">
-              Temporary password <span aria-hidden="true">*</span>
+              {t('admin.users.fields.temporaryPassword')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -398,7 +390,7 @@ function CreateUserForm({
               type="checkbox"
               {...register('isActive')}
             />
-            Active account
+            {t('admin.users.activeAccount')}
           </label>
         </div>
       </div>
@@ -406,7 +398,8 @@ function CreateUserForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Create team member"
+        submitLabel={t('admin.users.createTeamMember')}
+        submittingLabel={t('admin.users.creating')}
       />
     </form>
   )
@@ -425,6 +418,7 @@ function EditUserForm({
   onCancel: () => void
   onSubmit: (values: EditUserFormValues) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const isCurrentUser = currentUserId === member.id
   const {
     formState: { errors, isSubmitting },
@@ -446,15 +440,14 @@ function EditUserForm({
         <FormError message={error} />
         {isCurrentUser ? (
           <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            You are editing your own account. The server will prevent changes
-            that leave the system without an active administrator.
+            {t('admin.users.selfEditWarning')}
           </div>
         ) : null}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="edit-user-full-name">
-              Full name <span aria-hidden="true">*</span>
+              {t('admin.users.fields.fullName')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -473,7 +466,7 @@ function EditUserForm({
 
           <div>
             <label className="field-label" htmlFor="edit-user-phone">
-              Phone
+              {t('admin.users.fields.phone')}
             </label>
             <input
               aria-describedby={
@@ -494,7 +487,7 @@ function EditUserForm({
 
           <div>
             <label className="field-label" htmlFor="edit-user-role">
-              Role <span aria-hidden="true">*</span>
+              {t('admin.users.fields.role')} <span aria-hidden="true">*</span>
             </label>
             <select
               className="field-input"
@@ -503,7 +496,7 @@ function EditUserForm({
             >
               {userRoles.map((role) => (
                 <option key={role} value={role}>
-                  {formatLabel(role)}
+                  {getStatusLabel(t, 'role', role)}
                 </option>
               ))}
             </select>
@@ -515,12 +508,12 @@ function EditUserForm({
               type="checkbox"
               {...register('isActive')}
             />
-            Active account
+            {t('admin.users.activeAccount')}
           </label>
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="edit-user-avatar-url">
-              Avatar URL
+              {t('admin.users.fields.avatarUrl')}
             </label>
             <input
               aria-describedby={
@@ -544,7 +537,8 @@ function EditUserForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Save changes"
+        submitLabel={t('common.saveChanges')}
+        submittingLabel={t('admin.users.saving')}
       />
     </form>
   )
@@ -561,6 +555,7 @@ function ResetPasswordForm({
   onCancel: () => void
   onSubmit: (values: ResetPasswordFormValues) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -575,19 +570,15 @@ function ResetPasswordForm({
       <div className="p-5 sm:p-6">
         <FormError message={error} />
         <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          This is a temporary admin reset flow for internal CRM users. Share the
-          temporary password privately and ask the user to replace it when a
-          self-service password-change flow exists.
+          {t('admin.users.resetPasswordWarning')}
         </div>
         <div className="mb-5 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-          Resetting password for{' '}
-          <span className="font-bold text-slate-900">{member.fullName}</span>
-          .
+          {t('admin.users.resettingPasswordFor', { name: member.fullName })}
         </div>
         <div className="grid gap-5">
           <div>
             <label className="field-label" htmlFor="reset-user-password">
-              New temporary password <span aria-hidden="true">*</span>
+              {t('admin.users.fields.newTemporaryPassword')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -607,7 +598,7 @@ function ResetPasswordForm({
           </div>
           <div>
             <label className="field-label" htmlFor="reset-user-confirm-password">
-              Confirm password <span aria-hidden="true">*</span>
+              {t('auth.workspaceSignup.fields.confirmPassword')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -633,8 +624,8 @@ function ResetPasswordForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Reset password"
-        submittingLabel="Resetting..."
+        submitLabel={t('admin.users.resetPassword')}
+        submittingLabel={t('admin.users.resetting')}
       />
     </form>
   )
@@ -651,6 +642,8 @@ function AccountStatusDialog({
   onCancel: () => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation()
+
   if (!member) {
     return null
   }
@@ -664,7 +657,11 @@ function AccountStatusDialog({
       onClose={onCancel}
       role="alertdialog"
       size="sm"
-      title={willDeactivate ? 'Deactivate team member' : 'Activate team member'}
+      title={
+        willDeactivate
+          ? t('admin.users.deactivateTitle')
+          : t('admin.users.activateTitle')
+      }
     >
       <div className="p-5 sm:p-6">
         <div className="flex gap-4">
@@ -684,8 +681,8 @@ function AccountStatusDialog({
           </span>
           <p className="pt-1 text-sm leading-6 text-slate-600">
             {willDeactivate
-              ? `Deactivate ${member.fullName}? They will no longer be able to sign in.`
-              : `Activate ${member.fullName}? They will be able to sign in again with their current password.`}
+              ? t('admin.users.deactivateConfirm', { name: member.fullName })
+              : t('admin.users.activateConfirm', { name: member.fullName })}
           </p>
         </div>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -695,7 +692,7 @@ function AccountStatusDialog({
             onClick={onCancel}
             type="button"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             className={cn(
@@ -709,10 +706,10 @@ function AccountStatusDialog({
             type="button"
           >
             {isLoading
-              ? 'Saving...'
+              ? t('admin.users.saving')
               : willDeactivate
-                ? 'Deactivate'
-                : 'Activate'}
+                ? t('common.deactivate')
+                : t('common.activate')}
           </button>
         </div>
       </div>
@@ -769,14 +766,14 @@ export function AdminUsersPage() {
       }
     } catch (error) {
       if (sequence === listSequence.current) {
-        setLoadError(getErrorMessage(error, 'Team members could not load.'))
+        setLoadError(getErrorMessage(error, t('admin.users.loadError')))
       }
     } finally {
       if (sequence === listSequence.current) {
         setIsLoading(false)
       }
     }
-  }, [page, role, search, statusFilterValue])
+  }, [page, role, search, statusFilterValue, t])
 
   useEffect(() => {
     void loadMembers()
@@ -829,12 +826,12 @@ export function AdminUsersPage() {
       closeCreate()
       setFeedback({
         type: 'success',
-        message: `${created.fullName} created successfully.`,
+        message: t('admin.users.createdFeedback', { name: created.fullName }),
       })
       await refreshFromFirstPage()
     } catch (error) {
       setCreateError(
-        getErrorMessage(error, 'The team member could not be created.'),
+        getErrorMessage(error, t('admin.users.createError')),
       )
     }
   }
@@ -853,7 +850,7 @@ export function AdminUsersPage() {
       }
     } catch (error) {
       if (sequence === detailSequence.current) {
-        setEditError(getErrorMessage(error, 'User details could not load.'))
+        setEditError(getErrorMessage(error, t('admin.users.detailsLoadError')))
       }
     } finally {
       if (sequence === detailSequence.current) {
@@ -887,13 +884,13 @@ export function AdminUsersPage() {
       setEditDetail(updated)
       setFeedback({
         type: 'success',
-        message: `${updated.fullName} updated successfully.`,
+        message: t('admin.users.updatedFeedback', { name: updated.fullName }),
       })
       closeEdit()
       await loadMembers()
     } catch (error) {
       setEditError(
-        getErrorMessage(error, 'The team member could not be updated.'),
+        getErrorMessage(error, t('admin.users.updateError')),
       )
     }
   }
@@ -921,13 +918,15 @@ export function AdminUsersPage() {
       })
       setFeedback({
         type: 'success',
-        message: `${resetTarget.fullName}'s password was reset.`,
+        message: t('admin.users.passwordResetFeedback', {
+          name: resetTarget.fullName,
+        }),
       })
       closeResetPassword()
       await loadMembers()
     } catch (error) {
       setResetError(
-        getErrorMessage(error, 'The password could not be reset.'),
+        getErrorMessage(error, t('admin.users.passwordResetError')),
       )
     }
   }
@@ -951,9 +950,10 @@ export function AdminUsersPage() {
       setStatusTarget(null)
       setFeedback({
         type: 'success',
-        message: `${updated.fullName} is now ${
-          updated.isActive ? 'active' : 'inactive'
-        }.`,
+        message: t('admin.users.statusFeedback', {
+          name: updated.fullName,
+          status: updated.isActive ? t('common.active') : t('common.inactive'),
+        }),
       })
       await loadMembers()
     } catch (error) {
@@ -962,7 +962,7 @@ export function AdminUsersPage() {
         type: 'error',
         message: getErrorMessage(
           error,
-          'The account status could not be changed.',
+          t('admin.users.statusUpdateError'),
         ),
       })
     } finally {
@@ -972,25 +972,27 @@ export function AdminUsersPage() {
 
   const hasFilters = Boolean(search || role || status)
   const workspaceName = currentUser?.organization?.name?.trim()
-  const workspaceLabel = workspaceName || 'the current workspace'
+  const workspaceLabel = workspaceName || t('admin.users.currentWorkspace')
 
   const columns: readonly DataTableColumn<TeamMember>[] = [
     {
       key: 'name',
-      header: 'Full name',
+      header: t('admin.users.fields.fullName'),
       className: 'min-w-56',
       render: (member) => (
         <div>
           <p className="font-semibold text-slate-900">{member.fullName}</p>
           {member.id === currentUser?.id ? (
-            <p className="mt-0.5 text-xs font-semibold text-blue-600">You</p>
+            <p className="mt-0.5 text-xs font-semibold text-blue-600">
+              {t('admin.users.you')}
+            </p>
           ) : null}
         </div>
       ),
     },
     {
       key: 'email',
-      header: 'Email',
+      header: t('common.email'),
       className: 'max-w-72',
       render: (member) => (
         <span className="block truncate">{member.email}</span>
@@ -998,45 +1000,49 @@ export function AdminUsersPage() {
     },
     {
       key: 'phone',
-      header: 'Phone',
-      render: (member) => member.phone ?? 'None',
+      header: t('admin.users.fields.phone'),
+      render: (member) => member.phone ?? t('common.notProvided'),
     },
     {
       key: 'role',
-      header: 'Role',
+      header: t('admin.users.fields.role'),
       render: (member) => <RoleBadge role={member.role} />,
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('admin.cases.fields.status'),
       render: (member) => <StatusBadge isActive={member.isActive} />,
     },
     {
       key: 'createdAt',
-      header: 'Created date',
+      header: t('admin.users.fields.createdDate'),
       render: (member) => formatDate(member.createdAt),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
       className: 'text-right',
       render: (member) => (
         <div className="flex justify-end gap-1">
           <button
-            aria-label={`Edit ${member.fullName}`}
+            aria-label={t('admin.users.actions.editAria', {
+              name: member.fullName,
+            })}
             className="rounded-lg p-2 text-blue-700 transition hover:bg-blue-50"
             onClick={() => openEdit(member)}
-            title="Edit"
+            title={t('common.edit')}
             type="button"
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
-            aria-label={`Reset password for ${member.fullName}`}
+            aria-label={t('admin.users.actions.resetPasswordAria', {
+              name: member.fullName,
+            })}
             className="rounded-lg p-2 text-violet-700 transition hover:bg-violet-50"
             onClick={() => openResetPassword(member)}
-            title="Reset password"
+            title={t('admin.users.resetPassword')}
             type="button"
           >
             <KeyRound className="h-4 w-4" aria-hidden="true" />
@@ -1044,8 +1050,12 @@ export function AdminUsersPage() {
           <button
             aria-label={
               member.isActive
-                ? `Deactivate ${member.fullName}`
-                : `Activate ${member.fullName}`
+                ? t('admin.users.actions.deactivateAria', {
+                    name: member.fullName,
+                  })
+                : t('admin.users.actions.activateAria', {
+                    name: member.fullName,
+                  })
             }
             className={cn(
               'rounded-lg p-2 transition',
@@ -1054,7 +1064,9 @@ export function AdminUsersPage() {
                 : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-700',
             )}
             onClick={() => setStatusTarget(member)}
-            title={member.isActive ? 'Deactivate' : 'Activate'}
+            title={
+              member.isActive ? t('common.deactivate') : t('common.activate')
+            }
             type="button"
           >
             {member.isActive ? (
@@ -1073,16 +1085,16 @@ export function AdminUsersPage() {
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            Internal access
+            {t('admin.users.eyebrow')}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Team Members
+            {t('navigation.teamMembers')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Manage internal CRM users, roles, activation and password resets.
+            {t('admin.users.description')}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Team members belong to {workspaceLabel}.
+            {t('admin.users.workspaceScope', { workspace: workspaceLabel })}
           </p>
         </div>
         <button
@@ -1091,7 +1103,7 @@ export function AdminUsersPage() {
           type="button"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Create Team Member
+          {t('admin.users.createTeamMember')}
         </button>
       </header>
 
@@ -1106,14 +1118,14 @@ export function AdminUsersPage() {
         <div className="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem_auto_auto]">
           <SearchInput
             isDisabled={isLoading}
-            label="Search team members"
+            label={t('admin.users.searchLabel')}
             onChange={setSearchInput}
             onSubmit={submitSearch}
-            placeholder="Search name, email or phone..."
+            placeholder={t('admin.users.searchPlaceholder')}
             value={searchInput}
           />
           <select
-            aria-label="Filter team member role"
+            aria-label={t('admin.users.filterRole')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             onChange={(event) => {
               setPage(1)
@@ -1121,7 +1133,7 @@ export function AdminUsersPage() {
             }}
             value={role}
           >
-            <option value="">All roles</option>
+            <option value="">{t('admin.users.allRoles')}</option>
             {userRoles.map((userRole) => (
               <option key={userRole} value={userRole}>
                 {getStatusLabel(t, 'role', userRole)}
@@ -1129,7 +1141,7 @@ export function AdminUsersPage() {
             ))}
           </select>
           <select
-            aria-label="Filter account status"
+            aria-label={t('admin.users.filterStatus')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             onChange={(event) => {
               setPage(1)
@@ -1137,9 +1149,9 @@ export function AdminUsersPage() {
             }}
             value={status}
           >
-            <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="">{t('admin.cases.allStatuses')}</option>
+            <option value="active">{t('common.active')}</option>
+            <option value="inactive">{t('common.inactive')}</option>
           </select>
           <button
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
@@ -1151,7 +1163,7 @@ export function AdminUsersPage() {
               className={cn('h-4 w-4', isLoading && 'animate-spin')}
               aria-hidden="true"
             />
-            Refresh
+            {t('common.refresh')}
           </button>
           <button
             className="min-h-11 rounded-xl px-3 text-sm font-bold text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1159,7 +1171,7 @@ export function AdminUsersPage() {
             onClick={clearFilters}
             type="button"
           >
-            Clear filters
+            {t('admin.cases.clearFilters')}
           </button>
         </div>
 
@@ -1168,7 +1180,7 @@ export function AdminUsersPage() {
             <div>
               <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
               <h2 className="mt-4 font-bold text-slate-900">
-                Team members could not load
+                {t('admin.users.loadErrorTitle')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
                 {loadError}
@@ -1178,21 +1190,25 @@ export function AdminUsersPage() {
                 onClick={() => void loadMembers()}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           </div>
         ) : isLoading && members.length === 0 ? (
-          <LoadingState label="Loading team members..." />
+          <LoadingState label={t('admin.users.loading')} />
         ) : members.length === 0 ? (
           <EmptyState
             description={
               hasFilters
-                ? 'Try changing or clearing the current filters.'
-                : 'Create an internal CRM user to start managing team access.'
+                ? t('admin.users.emptyFiltered')
+                : t('admin.users.emptyDefault')
             }
             icon={<SearchX className="h-6 w-6" aria-hidden="true" />}
-            title={hasFilters ? 'No matching team members' : 'No team members yet'}
+            title={
+              hasFilters
+                ? t('admin.users.emptyFilteredTitle')
+                : t('admin.users.emptyTitle')
+            }
           />
         ) : (
           <>
@@ -1201,18 +1217,20 @@ export function AdminUsersPage() {
                 className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
                 role="alert"
               >
-                <span>Refresh failed: {loadError}. Showing cached data.</span>
+                <span>
+                  {t('admin.users.refreshFailed', { message: loadError })}
+                </span>
                 <button
                   className="shrink-0 font-bold underline"
                   onClick={() => void loadMembers()}
                   type="button"
                 >
-                  Retry
+                  {t('admin.appointments.retry')}
                 </button>
               </div>
             ) : null}
             <DataTable
-              caption="Internal team members"
+              caption={t('admin.users.tableCaption')}
               columns={columns}
               getRowKey={(member) => member.id}
               items={members}
@@ -1229,11 +1247,11 @@ export function AdminUsersPage() {
       </section>
 
       <Modal
-        description="Create an internal CRM user. Public visitors do not need accounts."
+        description={t('admin.users.createDescription')}
         isOpen={isCreateOpen}
         onClose={closeCreate}
         size="lg"
-        title="Create team member"
+        title={t('admin.users.createTeamMember')}
       >
         <CreateUserForm
           error={createError}
@@ -1247,7 +1265,11 @@ export function AdminUsersPage() {
         isOpen={editTarget !== null}
         onClose={closeEdit}
         size="lg"
-        title={editTarget ? `Edit ${editTarget.fullName}` : 'Edit team member'}
+        title={
+          editTarget
+            ? t('admin.users.editTitleWithName', { name: editTarget.fullName })
+            : t('admin.users.editTitle')
+        }
       >
         {editDetail ? (
           <EditUserForm
@@ -1264,7 +1286,7 @@ export function AdminUsersPage() {
                 {editError}
               </div>
             ) : (
-              <LoadingState label="Loading team member details..." />
+              <LoadingState label={t('admin.users.loadingDetails')} />
             )}
           </div>
         )}
@@ -1274,7 +1296,7 @@ export function AdminUsersPage() {
         isOpen={resetTarget !== null}
         onClose={closeResetPassword}
         size="md"
-        title="Reset password"
+        title={t('admin.users.resetPassword')}
       >
         {resetTarget ? (
           <ResetPasswordForm

@@ -21,6 +21,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   ConfirmDialog,
   DataTable,
@@ -71,6 +72,9 @@ import {
   type ServiceOption,
   type UserOption,
 } from '../../features/cases'
+import { formatDateTime as formatLocalizedDateTime } from '../../i18n/format'
+import { getStatusLabel } from '../../i18n/statusLabels'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 import { ApiError } from '../../lib/apiClient'
 import { cn } from '../../utils/cn'
 
@@ -112,13 +116,6 @@ const EMPTY_LOOKUPS: LookupState = {
   users: [],
 }
 
-const formatLabel = (value: string): string =>
-  value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
-
 const formatDateTime = (value: string | null): string => {
   if (!value) {
     return '—'
@@ -130,13 +127,7 @@ const formatDateTime = (value: string | null): string => {
     return value
   }
 
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
+  return formatLocalizedDateTime(value)
 }
 
 const isOverdue = (caseProfile: CaseProfile): boolean =>
@@ -157,9 +148,12 @@ function FieldError({
   id: string
   message?: string
 }) {
+  const { t } = useTranslation()
+  const translatedMessage = translateValidationMessage(t, message)
+
   return message ? (
     <p className="field-error" id={id}>
-      {message}
+      {translatedMessage}
     </p>
   ) : null
 }
@@ -176,11 +170,11 @@ function FormError({ message }: { message: string | null }) {
 }
 
 function ModalActions({
-  cancelLabel = 'Cancel',
+  cancelLabel,
   isSubmitting,
   onCancel,
   submitLabel,
-  submittingLabel = 'Saving…',
+  submittingLabel,
 }: {
   cancelLabel?: string
   isSubmitting: boolean
@@ -188,6 +182,8 @@ function ModalActions({
   submitLabel: string
   submittingLabel?: string
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
       <button
@@ -196,20 +192,23 @@ function ModalActions({
         onClick={onCancel}
         type="button"
       >
-        {cancelLabel}
+        {cancelLabel ?? t('common.cancel')}
       </button>
       <button
         className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? submittingLabel : submitLabel}
+        {isSubmitting
+          ? (submittingLabel ?? t('admin.cases.saving'))
+          : submitLabel}
       </button>
     </div>
   )
 }
 
 function PriorityBadge({ priority }: { priority: Priority }) {
+  const { t } = useTranslation()
   const styles: Record<Priority, string> = {
     LOW: 'bg-slate-100 text-slate-600 ring-slate-500/20',
     MEDIUM: 'bg-blue-50 text-blue-700 ring-blue-600/20',
@@ -224,7 +223,7 @@ function PriorityBadge({ priority }: { priority: Priority }) {
         styles[priority],
       )}
     >
-      {formatLabel(priority)}
+      {getStatusLabel(t, 'priority', priority)}
     </span>
   )
 }
@@ -248,6 +247,7 @@ function CreateCaseForm({
   onCancel,
   onSubmit,
 }: CreateCaseFormProps) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -271,14 +271,14 @@ function CreateCaseForm({
         ) : null}
         {isLoadingLookups ? (
           <div className="mb-5 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-            Loading customer, service and staff options…
+            {t('admin.cases.loadingOptions')}
           </div>
         ) : null}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="case-customer">
-              Customer <span aria-hidden="true">*</span>
+              {t('admin.cases.fields.customer')} <span aria-hidden="true">*</span>
             </label>
             <select
               aria-describedby={
@@ -290,7 +290,7 @@ function CreateCaseForm({
               id="case-customer"
               {...register('customerId')}
             >
-              <option value="">Select a customer</option>
+              <option value="">{t('admin.cases.selectCustomer')}</option>
               {lookups.customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
                   {customer.fullName} · {customer.phone}
@@ -305,7 +305,7 @@ function CreateCaseForm({
 
           <div>
             <label className="field-label" htmlFor="case-service">
-              Service <span aria-hidden="true">*</span>
+              {t('admin.cases.fields.service')} <span aria-hidden="true">*</span>
             </label>
             <select
               aria-describedby={
@@ -317,7 +317,7 @@ function CreateCaseForm({
               id="case-service"
               {...register('serviceId')}
             >
-              <option value="">Select a service</option>
+              <option value="">{t('admin.cases.selectService')}</option>
               {lookups.services
                 .filter((service) => service.isActive)
                 .map((service) => (
@@ -335,7 +335,7 @@ function CreateCaseForm({
           {showAssignee ? (
             <div>
               <label className="field-label" htmlFor="case-assignee">
-                Assigned to
+                {t('admin.cases.fields.assignedTo')}
               </label>
               <select
                 className="field-input"
@@ -343,10 +343,10 @@ function CreateCaseForm({
                 id="case-assignee"
                 {...register('assignedToId')}
               >
-                <option value="">Leave unassigned</option>
+                <option value="">{t('admin.cases.leaveUnassigned')}</option>
                 {lookups.users.map((staff) => (
                   <option key={staff.id} value={staff.id}>
-                    {staff.fullName} · {formatLabel(staff.role)}
+                    {staff.fullName} - {getStatusLabel(t, 'role', staff.role)}
                   </option>
                 ))}
               </select>
@@ -355,7 +355,7 @@ function CreateCaseForm({
 
           <div>
             <label className="field-label" htmlFor="case-priority">
-              Priority
+              {t('admin.cases.fields.priority')}
             </label>
             <select
               className="field-input"
@@ -364,7 +364,7 @@ function CreateCaseForm({
             >
               {priorities.map((priority) => (
                 <option key={priority} value={priority}>
-                  {formatLabel(priority)}
+                  {getStatusLabel(t, 'priority', priority)}
                 </option>
               ))}
             </select>
@@ -372,7 +372,7 @@ function CreateCaseForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="case-title">
-              Title <span aria-hidden="true">*</span>
+              {t('admin.cases.fields.title')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -391,7 +391,7 @@ function CreateCaseForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="case-description">
-              Description
+              {t('admin.cases.fields.description')}
             </label>
             <textarea
               className="field-input min-h-24 resize-y"
@@ -407,7 +407,7 @@ function CreateCaseForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="case-note">
-              Internal note
+              {t('admin.cases.fields.internalNote')}
             </label>
             <textarea
               className="field-input min-h-20 resize-y"
@@ -423,7 +423,7 @@ function CreateCaseForm({
 
           <div>
             <label className="field-label" htmlFor="case-deadline">
-              Deadline
+              {t('admin.cases.fields.deadline')}
             </label>
             <input
               aria-describedby={
@@ -446,8 +446,8 @@ function CreateCaseForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Create case"
-        submittingLabel="Creating…"
+        submitLabel={t('admin.cases.createCase')}
+        submittingLabel={t('admin.cases.creating')}
       />
     </form>
   )
@@ -466,6 +466,7 @@ function CaseDetailForm({
   onCancel,
   onSubmit,
 }: CaseDetailFormProps) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -500,7 +501,7 @@ function CaseDetailForm({
         <section className="mb-6 grid gap-3 rounded-xl bg-slate-50 p-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Case code
+              {t('admin.cases.fields.caseCode')}
             </p>
             <p className="mt-1 font-bold text-slate-900">
               {caseDetail.caseCode}
@@ -508,7 +509,7 @@ function CaseDetailForm({
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Status
+              {t('admin.cases.fields.status')}
             </p>
             <div className="mt-1">
               <StatusBadge status={caseDetail.status} />
@@ -516,7 +517,7 @@ function CaseDetailForm({
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Customer
+              {t('admin.cases.fields.customer')}
             </p>
             <p className="mt-1 font-semibold text-slate-800">
               {caseDetail.customer.fullName}
@@ -527,7 +528,7 @@ function CaseDetailForm({
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Service
+              {t('admin.cases.fields.service')}
             </p>
             <p className="mt-1 font-semibold text-slate-800">
               {caseDetail.service.name}
@@ -535,15 +536,15 @@ function CaseDetailForm({
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Assigned to
+              {t('admin.cases.fields.assignedTo')}
             </p>
             <p className="mt-1 font-semibold text-slate-800">
-              {caseDetail.assignedTo?.fullName ?? 'Unassigned'}
+              {caseDetail.assignedTo?.fullName ?? t('common.notAssigned')}
             </p>
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Completed
+              {t('common.completed')}
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-700">
               {formatDateTime(caseDetail.completedAt)}
@@ -551,12 +552,14 @@ function CaseDetailForm({
           </div>
           <div className="sm:col-span-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Related records
+              {t('admin.cases.relatedRecords')}
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-700">
-              {caseDetail._count.documents} documents ·{' '}
-              {caseDetail._count.tasks} tasks ·{' '}
-              {caseDetail._count.appointments} appointments
+              {t('admin.cases.relatedRecordsValue', {
+                appointments: caseDetail._count.appointments,
+                documents: caseDetail._count.documents,
+                tasks: caseDetail._count.tasks,
+              })}
             </p>
           </div>
         </section>
@@ -564,7 +567,7 @@ function CaseDetailForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="case-edit-title">
-              Title
+              {t('admin.cases.fields.title')}
             </label>
             <input
               aria-describedby={
@@ -583,7 +586,7 @@ function CaseDetailForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="case-edit-description">
-              Description
+              {t('admin.cases.fields.description')}
             </label>
             <textarea
               className="field-input min-h-24 resize-y"
@@ -599,7 +602,7 @@ function CaseDetailForm({
 
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="case-edit-note">
-              Internal note
+              {t('admin.cases.fields.internalNote')}
             </label>
             <textarea
               className="field-input min-h-20 resize-y"
@@ -615,7 +618,7 @@ function CaseDetailForm({
 
           <div>
             <label className="field-label" htmlFor="case-edit-priority">
-              Priority
+              {t('admin.cases.fields.priority')}
             </label>
             <select
               className="field-input"
@@ -624,7 +627,7 @@ function CaseDetailForm({
             >
               {priorities.map((priority) => (
                 <option key={priority} value={priority}>
-                  {formatLabel(priority)}
+                  {getStatusLabel(t, 'priority', priority)}
                 </option>
               ))}
             </select>
@@ -632,7 +635,7 @@ function CaseDetailForm({
 
           <div>
             <label className="field-label" htmlFor="case-edit-deadline">
-              Deadline
+              {t('admin.cases.fields.deadline')}
             </label>
             <input
               aria-describedby={
@@ -655,7 +658,8 @@ function CaseDetailForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Save changes"
+        submitLabel={t('common.saveChanges')}
+        submittingLabel={t('admin.cases.saving')}
       />
     </form>
   )
@@ -677,6 +681,7 @@ function StatusForm({
   onCancel,
   onSubmit,
 }: StatusFormProps) {
+  const { t } = useTranslation()
   const expectedStatuses = caseStatusTransitions[caseProfile.status]
   const defaultStatus = expectedStatuses[0] ?? caseProfile.status
   const {
@@ -696,21 +701,22 @@ function StatusForm({
       <div className="p-5 sm:p-6">
         <FormError message={error} />
         <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
-          <p className="font-bold">Workflow</p>
+          <p className="font-bold">{t('admin.cases.workflow.title')}</p>
           <p className="mt-1 leading-6">
-            Received → Verifying → Proposing Solution → Processing → Completed.
-            An unfinished case can be cancelled.
+            {t('admin.cases.workflow.description')}
           </p>
           <p className="mt-2 text-xs font-semibold">
-            Expected next:{' '}
+            {t('admin.cases.workflow.expectedNext')}{' '}
             {expectedStatuses.length > 0
-              ? expectedStatuses.map(formatLabel).join(' or ')
-              : 'This is a terminal status'}
+              ? expectedStatuses
+                  .map((status) => getStatusLabel(t, 'case', status))
+                  .join(t('admin.cases.workflow.orSeparator'))
+              : t('admin.cases.workflow.terminalStatus')}
           </p>
         </div>
 
         <label className="field-label" htmlFor="case-status">
-          New status
+          {t('admin.cases.fields.newStatus')}
         </label>
         <select
           className="field-input"
@@ -719,13 +725,13 @@ function StatusForm({
         >
           {caseStatuses.map((status) => (
             <option key={status} value={status}>
-              {formatLabel(status)}
+              {getStatusLabel(t, 'case', status)}
             </option>
           ))}
         </select>
 
         <label className="field-label mt-5" htmlFor="case-status-note">
-          Note
+          {t('admin.cases.fields.note')}
         </label>
         <textarea
           className="field-input min-h-24 resize-y"
@@ -742,8 +748,8 @@ function StatusForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Update status"
-        submittingLabel="Updating…"
+        submitLabel={t('admin.cases.updateStatus')}
+        submittingLabel={t('admin.cases.updating')}
       />
     </form>
   )
@@ -768,6 +774,7 @@ function AssignForm({
   onRetry,
   onSubmit,
 }: AssignFormProps) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -784,11 +791,12 @@ function AssignForm({
       <div className="p-5 sm:p-6">
         <FormError message={error} />
         <p className="mb-5 text-sm text-slate-500">
-          Assign <strong className="text-slate-800">{caseProfile.caseCode}</strong>{' '}
-          to an active CRM team member.
+          {t('admin.cases.assignDescription', {
+            caseCode: caseProfile.caseCode,
+          })}
         </p>
         <label className="field-label" htmlFor="case-assign-user">
-          Assigned staff
+          {t('admin.cases.fields.assignedStaff')}
         </label>
         <select
           aria-describedby={
@@ -800,10 +808,10 @@ function AssignForm({
           id="case-assign-user"
           {...register('assignedToId')}
         >
-          <option value="">Select a team member</option>
+          <option value="">{t('admin.cases.selectTeamMember')}</option>
           {users.map((staff) => (
             <option key={staff.id} value={staff.id}>
-              {staff.fullName} · {formatLabel(staff.role)}
+              {staff.fullName} - {getStatusLabel(t, 'role', staff.role)}
             </option>
           ))}
         </select>
@@ -813,7 +821,7 @@ function AssignForm({
         />
         {isLoadingUsers ? (
           <p className="mt-3 text-sm font-semibold text-slate-500">
-            Loading team members…
+            {t('admin.cases.loadingTeamMembers')}
           </p>
         ) : users.length === 0 ? (
           <button
@@ -821,7 +829,7 @@ function AssignForm({
             onClick={onRetry}
             type="button"
           >
-            Retry loading team members
+            {t('admin.cases.retryLoadingTeamMembers')}
           </button>
         ) : null}
       </div>
@@ -829,8 +837,8 @@ function AssignForm({
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Assign case"
-        submittingLabel="Assigning…"
+        submitLabel={t('admin.cases.assignCase')}
+        submittingLabel={t('admin.cases.assigning')}
       />
     </form>
   )
@@ -843,8 +851,10 @@ function DetailLoading({
   error: string | null
   onRetry: () => void
 }) {
+  const { t } = useTranslation()
+
   if (!error) {
-    return <LoadingState label="Loading case details…" />
+    return <LoadingState label={t('admin.cases.loadingDetails')} />
   }
 
   return (
@@ -857,7 +867,7 @@ function DetailLoading({
           onClick={onRetry}
           type="button"
         >
-          Try again
+          {t('common.tryAgain')}
         </button>
       </div>
     </div>
@@ -881,8 +891,10 @@ function HistoryTimeline({
   onPageChange,
   onRetry,
 }: HistoryTimelineProps) {
+  const { t } = useTranslation()
+
   if (isLoading && items.length === 0) {
-    return <LoadingState label="Loading case history…" />
+    return <LoadingState label={t('admin.cases.loadingHistory')} />
   }
 
   if (error && items.length === 0) {
@@ -896,7 +908,7 @@ function HistoryTimeline({
             onClick={onRetry}
             type="button"
           >
-            Try again
+            {t('common.tryAgain')}
           </button>
         </div>
       </div>
@@ -906,9 +918,9 @@ function HistoryTimeline({
   if (items.length === 0) {
     return (
       <EmptyState
-        description="Changes to this case will appear here."
+        description={t('admin.cases.historyEmptyDescription')}
         icon={<FileClock className="h-6 w-6" aria-hidden="true" />}
-        title="No history yet"
+        title={t('admin.cases.historyEmptyTitle')}
       />
     )
   }
@@ -920,7 +932,7 @@ function HistoryTimeline({
           className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
           role="alert"
         >
-          Refresh failed: {error}
+          {t('admin.cases.refreshFailedShort', { message: error })}
         </div>
       ) : null}
       <ol className="max-h-[calc(100vh-20rem)] overflow-y-auto p-5 sm:p-6">
@@ -935,7 +947,9 @@ function HistoryTimeline({
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <p className="font-bold text-slate-900">
-                  {formatLabel(item.action)}
+                  {t(`admin.cases.historyActions.${item.action}`, {
+                    defaultValue: item.action,
+                  })}
                 </p>
                 <time
                   className="text-xs font-medium text-slate-400"
@@ -963,7 +977,12 @@ function HistoryTimeline({
                 </p>
               ) : null}
               <p className="mt-2 text-xs text-slate-400">
-                By {item.user?.fullName ?? item.user?.email ?? 'System'}
+                {t('admin.cases.historyBy', {
+                  name:
+                    item.user?.fullName ??
+                    item.user?.email ??
+                    t('admin.dashboard.system'),
+                })}
               </p>
             </div>
           </li>
@@ -987,6 +1006,7 @@ function FeedbackBanner({
   feedback: Feedback
   onDismiss: () => void
 }) {
+  const { t } = useTranslation()
   const icon: ReactNode =
     feedback.type === 'success' ? (
       <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -1011,13 +1031,14 @@ function FeedbackBanner({
         onClick={onDismiss}
         type="button"
       >
-        Dismiss
+        {t('common.close')}
       </button>
     </div>
   )
 }
 
 export function AdminCasesPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [cases, setCases] = useState<CaseProfile[]>([])
   const [meta, setMeta] = useState<PaginationMeta>(EMPTY_META)
@@ -1097,8 +1118,8 @@ export function AdminCasesPage() {
         getErrorMessage(
           error,
           overdueOnly
-            ? 'Overdue cases could not be loaded.'
-            : 'Cases could not be loaded.',
+            ? t('admin.cases.overdueLoadError')
+            : t('admin.cases.loadError'),
         ),
       )
     } finally {
@@ -1106,7 +1127,7 @@ export function AdminCasesPage() {
         setIsLoading(false)
       }
     }
-  }, [overdueOnly, page, priority, search, status])
+  }, [overdueOnly, page, priority, search, status, t])
 
   useEffect(() => {
     void loadCases()
@@ -1149,23 +1170,23 @@ export function AdminCasesPage() {
 
     const errors = [
       customerResult.status === 'rejected'
-        ? getErrorMessage(customerResult.reason, 'customers')
+        ? getErrorMessage(customerResult.reason, t('navigation.customers'))
         : null,
       serviceResult.status === 'rejected'
-        ? getErrorMessage(serviceResult.reason, 'services')
+        ? getErrorMessage(serviceResult.reason, t('navigation.services'))
         : null,
       userResult.status === 'rejected'
-        ? getErrorMessage(userResult.reason, 'team members')
+        ? getErrorMessage(userResult.reason, t('navigation.teamMembers'))
         : null,
     ].filter((message): message is string => message !== null)
 
     setLookupError(
       errors.length > 0
-        ? `Some options could not be loaded: ${errors.join('; ')}`
+        ? t('admin.cases.lookupError', { message: errors.join('; ') })
         : null,
     )
     setIsLoadingLookups(false)
-  }, [canManage])
+  }, [canManage, t])
 
   const loadDetail = useCallback(async (target: CaseProfile) => {
     const sequence = ++detailSequence.current
@@ -1182,7 +1203,7 @@ export function AdminCasesPage() {
     } catch (error) {
       if (sequence === detailSequence.current) {
         setDetailError(
-          getErrorMessage(error, 'Case details could not be loaded.'),
+          getErrorMessage(error, t('admin.cases.detailsLoadError')),
         )
       }
     } finally {
@@ -1190,7 +1211,7 @@ export function AdminCasesPage() {
         setIsDetailLoading(false)
       }
     }
-  }, [])
+  }, [t])
 
   const loadHistory = useCallback(async () => {
     if (!historyTarget) {
@@ -1214,7 +1235,7 @@ export function AdminCasesPage() {
     } catch (error) {
       if (sequence === historySequence.current) {
         setHistoryError(
-          getErrorMessage(error, 'Case history could not be loaded.'),
+          getErrorMessage(error, t('admin.cases.historyLoadError')),
         )
       }
     } finally {
@@ -1222,7 +1243,7 @@ export function AdminCasesPage() {
         setIsHistoryLoading(false)
       }
     }
-  }, [historyPage, historyTarget])
+  }, [historyPage, historyTarget, t])
 
   useEffect(() => {
     void loadHistory()
@@ -1254,7 +1275,7 @@ export function AdminCasesPage() {
       closeCreate()
       setFeedback({
         type: 'success',
-        message: 'Case created successfully.',
+        message: t('admin.cases.createdFeedback'),
       })
 
       if (page !== 1) {
@@ -1263,7 +1284,7 @@ export function AdminCasesPage() {
         await refreshAfterMutation()
       }
     } catch (error) {
-      setCreateError(getErrorMessage(error, 'The case could not be created.'))
+      setCreateError(getErrorMessage(error, t('admin.cases.createError')))
     }
   }
 
@@ -1297,11 +1318,13 @@ export function AdminCasesPage() {
       )
       setFeedback({
         type: 'success',
-        message: `${updated.caseCode} updated successfully.`,
+        message: t('admin.cases.updatedFeedback', {
+          caseCode: updated.caseCode,
+        }),
       })
       await refreshAfterMutation()
     } catch (error) {
-      setDetailError(getErrorMessage(error, 'The case could not be updated.'))
+      setDetailError(getErrorMessage(error, t('admin.cases.updateError')))
     }
   }
 
@@ -1323,12 +1346,15 @@ export function AdminCasesPage() {
       setStatusTarget(null)
       setFeedback({
         type: 'success',
-        message: `${updated.caseCode} moved to ${formatLabel(updated.status)}.`,
+        message: t('admin.cases.statusFeedback', {
+          caseCode: updated.caseCode,
+          status: getStatusLabel(t, 'case', updated.status),
+        }),
       })
       await refreshAfterMutation()
     } catch (error) {
       setStatusError(
-        getErrorMessage(error, 'The case status could not be updated.'),
+        getErrorMessage(error, t('admin.cases.statusUpdateError')),
       )
     }
   }
@@ -1354,7 +1380,7 @@ export function AdminCasesPage() {
     } catch (error) {
       if (sequence === lookupSequence.current) {
         setAssignError(
-          getErrorMessage(error, 'Team members could not be loaded.'),
+          getErrorMessage(error, t('admin.cases.teamMembersLoadError')),
         )
       }
     } finally {
@@ -1389,11 +1415,16 @@ export function AdminCasesPage() {
       closeAssign()
       setFeedback({
         type: 'success',
-        message: `${updated.caseCode} assigned to ${updated.assignedTo?.fullName ?? 'the selected team member'}.`,
+        message: t('admin.cases.assignedFeedback', {
+          assignee:
+            updated.assignedTo?.fullName ??
+            t('admin.cases.selectedTeamMember'),
+          caseCode: updated.caseCode,
+        }),
       })
       await refreshAfterMutation()
     } catch (error) {
-      setAssignError(getErrorMessage(error, 'The case could not be assigned.'))
+      setAssignError(getErrorMessage(error, t('admin.cases.assignError')))
     }
   }
 
@@ -1428,7 +1459,7 @@ export function AdminCasesPage() {
       setDeleteTarget(null)
       setFeedback({
         type: 'success',
-        message: `${deletedCode} deleted successfully.`,
+        message: t('admin.cases.deletedFeedback', { caseCode: deletedCode }),
       })
 
       if (cases.length === 1 && page > 1) {
@@ -1442,8 +1473,8 @@ export function AdminCasesPage() {
         type: 'error',
         message:
           error instanceof ApiError && error.status === 409
-            ? 'This case cannot be deleted because related records exist.'
-            : getErrorMessage(error, 'The case could not be deleted.'),
+            ? t('admin.cases.deleteConflict')
+            : getErrorMessage(error, t('admin.cases.deleteError')),
       })
     } finally {
       setIsDeleting(false)
@@ -1474,14 +1505,14 @@ export function AdminCasesPage() {
   const columns: readonly DataTableColumn<CaseProfile>[] = [
     {
       key: 'caseCode',
-      header: 'Case code',
+      header: t('admin.cases.fields.caseCode'),
       render: (caseProfile) => (
         <div>
           <p className="font-bold text-slate-900">{caseProfile.caseCode}</p>
           {isOverdue(caseProfile) ? (
             <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-rose-700">
               <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-              Overdue
+              {t('admin.cases.overdue')}
             </span>
           ) : null}
         </div>
@@ -1489,7 +1520,7 @@ export function AdminCasesPage() {
     },
     {
       key: 'title',
-      header: 'Title',
+      header: t('admin.cases.fields.title'),
       className: 'max-w-64',
       render: (caseProfile) => (
         <span className="block truncate font-semibold text-slate-800">
@@ -1499,7 +1530,7 @@ export function AdminCasesPage() {
     },
     {
       key: 'customer',
-      header: 'Customer',
+      header: t('admin.cases.fields.customer'),
       render: (caseProfile) => (
         <div>
           <p className="font-semibold text-slate-800">
@@ -1513,7 +1544,7 @@ export function AdminCasesPage() {
     },
     {
       key: 'service',
-      header: 'Service',
+      header: t('admin.cases.fields.service'),
       className: 'max-w-52',
       render: (caseProfile) => (
         <span className="block truncate">{caseProfile.service.name}</span>
@@ -1521,24 +1552,25 @@ export function AdminCasesPage() {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('admin.cases.fields.status'),
       render: (caseProfile) => <StatusBadge status={caseProfile.status} />,
     },
     {
       key: 'priority',
-      header: 'Priority',
+      header: t('admin.cases.fields.priority'),
       render: (caseProfile) => (
         <PriorityBadge priority={caseProfile.priority} />
       ),
     },
     {
       key: 'assigned',
-      header: 'Assigned to',
-      render: (caseProfile) => caseProfile.assignedTo?.fullName ?? 'Unassigned',
+      header: t('admin.cases.fields.assignedTo'),
+      render: (caseProfile) =>
+        caseProfile.assignedTo?.fullName ?? t('common.notAssigned'),
     },
     {
       key: 'deadline',
-      header: 'Deadline',
+      header: t('admin.cases.fields.deadline'),
       render: (caseProfile) => (
         <span
           className={cn(
@@ -1551,58 +1583,68 @@ export function AdminCasesPage() {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
       className: 'text-right',
       render: (caseProfile) => (
         <div className="flex justify-end gap-1">
           <button
-            aria-label={`View and edit ${caseProfile.caseCode}`}
+            aria-label={t('admin.cases.actions.viewEditAria', {
+              caseCode: caseProfile.caseCode,
+            })}
             className="rounded-lg p-2 text-blue-700 transition hover:bg-blue-50"
             onClick={() => openDetail(caseProfile)}
-            title="View / Edit"
+            title={t('admin.cases.actions.viewEdit')}
             type="button"
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
-            aria-label={`Update status for ${caseProfile.caseCode}`}
+            aria-label={t('admin.cases.actions.updateStatusAria', {
+              caseCode: caseProfile.caseCode,
+            })}
             className="rounded-lg p-2 text-violet-700 transition hover:bg-violet-50"
             onClick={() => {
               setStatusError(null)
               setStatusTarget(caseProfile)
             }}
-            title="Update status"
+            title={t('admin.cases.updateStatus')}
             type="button"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
           </button>
           {canManage ? (
             <button
-              aria-label={`Assign ${caseProfile.caseCode}`}
+              aria-label={t('admin.cases.actions.assignAria', {
+                caseCode: caseProfile.caseCode,
+              })}
               className="rounded-lg p-2 text-emerald-700 transition hover:bg-emerald-50"
               onClick={() => openAssign(caseProfile)}
-              title="Assign staff"
+              title={t('admin.cases.assignStaff')}
               type="button"
             >
               <UserRoundCheck className="h-4 w-4" aria-hidden="true" />
             </button>
           ) : null}
           <button
-            aria-label={`View history for ${caseProfile.caseCode}`}
+            aria-label={t('admin.cases.actions.historyAria', {
+              caseCode: caseProfile.caseCode,
+            })}
             className="rounded-lg p-2 text-slate-600 transition hover:bg-slate-100"
             onClick={() => openHistory(caseProfile)}
-            title="View history"
+            title={t('admin.cases.viewHistory')}
             type="button"
           >
             <History className="h-4 w-4" aria-hidden="true" />
           </button>
           {canManage ? (
             <button
-              aria-label={`Delete ${caseProfile.caseCode}`}
+              aria-label={t('admin.cases.actions.deleteAria', {
+                caseCode: caseProfile.caseCode,
+              })}
               className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"
               onClick={() => setDeleteTarget(caseProfile)}
-              title="Delete"
+              title={t('common.delete')}
               type="button"
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -1619,12 +1661,14 @@ export function AdminCasesPage() {
     <div className="mx-auto max-w-[1600px]">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-blue-600">Case workflow</p>
+          <p className="text-sm font-semibold text-blue-600">
+            {t('admin.cases.eyebrow')}
+          </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Cases
+            {t('navigation.cases')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Track client matters, ownership, deadlines and workflow history.
+            {t('admin.cases.description')}
           </p>
         </div>
         <button
@@ -1633,7 +1677,7 @@ export function AdminCasesPage() {
           type="button"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Create Case
+          {t('admin.cases.createCase')}
         </button>
       </header>
 
@@ -1648,14 +1692,14 @@ export function AdminCasesPage() {
         <div className="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-[minmax(16rem,1fr)_13rem_12rem_auto_auto]">
           <SearchInput
             isDisabled={isLoading || overdueOnly}
-            label="Search cases"
+            label={t('admin.cases.searchLabel')}
             onChange={setSearchInput}
             onSubmit={submitSearch}
-            placeholder="Search code, title, customer or service…"
+            placeholder={t('admin.cases.searchPlaceholder')}
             value={searchInput}
           />
           <label>
-            <span className="sr-only">Filter by status</span>
+            <span className="sr-only">{t('admin.cases.filterStatus')}</span>
             <select
               className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
               disabled={overdueOnly}
@@ -1665,16 +1709,16 @@ export function AdminCasesPage() {
               }}
               value={status}
             >
-              <option value="">All statuses</option>
+              <option value="">{t('admin.cases.allStatuses')}</option>
               {caseStatuses.map((caseStatus) => (
                 <option key={caseStatus} value={caseStatus}>
-                  {formatLabel(caseStatus)}
+                  {getStatusLabel(t, 'case', caseStatus)}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            <span className="sr-only">Filter by priority</span>
+            <span className="sr-only">{t('admin.cases.filterPriority')}</span>
             <select
               className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
               disabled={overdueOnly}
@@ -1684,10 +1728,10 @@ export function AdminCasesPage() {
               }}
               value={priority}
             >
-              <option value="">All priorities</option>
+              <option value="">{t('admin.cases.allPriorities')}</option>
               {priorities.map((casePriority) => (
                 <option key={casePriority} value={casePriority}>
-                  {formatLabel(casePriority)}
+                  {getStatusLabel(t, 'priority', casePriority)}
                 </option>
               ))}
             </select>
@@ -1707,7 +1751,7 @@ export function AdminCasesPage() {
             type="button"
           >
             <Clock3 className="h-4 w-4" aria-hidden="true" />
-            {overdueOnly ? 'Showing overdue' : 'View overdue'}
+            {overdueOnly ? t('admin.cases.showingOverdue') : t('admin.cases.viewOverdue')}
           </button>
           <button
             className="min-h-11 rounded-xl px-3 text-sm font-bold text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1715,14 +1759,14 @@ export function AdminCasesPage() {
             onClick={clearFilters}
             type="button"
           >
-            Clear filters
+            {t('admin.cases.clearFilters')}
           </button>
         </div>
 
         {overdueOnly ? (
           <div className="flex items-center gap-2 border-b border-rose-100 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-800">
             <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-            Showing unfinished cases whose deadline has passed.
+            {t('admin.cases.overdueBanner')}
           </div>
         ) : null}
 
@@ -1731,7 +1775,7 @@ export function AdminCasesPage() {
             <div>
               <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
               <h2 className="mt-4 font-bold text-slate-900">
-                Couldn&apos;t load cases
+                {t('admin.cases.loadErrorTitle')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
                 {loadError}
@@ -1741,21 +1785,23 @@ export function AdminCasesPage() {
                 onClick={() => void loadCases()}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           </div>
         ) : isLoading && cases.length === 0 ? (
-          <LoadingState label="Loading cases…" />
+          <LoadingState label={t('admin.cases.loading')} />
         ) : cases.length === 0 ? (
           <EmptyState
             description={
               hasFilters
-                ? 'Try changing or clearing the current filters.'
-                : 'Create the first case profile to start tracking work.'
+                ? t('admin.cases.emptyFiltered')
+                : t('admin.cases.emptyDefault')
             }
             icon={<SearchX className="h-6 w-6" aria-hidden="true" />}
-            title={overdueOnly ? 'No overdue cases' : 'No cases found'}
+            title={
+              overdueOnly ? t('admin.cases.noOverdue') : t('admin.cases.emptyTitle')
+            }
           />
         ) : (
           <>
@@ -1764,18 +1810,22 @@ export function AdminCasesPage() {
                 className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
                 role="alert"
               >
-                <span>Refresh failed: {loadError}. Showing cached data.</span>
+                <span>
+                  {t('admin.cases.refreshFailed', { message: loadError })}
+                </span>
                 <button
                   className="shrink-0 font-bold underline"
                   onClick={() => void loadCases()}
                   type="button"
                 >
-                  Retry
+                  {t('admin.appointments.retry')}
                 </button>
               </div>
             ) : null}
             <DataTable
-              caption={overdueOnly ? 'Overdue cases' : 'Case profiles'}
+              caption={
+                overdueOnly ? t('admin.cases.overdueCases') : t('admin.cases.tableCaption')
+              }
               columns={columns}
               getRowKey={(caseProfile) => caseProfile.id}
               items={cases}
@@ -1796,8 +1846,8 @@ export function AdminCasesPage() {
         isOpen={isCreateOpen}
         onClose={closeCreate}
         size="lg"
-        title="Create Case"
-        description="Create a case profile using an existing customer and service."
+        title={t('admin.cases.createCase')}
+        description={t('admin.cases.createDescription')}
       >
         <CreateCaseForm
           error={createError}
@@ -1816,9 +1866,13 @@ export function AdminCasesPage() {
         onClose={closeDetail}
         size="xl"
         title={
-          detailTarget ? `View / Edit ${detailTarget.caseCode}` : 'Case details'
+          detailTarget
+            ? t('admin.cases.viewEditTitle', {
+                caseCode: detailTarget.caseCode,
+              })
+            : t('admin.cases.detailsTitle')
         }
-        description="Review immutable associations and update basic case information."
+        description={t('admin.cases.detailsDescription')}
       >
         {caseDetail ? (
           <CaseDetailForm
@@ -1848,8 +1902,10 @@ export function AdminCasesPage() {
         size="md"
         title={
           statusTarget
-            ? `Update status · ${statusTarget.caseCode}`
-            : 'Update case status'
+            ? t('admin.cases.updateStatusTitleWithCode', {
+                caseCode: statusTarget.caseCode,
+              })
+            : t('admin.cases.updateStatusTitle')
         }
       >
         {statusTarget ? (
@@ -1870,7 +1926,7 @@ export function AdminCasesPage() {
         isOpen={assignTarget !== null}
         onClose={closeAssign}
         size="sm"
-        title="Assign Staff"
+        title={t('admin.cases.assignStaff')}
       >
         {assignTarget ? (
           <AssignForm
@@ -1891,10 +1947,12 @@ export function AdminCasesPage() {
         size="lg"
         title={
           historyTarget
-            ? `History · ${historyTarget.caseCode}`
-            : 'Case history'
+            ? t('admin.cases.historyTitleWithCode', {
+                caseCode: historyTarget.caseCode,
+              })
+            : t('admin.cases.historyTitle')
         }
-        description="Newest workflow activity appears first."
+        description={t('admin.cases.historyDescription')}
       >
         <HistoryTimeline
           error={historyError}
@@ -1909,14 +1967,16 @@ export function AdminCasesPage() {
       <ConfirmDialog
         isLoading={isDeleting}
         isOpen={deleteTarget !== null}
-        message={`Delete case ${deleteTarget?.caseCode ?? ''}? This action cannot be undone.`}
+        message={t('admin.cases.deleteConfirm', {
+          caseCode: deleteTarget?.caseCode ?? '',
+        })}
         onCancel={() => {
           if (!isDeleting) {
             setDeleteTarget(null)
           }
         }}
         onConfirm={() => void handleDelete()}
-        title="Delete case"
+        title={t('admin.cases.deleteTitle')}
       />
     </div>
   )

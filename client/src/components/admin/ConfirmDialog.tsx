@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from './Modal'
 
 export interface ConfirmDialogProps {
@@ -16,12 +17,16 @@ export function ConfirmDialog({
   isOpen,
   title,
   message,
-  confirmLabel = 'Delete',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   isLoading = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation()
+  const resolvedConfirmLabel = confirmLabel ?? t('common.delete')
+  const resolvedCancelLabel = cancelLabel ?? t('common.cancel')
+
   return (
     <Modal
       isDismissible={!isLoading}
@@ -45,7 +50,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             type="button"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -53,7 +58,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             type="button"
           >
-            {isLoading ? 'Deleting…' : confirmLabel}
+            {isLoading ? t('common.deleting') : resolvedConfirmLabel}
           </button>
         </div>
       </div>

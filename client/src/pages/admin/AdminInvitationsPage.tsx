@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import type { TFunction } from 'i18next'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import {
@@ -43,7 +44,12 @@ import {
   type PaginationMeta,
   type WorkspaceInvitation,
 } from '../../features/invitations'
+import {
+  formatDate as formatLocalizedDate,
+  formatDateTime as formatLocalizedDateTime,
+} from '../../i18n/format'
 import { getStatusLabel } from '../../i18n/statusLabels'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -69,42 +75,10 @@ interface Feedback {
   emailDelivery?: EmailDeliveryResult
 }
 
-const formatLabel = (value: string): string =>
-  value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
+const formatDate = (value: string): string => formatLocalizedDate(value)
 
-const formatDate = (value: string): string => {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
-const formatDateTime = (value: string): string => {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
+const formatDateTime = (value: string): string =>
+  formatLocalizedDateTime(value)
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
@@ -119,6 +93,7 @@ const toCreateInput = (
 })
 
 const getEmailDeliveryMessage = (
+  t: TFunction,
   delivery?: EmailDeliveryResult,
 ): string | null => {
   if (!delivery) {
@@ -126,18 +101,20 @@ const getEmailDeliveryMessage = (
   }
 
   if (delivery.status === 'MOCK_SENT') {
-    return 'Email preview generated in console mode.'
+    return t('admin.invitations.emailDelivery.mockSent')
   }
 
   if (delivery.status === 'SENT') {
-    return 'Invitation email sent.'
+    return t('admin.invitations.emailDelivery.sent')
   }
 
   if (delivery.status === 'FAILED') {
-    return `Invitation created, but email delivery failed.${delivery.error ? ` ${delivery.error}` : ''}`
+    return t('admin.invitations.emailDelivery.failed', {
+      message: delivery.error ? ` ${delivery.error}` : '',
+    })
   }
 
-  return 'Email delivery disabled. Copy the link manually.'
+  return t('admin.invitations.emailDelivery.disabled')
 }
 
 const getDeliveryFeedbackType = (
@@ -177,9 +154,12 @@ function FieldError({
   id: string
   message?: string
 }) {
+  const { t } = useTranslation()
+  const translatedMessage = translateValidationMessage(t, message)
+
   return message ? (
     <p className="field-error" id={id}>
-      {message}
+      {translatedMessage}
     </p>
   ) : null
 }
@@ -204,9 +184,10 @@ function FeedbackBanner({
   onCopy: (value: string) => void
   onDismiss: () => void
 }) {
+  const { t } = useTranslation()
   const isSuccess = feedback.type === 'success'
   const isWarning = feedback.type === 'warning'
-  const emailDeliveryMessage = getEmailDeliveryMessage(feedback.emailDelivery)
+  const emailDeliveryMessage = getEmailDeliveryMessage(t, feedback.emailDelivery)
 
   return (
     <div
@@ -243,7 +224,7 @@ function FeedbackBanner({
             type="button"
           >
             <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-            Copy link
+            {t('admin.invitations.copyLink')}
           </button>
         ) : null}
         <button
@@ -251,7 +232,7 @@ function FeedbackBanner({
           onClick={onDismiss}
           type="button"
         >
-          Dismiss
+          {t('common.close')}
         </button>
       </span>
     </div>
@@ -262,13 +243,15 @@ function ModalActions({
   isSubmitting,
   onCancel,
   submitLabel,
-  submittingLabel = 'Saving...',
+  submittingLabel,
 }: {
   isSubmitting: boolean
   onCancel: () => void
   submitLabel: string
   submittingLabel?: string
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
       <button
@@ -277,14 +260,16 @@ function ModalActions({
         onClick={onCancel}
         type="button"
       >
-        Cancel
+        {t('common.cancel')}
       </button>
       <button
         className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? submittingLabel : submitLabel}
+        {isSubmitting
+          ? (submittingLabel ?? t('admin.invitations.saving'))
+          : submitLabel}
       </button>
     </div>
   )
@@ -340,6 +325,7 @@ function CreateInvitationForm({
   onCancel: () => void
   onSubmit: (values: CreateInvitationFormValues) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -356,7 +342,7 @@ function CreateInvitationForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="create-invitation-email">
-              Email <span aria-hidden="true">*</span>
+              {t('common.email')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -377,7 +363,7 @@ function CreateInvitationForm({
 
           <div>
             <label className="field-label" htmlFor="create-invitation-role">
-              Role <span aria-hidden="true">*</span>
+              {t('admin.users.fields.role')} <span aria-hidden="true">*</span>
             </label>
             <select
               className="field-input"
@@ -386,7 +372,7 @@ function CreateInvitationForm({
             >
               {invitationRoles.map((role) => (
                 <option key={role} value={role}>
-                  {formatLabel(role)}
+                  {getStatusLabel(t, 'role', role)}
                 </option>
               ))}
             </select>
@@ -394,7 +380,7 @@ function CreateInvitationForm({
 
           <div>
             <label className="field-label" htmlFor="create-invitation-expiry">
-              Expires in days <span aria-hidden="true">*</span>
+              {t('admin.invitations.expiresInDays')} <span aria-hidden="true">*</span>
             </label>
             <input
               aria-describedby={
@@ -422,21 +408,20 @@ function CreateInvitationForm({
               type="checkbox"
               {...register('sendEmail')}
             />
-            Send invitation email now
+            {t('admin.invitations.sendEmailNow')}
           </label>
         </div>
 
         <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-          The invite link is shown only after this create action. If email
-          delivery is disabled or fails, copy it and share it privately.
+          {t('admin.invitations.createWarning')}
         </div>
       </div>
 
       <ModalActions
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Create invitation"
-        submittingLabel="Creating..."
+        submitLabel={t('admin.invitations.createInvitation')}
+        submittingLabel={t('admin.invitations.creating')}
       />
     </form>
   )
@@ -453,6 +438,8 @@ function RevokeInvitationDialog({
   onCancel: () => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation()
+
   if (!invitation) {
     return null
   }
@@ -464,7 +451,7 @@ function RevokeInvitationDialog({
       onClose={onCancel}
       role="alertdialog"
       size="sm"
-      title="Revoke invitation"
+      title={t('admin.invitations.revokeTitle')}
     >
       <div className="p-5 sm:p-6">
         <div className="flex gap-4">
@@ -472,11 +459,9 @@ function RevokeInvitationDialog({
             <Ban className="h-5 w-5" aria-hidden="true" />
           </span>
           <p className="pt-1 text-sm leading-6 text-slate-600">
-            Revoke the pending invitation for{' '}
-            <span className="font-bold text-slate-900">
-              {invitation.email}
-            </span>
-            ? The current invite link will stop working.
+            {t('admin.invitations.revokeConfirm', {
+              email: invitation.email,
+            })}
           </p>
         </div>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -486,7 +471,7 @@ function RevokeInvitationDialog({
             onClick={onCancel}
             type="button"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -494,7 +479,7 @@ function RevokeInvitationDialog({
             onClick={onConfirm}
             type="button"
           >
-            {isLoading ? 'Revoking...' : 'Revoke'}
+            {isLoading ? t('admin.invitations.revoking') : t('common.revoke')}
           </button>
         </div>
       </div>
@@ -515,6 +500,7 @@ function ResendInvitationDialog({
   onCancel: () => void
   onSubmit: (values: { expiresInDays: number }) => void
 }) {
+  const { t } = useTranslation()
   const [expiresInDays, setExpiresInDays] = useState(7)
 
   useEffect(() => {
@@ -534,7 +520,7 @@ function ResendInvitationDialog({
       onClose={onCancel}
       role="alertdialog"
       size="sm"
-      title="Resend invitation"
+      title={t('admin.invitations.resendTitle')}
     >
       <form
         onSubmit={(event) => {
@@ -549,21 +535,18 @@ function ResendInvitationDialog({
             </span>
             <div className="pt-1 text-sm leading-6 text-slate-600">
               <p>
-                Resend the invitation for{' '}
-                <span className="font-bold text-slate-900">
-                  {invitation.email}
-                </span>
-                .
+                {t('admin.invitations.resendConfirm', {
+                  email: invitation.email,
+                })}
               </p>
               <p className="mt-2 font-semibold text-amber-800">
-                Resending rotates the invite link. Older links will stop
-                working.
+                {t('admin.invitations.resendWarning')}
               </p>
             </div>
           </div>
           <div className="mt-5">
             <label className="field-label" htmlFor="resend-invitation-expiry">
-              Expires in days
+              {t('admin.invitations.expiresInDays')}
             </label>
             <input
               className="field-input"
@@ -592,7 +575,7 @@ function ResendInvitationDialog({
               onClick={onCancel}
               type="button"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -604,7 +587,7 @@ function ResendInvitationDialog({
               }
               type="submit"
             >
-              {isLoading ? 'Resending...' : 'Resend'}
+              {isLoading ? t('admin.invitations.resending') : t('common.resend')}
             </button>
           </div>
         </div>
@@ -657,14 +640,14 @@ export function AdminInvitationsPage() {
       }
     } catch (error) {
       if (sequence === listSequence.current) {
-        setLoadError(getErrorMessage(error, 'Invitations could not load.'))
+        setLoadError(getErrorMessage(error, t('admin.invitations.loadError')))
       }
     } finally {
       if (sequence === listSequence.current) {
         setIsLoading(false)
       }
     }
-  }, [page, role, search, status])
+  }, [page, role, search, status, t])
 
   useEffect(() => {
     void loadInvitations()
@@ -714,13 +697,13 @@ export function AdminInvitationsPage() {
       await copyText(inviteUrl)
       setFeedback({
         type: 'success',
-        message: 'Invite link copied. Share it privately with the recipient.',
+        message: t('admin.invitations.copyFeedback'),
         inviteUrl,
       })
     } catch (error) {
       setFeedback({
         type: 'error',
-        message: getErrorMessage(error, 'Invite link could not be copied.'),
+        message: getErrorMessage(error, t('admin.invitations.copyError')),
         inviteUrl,
       })
     }
@@ -735,14 +718,16 @@ export function AdminInvitationsPage() {
       const emailDeliveryType = getDeliveryFeedbackType(result.emailDelivery)
       setFeedback({
         type: emailDeliveryType,
-        message: `Invitation for ${result.invitation.email} created. Copy the invite link now; it will not be shown again.`,
+        message: t('admin.invitations.createdFeedback', {
+          email: result.invitation.email,
+        }),
         inviteUrl: result.inviteUrl,
         emailDelivery: result.emailDelivery,
       })
       await refreshFromFirstPage()
     } catch (error) {
       setCreateError(
-        getErrorMessage(error, 'The invitation could not be created.'),
+        getErrorMessage(error, t('admin.invitations.createError')),
       )
     }
   }
@@ -773,7 +758,9 @@ export function AdminInvitationsPage() {
       })
       setFeedback({
         type: getDeliveryFeedbackType(result.emailDelivery),
-        message: `Invitation for ${result.invitation.email} resent. Copy the new link now; older links no longer work.`,
+        message: t('admin.invitations.resentFeedback', {
+          email: result.invitation.email,
+        }),
         inviteUrl: result.inviteUrl,
         emailDelivery: result.emailDelivery,
       })
@@ -781,7 +768,7 @@ export function AdminInvitationsPage() {
       await loadInvitations()
     } catch (error) {
       setResendError(
-        getErrorMessage(error, 'The invitation could not be resent.'),
+        getErrorMessage(error, t('admin.invitations.resendError')),
       )
     } finally {
       setIsResending(false)
@@ -800,14 +787,16 @@ export function AdminInvitationsPage() {
       const revoked = await revokeInvitation(revokeTarget.id)
       setFeedback({
         type: 'success',
-        message: `Invitation for ${revoked.email} was revoked.`,
+        message: t('admin.invitations.revokedFeedback', {
+          email: revoked.email,
+        }),
       })
       setRevokeTarget(null)
       await loadInvitations()
     } catch (error) {
       setFeedback({
         type: 'error',
-        message: getErrorMessage(error, 'The invitation could not be revoked.'),
+        message: getErrorMessage(error, t('admin.invitations.revokeError')),
       })
       setRevokeTarget(null)
     } finally {
@@ -817,12 +806,12 @@ export function AdminInvitationsPage() {
 
   const hasFilters = Boolean(search || role || status)
   const workspaceName = currentUser?.organization?.name?.trim()
-  const workspaceLabel = workspaceName || 'the current workspace'
+  const workspaceLabel = workspaceName || t('admin.users.currentWorkspace')
 
   const columns: readonly DataTableColumn<WorkspaceInvitation>[] = [
     {
       key: 'email',
-      header: 'Email',
+      header: t('common.email'),
       className: 'min-w-72 max-w-96',
       render: (invitation) => (
         <span className="block truncate font-semibold text-slate-900">
@@ -832,45 +821,49 @@ export function AdminInvitationsPage() {
     },
     {
       key: 'role',
-      header: 'Role',
+      header: t('admin.users.fields.role'),
       render: (invitation) => <RoleBadge role={invitation.role} />,
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('admin.cases.fields.status'),
       render: (invitation) => (
         <InvitationStatusBadge status={invitation.status} />
       ),
     },
     {
       key: 'expiresAt',
-      header: 'Expires',
+      header: t('auth.inviteAccept.expires'),
       render: (invitation) => formatDateTime(invitation.expiresAt),
     },
     {
       key: 'invitedBy',
-      header: 'Invited by',
-      render: (invitation) => invitation.invitedBy?.fullName ?? 'System',
+      header: t('admin.invitations.invitedBy'),
+      render: (invitation) =>
+        invitation.invitedBy?.fullName ?? t('admin.dashboard.system'),
     },
     {
       key: 'acceptedBy',
-      header: 'Accepted by',
-      render: (invitation) => invitation.acceptedBy?.fullName ?? 'None',
+      header: t('admin.invitations.acceptedBy'),
+      render: (invitation) =>
+        invitation.acceptedBy?.fullName ?? t('common.notProvided'),
     },
     {
       key: 'createdAt',
-      header: 'Created',
+      header: t('common.created'),
       render: (invitation) => formatDate(invitation.createdAt),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
       className: 'text-right',
       render: (invitation) => (
         <div className="flex justify-end gap-1">
           <button
-            aria-label={`Resend invitation for ${invitation.email}`}
+            aria-label={t('admin.invitations.actions.resendAria', {
+              email: invitation.email,
+            })}
             className={cn(
               'rounded-lg p-2 transition',
               invitation.status === 'PENDING' || invitation.status === 'EXPIRED'
@@ -883,15 +876,17 @@ export function AdminInvitationsPage() {
             onClick={() => openResend(invitation)}
             title={
               invitation.status === 'PENDING' || invitation.status === 'EXPIRED'
-                ? 'Resend invitation'
-                : 'Accepted and revoked invitations cannot be resent'
+                ? t('admin.invitations.resendTitle')
+                : t('admin.invitations.resendBlocked')
             }
             type="button"
           >
             <Send className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
-            aria-label={`Revoke invitation for ${invitation.email}`}
+            aria-label={t('admin.invitations.actions.revokeAria', {
+              email: invitation.email,
+            })}
             className={cn(
               'rounded-lg p-2 transition',
               invitation.status === 'PENDING'
@@ -902,8 +897,8 @@ export function AdminInvitationsPage() {
             onClick={() => setRevokeTarget(invitation)}
             title={
               invitation.status === 'PENDING'
-                ? 'Revoke invitation'
-                : 'Only pending invitations can be revoked'
+                ? t('admin.invitations.revokeTitle')
+                : t('admin.invitations.revokeBlocked')
             }
             type="button"
           >
@@ -919,13 +914,13 @@ export function AdminInvitationsPage() {
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            Workspace access
+            {t('admin.invitations.eyebrow')}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Invitations
+            {t('navigation.invitations')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Invite admin, manager and staff accounts into {workspaceLabel}.
+            {t('admin.invitations.description', { workspace: workspaceLabel })}
           </p>
         </div>
         <button
@@ -934,7 +929,7 @@ export function AdminInvitationsPage() {
           type="button"
         >
           <MailPlus className="h-4 w-4" aria-hidden="true" />
-          Create Invitation
+          {t('admin.invitations.createInvitation')}
         </button>
       </header>
 
@@ -950,14 +945,14 @@ export function AdminInvitationsPage() {
         <div className="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem_auto_auto]">
           <SearchInput
             isDisabled={isLoading}
-            label="Search invitations"
+            label={t('admin.invitations.searchLabel')}
             onChange={setSearchInput}
             onSubmit={submitSearch}
-            placeholder="Search email or inviter..."
+            placeholder={t('admin.invitations.searchPlaceholder')}
             value={searchInput}
           />
           <select
-            aria-label="Filter invitation role"
+            aria-label={t('admin.invitations.filterRole')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             onChange={(event) => {
               setPage(1)
@@ -965,7 +960,7 @@ export function AdminInvitationsPage() {
             }}
             value={role}
           >
-            <option value="">All roles</option>
+            <option value="">{t('admin.users.allRoles')}</option>
             {invitationRoles.map((invitationRole) => (
               <option key={invitationRole} value={invitationRole}>
                 {getStatusLabel(t, 'role', invitationRole)}
@@ -973,7 +968,7 @@ export function AdminInvitationsPage() {
             ))}
           </select>
           <select
-            aria-label="Filter invitation status"
+            aria-label={t('admin.invitations.filterStatus')}
             className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             onChange={(event) => {
               setPage(1)
@@ -981,7 +976,7 @@ export function AdminInvitationsPage() {
             }}
             value={status}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('admin.cases.allStatuses')}</option>
             {invitationStatuses.map((invitationStatus) => (
               <option key={invitationStatus} value={invitationStatus}>
                 {getStatusLabel(t, 'invitation', invitationStatus)}
@@ -998,7 +993,7 @@ export function AdminInvitationsPage() {
               className={cn('h-4 w-4', isLoading && 'animate-spin')}
               aria-hidden="true"
             />
-            Refresh
+            {t('common.refresh')}
           </button>
           <button
             className="min-h-11 rounded-xl px-3 text-sm font-bold text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1006,7 +1001,7 @@ export function AdminInvitationsPage() {
             onClick={clearFilters}
             type="button"
           >
-            Clear filters
+            {t('admin.cases.clearFilters')}
           </button>
         </div>
 
@@ -1015,7 +1010,7 @@ export function AdminInvitationsPage() {
             <div>
               <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
               <h2 className="mt-4 font-bold text-slate-900">
-                Invitations could not load
+                {t('admin.invitations.loadErrorTitle')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
                 {loadError}
@@ -1025,21 +1020,25 @@ export function AdminInvitationsPage() {
                 onClick={() => void loadInvitations()}
                 type="button"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           </div>
         ) : isLoading && invitations.length === 0 ? (
-          <LoadingState label="Loading invitations..." />
+          <LoadingState label={t('admin.invitations.loading')} />
         ) : invitations.length === 0 ? (
           <EmptyState
             description={
               hasFilters
-                ? 'Try changing or clearing the current filters.'
-                : 'Create an invitation to add an internal workspace user.'
+                ? t('admin.invitations.emptyFiltered')
+                : t('admin.invitations.emptyDefault')
             }
             icon={<SearchX className="h-6 w-6" aria-hidden="true" />}
-            title={hasFilters ? 'No matching invitations' : 'No invitations yet'}
+            title={
+              hasFilters
+                ? t('admin.invitations.emptyFilteredTitle')
+                : t('admin.invitations.emptyTitle')
+            }
           />
         ) : (
           <>
@@ -1048,18 +1047,22 @@ export function AdminInvitationsPage() {
                 className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
                 role="alert"
               >
-                <span>Refresh failed: {loadError}. Showing cached data.</span>
+                <span>
+                  {t('admin.invitations.refreshFailed', {
+                    message: loadError,
+                  })}
+                </span>
                 <button
                   className="shrink-0 font-bold underline"
                   onClick={() => void loadInvitations()}
                   type="button"
                 >
-                  Retry
+                  {t('admin.appointments.retry')}
                 </button>
               </div>
             ) : null}
             <DataTable
-              caption="Workspace invitations"
+              caption={t('admin.invitations.tableCaption')}
               columns={columns}
               getRowKey={(invitation) => invitation.id}
               items={invitations}
@@ -1076,11 +1079,11 @@ export function AdminInvitationsPage() {
       </section>
 
       <Modal
-        description="Create a one-time invitation for an internal CRM user."
+        description={t('admin.invitations.createDescription')}
         isOpen={isCreateOpen}
         onClose={closeCreate}
         size="md"
-        title="Create invitation"
+        title={t('admin.invitations.createInvitation')}
       >
         <CreateInvitationForm
           error={createError}
