@@ -31,6 +31,9 @@ Do not paste real secrets, database URLs, or access tokens into this document.
 
 ## Public Website
 
+- [ ] Language switcher changes English -> Vietnamese without a reload.
+- [ ] Language switcher changes Vietnamese -> English without a reload.
+- [ ] Selected language persists in local storage as `advisora_locale` after refresh.
 - [ ] Home page loads.
 - [ ] Services page loads.
 - [ ] Service detail page loads.
@@ -47,6 +50,7 @@ Do not paste real secrets, database URLs, or access tokens into this document.
 
 ## Admin Authentication
 
+- [ ] Admin login language switcher works.
 - [ ] Login succeeds with an authorized admin account.
 - [ ] Invalid login shows a clear error.
 - [ ] Refresh keeps the authenticated session.
@@ -58,6 +62,7 @@ Do not paste real secrets, database URLs, or access tokens into this document.
 
 Dashboard:
 
+- [ ] Sidebar and topbar labels follow the selected language.
 - [ ] Overview metrics load.
 - [ ] Upcoming deadlines load.
 - [ ] Recent activity loads.
@@ -71,6 +76,7 @@ Customers:
 
 Customer Portal:
 
+- [ ] Portal login language switcher works.
 - [ ] Create portal access for an existing customer works.
 - [ ] Create response shows a generated temporary password once when password
   is omitted.
@@ -85,6 +91,8 @@ Customer Portal:
 - [ ] `/portal/cases` lists only the authenticated portal customer's cases.
 - [ ] `/portal/cases/:id` shows safe case overview, timeline, appointments,
   document metadata, and task summary for the portal customer's own case.
+- [ ] Portal case status, priority, appointment method/status, document type,
+  and task status labels translate in English and Vietnamese.
 - [ ] Another customer's case ID returns generic `404`.
 - [ ] A cross-workspace case ID returns generic `404`.
 - [ ] Portal case responses do not include internal notes, `fileUrl`,
@@ -211,6 +219,8 @@ Reports:
 
 ## Security And Privacy
 
+- [ ] No real locale preference is stored server-side; UI locale stays in
+  `advisora_locale`.
 - [ ] No `.env` file is committed.
 - [ ] No `DATABASE_URL` is committed.
 - [ ] No JWT secret is committed.
@@ -235,6 +245,8 @@ Reports:
 Use these checks for staging smoke testing as well as later production smoke
 testing.
 
+- [ ] English/Vietnamese switching works on public, admin, and portal surfaces.
+- [ ] User-generated data is still displayed as entered and is not auto-translated.
 - [ ] `GET /api/health` returns success.
 - [ ] Admin login returns a sanitized user and access token.
 - [ ] Dashboard API returns data.

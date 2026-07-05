@@ -1,18 +1,22 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { TFunction } from 'i18next'
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, Scale } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { LoadingState } from '../../components/admin'
+import { LanguageSwitcher } from '../../components/common/LanguageSwitcher'
 import { useAuth } from '../../features/auth'
 
-const loginSchema = z.object({
-  email: z.email('Enter a valid email address.'),
-  password: z.string().min(6, 'Password must contain at least 6 characters.'),
-})
+const createLoginSchema = (t: TFunction) =>
+  z.object({
+    email: z.email(t('validation.email')),
+    password: z.string().min(6, t('validation.passwordMin', { count: 6 })),
+  })
 
-type LoginValues = z.infer<typeof loginSchema>
+type LoginValues = z.infer<ReturnType<typeof createLoginSchema>>
 
 interface LoginLocationState {
   from?: {
@@ -23,7 +27,9 @@ interface LoginLocationState {
 }
 
 export function AdminLoginPage() {
+  const { t } = useTranslation()
   const { isAuthenticated, isLoading, login } = useAuth()
+  const loginSchema = useMemo(() => createLoginSchema(t), [t])
   const navigate = useNavigate()
   const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
@@ -44,7 +50,7 @@ export function AdminLoginPage() {
   if (isLoading) {
     return (
       <main className="grid min-h-screen place-items-center bg-slate-50">
-        <LoadingState label="Restoring your session" />
+        <LoadingState label={t('auth.adminLogin.restoreSession')} />
       </main>
     )
   }
@@ -63,13 +69,17 @@ export function AdminLoginPage() {
       setSubmitError(
         error instanceof Error
           ? error.message
-          : 'Unable to sign in. Check your credentials and try again.',
+          : t('auth.adminLogin.fallbackError'),
       )
     }
   })
 
   return (
-    <main className="grid min-h-screen bg-slate-950 lg:grid-cols-[1.05fr_0.95fr]">
+    <main className="relative grid min-h-screen bg-slate-950 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="absolute right-5 top-5 z-20">
+        <LanguageSwitcher />
+      </div>
+
       <section className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
         <div className="absolute -left-24 top-1/4 h-80 w-80 rounded-full bg-blue-600/20 blur-3xl" />
         <div className="absolute -bottom-24 right-0 h-96 w-96 rounded-full bg-indigo-500/15 blur-3xl" />
@@ -83,18 +93,17 @@ export function AdminLoginPage() {
         </div>
         <div className="relative max-w-xl pb-12">
           <p className="mb-5 text-sm font-bold uppercase tracking-[0.22em] text-blue-400">
-            Client operations, simplified
+            {t('auth.adminLogin.eyebrow')}
           </p>
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-white xl:text-5xl">
-            Keep every case moving, from first contact to resolution.
+            {t('auth.adminLogin.heading')}
           </h1>
           <p className="mt-6 max-w-lg text-base leading-7 text-slate-400">
-            A focused workspace for your customers, legal matters, appointments,
-            documents and team priorities.
+            {t('auth.adminLogin.subheading')}
           </p>
         </div>
         <p className="relative text-xs text-slate-600">
-          Advisora Consulting CRM &middot; Secure staff access
+          {t('auth.adminLogin.footer')}
         </p>
       </section>
 
@@ -110,19 +119,21 @@ export function AdminLoginPage() {
           </div>
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-9">
             <div>
-              <p className="text-sm font-semibold text-blue-600">Welcome back</p>
+              <p className="text-sm font-semibold text-blue-600">
+                {t('auth.adminLogin.welcome')}
+              </p>
               <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                Sign in to your workspace
+                {t('auth.adminLogin.title')}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Enter your staff credentials to continue.
+                {t('auth.adminLogin.description')}
               </p>
             </div>
 
             <form className="mt-8 space-y-5" noValidate onSubmit={onSubmit}>
               <div>
                 <label className="field-label" htmlFor="admin-email">
-                  Email address
+                  {t('auth.adminLogin.emailLabel')}
                 </label>
                 <div className="relative">
                   <Mail
@@ -133,7 +144,7 @@ export function AdminLoginPage() {
                     autoComplete="email"
                     className="field-input pl-11"
                     id="admin-email"
-                    placeholder="you@company.com"
+                    placeholder={t('auth.adminLogin.emailPlaceholder')}
                     type="email"
                     {...register('email')}
                   />
@@ -145,7 +156,7 @@ export function AdminLoginPage() {
 
               <div>
                 <label className="field-label" htmlFor="admin-password">
-                  Password
+                  {t('common.password')}
                 </label>
                 <div className="relative">
                   <LockKeyhole
@@ -156,12 +167,16 @@ export function AdminLoginPage() {
                     autoComplete="current-password"
                     className="field-input px-11"
                     id="admin-password"
-                    placeholder="Enter your password"
+                    placeholder={t('auth.adminLogin.passwordPlaceholder')}
                     type={showPassword ? 'text' : 'password'}
                     {...register('password')}
                   />
                   <button
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showPassword
+                        ? t('auth.adminLogin.hidePassword')
+                        : t('auth.adminLogin.showPassword')
+                    }
                     className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                     onClick={() => setShowPassword((current) => !current)}
                     type="button"
@@ -192,28 +207,28 @@ export function AdminLoginPage() {
                 disabled={isSubmitting}
                 type="submit"
               >
-                {isSubmitting ? 'Signing in…' : 'Sign in'}
+                {isSubmitting ? t('auth.adminLogin.signingIn') : t('common.signIn')}
                 {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
               </button>
             </form>
 
             <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-xs leading-5 text-blue-900">
-              <p className="font-bold">Portfolio demo</p>
-              <p>Use the internal demo account shared for this review.</p>
+              <p className="font-bold">{t('auth.adminLogin.portfolioDemo')}</p>
+              <p>{t('auth.adminLogin.demoHint')}</p>
             </div>
 
             <p className="mt-5 text-center text-sm text-slate-500">
-              Need a workspace?{' '}
+              {t('auth.adminLogin.needWorkspace')}{' '}
               <Link
                 className="font-bold text-blue-700 underline-offset-4 hover:underline"
                 to="/workspace-signup"
               >
-                Create one
+                {t('auth.adminLogin.createOne')}
               </Link>
             </p>
           </div>
           <p className="mt-6 text-center text-xs text-slate-400">
-            Protected access for authorised team members.
+            {t('auth.adminLogin.protectedAccess')}
           </p>
         </div>
       </section>

@@ -16,6 +16,24 @@ current demo/staging workspace is `Advisora Demo Workspace`.
 - React Hook Form
 - Zod
 - Lucide React
+- i18next, react-i18next, and i18next-browser-languagedetector
+
+## Bilingual UI
+
+Step 28.5 adds bilingual English/Vietnamese UI support.
+
+- Supported locales: `en`, `vi`.
+- Locale preference is stored in local storage as `advisora_locale`.
+- Browser language detection defaults Vietnamese browsers to `vi`; otherwise
+  the UI falls back to `en`.
+- Language switchers appear in the public layout, admin topbar, admin login,
+  portal layout, and portal login.
+- Core navigation, buttons, login forms, status labels, role labels, invitation
+  labels, and portal case-tracking labels use translation resources.
+- User-generated database content such as customer names, case titles, notes,
+  service names, and file names is displayed as entered.
+- Backend API response localization and invitation email localization remain
+  future work.
 
 ## Local Development
 
@@ -75,6 +93,7 @@ configured with `DEFAULT_ORGANIZATION_SLUG`; the frontend never sends an
 - Legacy local account: `admin@advisora.demo` / `password123`
 - Local token key: `consulting_crm_access_token`
 - Customer portal token key: `advisora_portal_access_token`
+- UI locale key: `advisora_locale`
 
 The legacy local account is for local portfolio testing only and must not be
 used as a staging or production credential.

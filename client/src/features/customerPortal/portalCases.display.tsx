@@ -1,11 +1,13 @@
+import { useTranslation } from 'react-i18next'
+import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
-import { formatPortalLabel } from './portalCases.format'
 import type {
   PortalCaseStatus,
   PortalPriority,
 } from './portalCases.types'
 
 export function PortalStatusBadge({ status }: { status: PortalCaseStatus }) {
+  const { t } = useTranslation()
   const styles: Record<PortalCaseStatus, string> = {
     RECEIVED: 'bg-sky-50 text-sky-700 ring-sky-600/20',
     VERIFYING: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
@@ -22,7 +24,7 @@ export function PortalStatusBadge({ status }: { status: PortalCaseStatus }) {
         styles[status],
       )}
     >
-      {formatPortalLabel(status)}
+      {getStatusLabel(t, 'case', status)}
     </span>
   )
 }
@@ -32,6 +34,7 @@ export function PortalPriorityBadge({
 }: {
   priority: PortalPriority
 }) {
+  const { t } = useTranslation()
   const styles: Record<PortalPriority, string> = {
     LOW: 'bg-slate-100 text-slate-600 ring-slate-500/20',
     MEDIUM: 'bg-blue-50 text-blue-700 ring-blue-600/20',
@@ -46,7 +49,7 @@ export function PortalPriorityBadge({
         styles[priority],
       )}
     >
-      {formatPortalLabel(priority)}
+      {getStatusLabel(t, 'priority', priority)}
     </span>
   )
 }

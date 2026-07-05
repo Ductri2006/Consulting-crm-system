@@ -10,6 +10,8 @@ protected internal CRM dashboard for managing customers, consultation requests,
 case profiles, appointments, tasks, documents, users, dashboards, and reports.
 The backend now includes an Organization model used as the internal Workspace
 tenant boundary; the current staging/demo path uses a single default workspace.
+Step 28.5 adds bilingual English/Vietnamese UI support across the public site,
+internal admin CRM shell, and customer portal case-tracking surfaces.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -55,6 +57,7 @@ This project addresses that need with a centralized platform that connects publi
 - Appointment request form
 - Responsive layouts for desktop, tablet, and mobile
 - Basic SEO-friendly structure
+- English/Vietnamese language switcher in the public layout
 
 ### Customer Reception
 
@@ -176,6 +179,7 @@ The platform is divided into the following functional modules:
 | User Management | Maintains staff accounts, roles, and active status |
 | Organization Workspace | Scopes internal users and CRM business data by workspace |
 | Customer Portal | Lets existing customers view their own read-only case status, appointments, and document metadata |
+| Bilingual UI | Provides English/Vietnamese resources, language switching, locale storage, and localized status/date helpers for core UI surfaces |
 | Public Content Catalog | Uses typed local content for services, news, and project gallery pages |
 | Dashboard and Reporting | Summarizes workload, performance, appointments, and deadlines |
 | Activity Logging | Records important user actions for traceability |
@@ -215,6 +219,7 @@ Each case profile stores:
 - React Router
 - React Hook Form
 - Zod
+- i18next, react-i18next, and browser language detection
 
 ### Backend
 
@@ -313,6 +318,10 @@ Local URLs:
 Public visitors do not need an account. Admin, manager, and staff accounts are
 internal CRM users for the protected workspace. Customer portal accounts are
 separate from internal staff users and sign in through `/portal/login`.
+The UI supports English (`en`) and Vietnamese (`vi`). The selected language is
+stored in browser local storage as `advisora_locale`, with browser-language
+detection as a fallback. Database content and user-generated values such as
+customer names, case titles, file names, and notes are displayed as entered.
 
 Current staging/demo workspace:
 
@@ -534,7 +543,8 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Cloud file storage
 - OCR-assisted document processing
 - Advanced analytics and configurable reports
-- Multi-branch and multi-language support
+- Multi-branch support and deeper localization coverage
+- Backend API response and email template localization
 - Calendar and third-party integrations
 - Export to Excel and PDF
 - Automated testing and continuous delivery
@@ -557,6 +567,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED`; admins can edit the current workspace profile |
 | Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens, console email preview, optional Resend delivery, and resend token rotation |
 | Customer portal | Implemented with separate `CustomerPortalAccount` records, portal-purpose JWTs, `/portal/login`, `/portal/dashboard`, `/portal/cases`, read-only portal case detail, and internal admin/manager portal access controls for existing customers |
+| Bilingual UI | Implemented with English/Vietnamese resources, `advisora_locale` persistence, switchers in public/admin/portal layouts and login flows, localized core status labels, and locale-aware portal date/file-size helpers |
 | Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
@@ -585,6 +596,10 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - The customer portal currently supports login, session restore, dashboard,
   profile/account summary, internal access controls, and read-only case
   tracking for the authenticated customer.
+- Bilingual UI currently focuses on core navigation, layout chrome, login
+  flows, status labels, and portal case tracking. Backend API response
+  localization, email template localization, and translation of user-generated
+  database content remain future work.
 - No customer document upload/download, customer self-registration,
   billing, OCR, malware scanning, cloud object storage, report exports,
   realtime updates, production-grade rate limiting, or centralized
@@ -636,11 +651,12 @@ This project is designed to practice:
 - [x] Organization / Workspace tenant foundation
 - [x] Workspace settings / organization profile
 - [x] Customer portal case tracking
+- [x] Bilingual English/Vietnamese UI
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Step 28 complete - Customer Portal Case Tracking
+**Current phase:** Step 28.5 complete - Bilingual English/Vietnamese UI
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -719,3 +735,9 @@ only cases scoped to their portal account's `organizationId + customerId`,
 open safe case detail pages, see status timeline, appointments, document
 metadata, and task summary, while internal notes, document file URLs, secrets,
 and customer document upload/download remain excluded.
+Step 28.5 adds bilingual UI support: i18next resources for English and
+Vietnamese, `advisora_locale` local storage persistence, language switchers in
+public/admin/portal surfaces, translated core navigation/buttons/status labels,
+and locale-aware formatting helpers for the portal case-tracking flow. Backend
+API response localization, email template localization, and translation of
+user-generated/database content remain future work.

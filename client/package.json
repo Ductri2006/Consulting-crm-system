@@ -12,10 +12,13 @@
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
     "clsx": "^2.1.1",
+    "i18next": "^26.3.4",
+    "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.23.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.80.0",
+    "react-i18next": "^17.0.8",
     "react-router-dom": "^7.18.1",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"

@@ -1,18 +1,19 @@
 import { Mail, MapPin, Phone } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
-import type { NavItem } from '../../types'
 import { Container } from '../common/Container'
+import { LanguageSwitcher } from '../common/LanguageSwitcher'
 
-const quickLinks: NavItem[] = [
-  { label: 'About us', href: '/about' },
-  { label: 'Our services', href: '/services' },
-  { label: 'Projects', href: '/projects' },
-  { label: 'Insights', href: '/news' },
-  { label: 'Contact', href: '/contact' },
+const quickLinks = [
+  { labelKey: 'public.aboutUs', href: '/about' },
+  { labelKey: 'public.ourServices', href: '/services' },
+  { labelKey: 'navigation.projects', href: '/projects' },
+  { labelKey: 'public.insights', href: '/news' },
+  { labelKey: 'navigation.contact', href: '/contact' },
 ]
 
-const serviceLinks: NavItem[] = [
+const serviceLinks = [
   {
     label: 'Real Estate Consulting',
     href: '/services/real-estate-consulting',
@@ -29,13 +30,15 @@ const footerLinkClasses =
   'text-sm text-slate-400 transition hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400'
 
 export function Footer() {
+  const { t } = useTranslation()
+
   return (
     <footer className="bg-slate-950 text-slate-300">
       <Container className="py-14 sm:py-16">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.2fr_0.75fr_1fr_1.2fr]">
           <div>
             <Link
-              aria-label="Advisora home"
+              aria-label={t('navigation.home')}
               className="inline-flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
               to="/"
             >
@@ -48,20 +51,20 @@ export function Footer() {
               <span className="text-xl font-bold text-white">Advisora</span>
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-6 text-slate-400">
-              Practical consulting for organizations navigating property,
-              legal, investment, and construction decisions with confidence.
+              {t('public.footerDescription')}
             </p>
+            <LanguageSwitcher className="mt-5 border-slate-800 bg-slate-900 text-slate-300 shadow-none" />
           </div>
 
           <div>
             <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-              Quick links
+              {t('public.quickLinks')}
             </h2>
             <ul className="mt-5 space-y-3">
               {quickLinks.map((item) => (
                 <li key={item.href}>
                   <Link className={footerLinkClasses} to={item.href}>
-                    {item.label}
+                    {t(item.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -70,7 +73,7 @@ export function Footer() {
 
           <div>
             <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-              Services
+              {t('navigation.services')}
             </h2>
             <ul className="mt-5 space-y-3">
               {serviceLinks.map((item) => (
@@ -85,7 +88,7 @@ export function Footer() {
 
           <div>
             <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-              Contact
+              {t('navigation.contact')}
             </h2>
             <address className="mt-5 space-y-4 not-italic">
               <a
@@ -112,7 +115,8 @@ export function Footer() {
 
         <div className="mt-12 border-t border-slate-800 pt-6">
           <p className="text-sm text-slate-500">
-            © {new Date().getFullYear()} Advisora. All rights reserved.
+            (c) {new Date().getFullYear()} Advisora.{' '}
+            {t('public.allRightsReserved')}
           </p>
         </div>
       </Container>

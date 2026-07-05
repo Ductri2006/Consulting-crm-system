@@ -14,6 +14,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   DataTable,
   EmptyState,
@@ -35,6 +36,7 @@ import {
   type EditableConsultationRequestStatus,
   type PaginationMeta,
 } from '../../features/consultationRequests/consultationRequests.types'
+import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -66,6 +68,8 @@ function formatDate(value: string, includeTime = false): string {
 }
 
 function StatusBadge({ status }: { status: ConsultationRequestStatus }) {
+  const { t } = useTranslation()
+
   return (
     <span
       className={cn(
@@ -73,7 +77,7 @@ function StatusBadge({ status }: { status: ConsultationRequestStatus }) {
         statusStyles[status],
       )}
     >
-      {formatStatus(status)}
+      {getStatusLabel(t, 'request', status)}
     </span>
   )
 }
@@ -120,6 +124,7 @@ function RequestDetailModal({
   onRetry,
   onUpdateStatus,
 }: RequestDetailModalProps) {
+  const { t } = useTranslation()
   const [selectedStatus, setSelectedStatus] = useState<
     EditableConsultationRequestStatus | ''
   >('')
@@ -262,7 +267,7 @@ function RequestDetailModal({
                     ) : null}
                     {editableConsultationRequestStatuses.map((status) => (
                       <option key={status} value={status}>
-                        {formatStatus(status)}
+                        {getStatusLabel(t, 'request', status)}
                       </option>
                     ))}
                   </select>
@@ -294,6 +299,7 @@ function RequestDetailModal({
 }
 
 export function AdminConsultationRequestsPage() {
+  const { t } = useTranslation()
   const [requests, setRequests] = useState<ConsultationRequest[]>([])
   const [meta, setMeta] = useState<PaginationMeta>({
     page: 1,
@@ -566,7 +572,7 @@ export function AdminConsultationRequestsPage() {
               <option value="">All statuses</option>
               {consultationRequestStatuses.map((requestStatus) => (
                 <option key={requestStatus} value={requestStatus}>
-                  {formatStatus(requestStatus)}
+                  {getStatusLabel(t, 'request', requestStatus)}
                 </option>
               ))}
             </select>

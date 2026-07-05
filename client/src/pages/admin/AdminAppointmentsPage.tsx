@@ -558,7 +558,7 @@ function StatusForm({
         <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
           <p className="font-bold">Current status</p>
           <div className="mt-2">
-            <StatusBadge status={appointment.status} />
+            <StatusBadge namespace="appointment" status={appointment.status} />
           </div>
         </div>
         <label className="field-label" htmlFor="appointment-status">
@@ -1002,7 +1002,9 @@ export function AdminAppointmentsPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (appointment) => <StatusBadge status={appointment.status} />,
+      render: (appointment) => (
+        <StatusBadge namespace="appointment" status={appointment.status} />
+      ),
     },
     {
       key: 'actions',

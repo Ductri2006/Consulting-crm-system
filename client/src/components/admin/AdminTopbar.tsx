@@ -1,5 +1,8 @@
 import { LogOut, Menu, ShieldCheck } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { LanguageSwitcher } from '../common/LanguageSwitcher'
 import { useAuth } from '../../features/auth'
+import { getStatusLabel } from '../../i18n/statusLabels'
 
 export interface AdminTopbarProps {
   onMenuClick: () => void
@@ -15,14 +18,15 @@ function initials(name: string) {
 }
 
 export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
-  const workspaceName = user?.organization?.name?.trim() || 'CRM workspace'
+  const workspaceName = user?.organization?.name?.trim() || t('admin.crmWorkspace')
 
   return (
     <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur md:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <button
-          aria-label="Open navigation"
+          aria-label={t('admin.openNavigation')}
           className="rounded-xl border border-slate-200 p-2.5 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 lg:hidden"
           onClick={onMenuClick}
           type="button"
@@ -36,14 +40,15 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
           >
             {workspaceName}
           </p>
-          <p className="text-xs text-slate-400">Your operations at a glance</p>
+          <p className="text-xs text-slate-400">{t('admin.topbarSubtitle')}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
+        <LanguageSwitcher compact className="hidden md:inline-flex" />
         <div className="hidden text-right sm:block">
           <p className="max-w-44 truncate text-sm font-semibold text-slate-900">
-            {user?.fullName ?? 'CRM user'}
+            {user?.fullName ?? t('admin.crmUser')}
           </p>
           <p className="max-w-44 truncate text-xs text-slate-400">
             {user?.email ?? ''}
@@ -57,7 +62,7 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
         </div>
         <span className="hidden items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 md:inline-flex">
           <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-          {user?.role ?? 'User'}
+          {user?.role ? getStatusLabel(t, 'role', user.role) : t('admin.crmUser')}
         </span>
         <button
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
@@ -65,7 +70,7 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
           type="button"
         >
           <LogOut className="h-4 w-4" aria-hidden="true" />
-          <span className="hidden md:inline">Logout</span>
+          <span className="hidden md:inline">{t('common.logout')}</span>
         </button>
       </div>
     </header>

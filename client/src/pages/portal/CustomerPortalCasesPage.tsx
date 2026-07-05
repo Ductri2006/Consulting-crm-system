@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
   listPortalCases,
@@ -29,6 +30,7 @@ import {
   formatPortalDateTime,
   formatPortalLabel,
 } from '../../features/customerPortal/portalCases.format'
+import { getStatusLabel } from '../../i18n/statusLabels'
 
 const PAGE_SIZE = 10
 
@@ -43,6 +45,8 @@ const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
 
 function CaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
+  const { t } = useTranslation()
+
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -66,35 +70,46 @@ function CaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
           to={`/portal/cases/${caseProfile.id}`}
         >
           <Eye className="h-4 w-4" aria-hidden="true" />
-          View details
+          {t('common.viewDetails')}
         </Link>
       </div>
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
         <div>
-          <dt className="font-bold text-slate-400">Updated</dt>
+          <dt className="font-bold text-slate-400">{t('common.updated')}</dt>
           <dd className="mt-1 font-semibold text-slate-800">
             {formatPortalDateTime(caseProfile.updatedAt)}
           </dd>
         </div>
         <div>
-          <dt className="font-bold text-slate-400">Assigned consultant</dt>
+          <dt className="font-bold text-slate-400">
+            {t('portal.cases.assignedConsultant')}
+          </dt>
           <dd className="mt-1 font-semibold text-slate-800">
-            {caseProfile.assignedStaff?.fullName ?? 'Not assigned yet'}
+            {caseProfile.assignedStaff?.fullName ?? t('common.notAssigned')}
           </dd>
         </div>
         <div>
-          <dt className="font-bold text-slate-400">Related records</dt>
+          <dt className="font-bold text-slate-400">
+            {t('portal.cases.relatedRecords')}
+          </dt>
           <dd className="mt-1 font-semibold text-slate-800">
-            {caseProfile.documentCount} documents - {caseProfile.taskCount}{' '}
-            tasks
+            {t('portal.cases.documentCount', {
+              count: caseProfile.documentCount,
+            })}{' '}
+            -{' '}
+            {t('portal.cases.taskCount', {
+              count: caseProfile.taskCount,
+            })}
           </dd>
         </div>
       </dl>
 
       {caseProfile.latestActivity ? (
         <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          <span className="font-bold text-slate-700">Latest activity:</span>{' '}
+          <span className="font-bold text-slate-700">
+            {t('portal.cases.latestActivity')}
+          </span>{' '}
           {caseProfile.latestActivity.description ??
             formatPortalLabel(caseProfile.latestActivity.action)}
         </div>
@@ -104,6 +119,7 @@ function CaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
 }
 
 export function CustomerPortalCasesPage() {
+  const { t } = useTranslation()
   const [cases, setCases] = useState<PortalCaseSummary[]>([])
   const [meta, setMeta] = useState<PortalPaginationMeta>(EMPTY_META)
   const [page, setPage] = useState(1)
@@ -128,11 +144,18 @@ export function CustomerPortalCasesPage() {
       setCases(result.items)
       setMeta(result.meta)
     } catch (error) {
-      setLoadError(getErrorMessage(error, 'Portal cases could not be loaded.'))
+      setLoadError(
+        getErrorMessage(
+          error,
+          t('portal.cases.loadErrorFallback', {
+            defaultValue: 'Portal cases could not be loaded.',
+          }),
+        ),
+      )
     } finally {
       setIsLoading(false)
     }
-  }, [page, search, status])
+  }, [page, search, status, t])
 
   useEffect(() => {
     void loadCases()
@@ -146,7 +169,12 @@ export function CustomerPortalCasesPage() {
     })
 
     if (!parsed.success) {
-      setFilterError(parsed.error.issues[0]?.message ?? 'Invalid filters.')
+      setFilterError(
+        parsed.error.issues[0]?.message ??
+          t('portal.cases.invalidFilters', {
+            defaultValue: 'Invalid filters.',
+          }),
+      )
       return
     }
 
@@ -172,13 +200,13 @@ export function CustomerPortalCasesPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold text-emerald-700">
-              Customer portal
+              {t('portal.cases.eyebrow')}
             </p>
             <h1 className="mt-2 text-2xl font-bold text-slate-950">
-              My Cases
+              {t('portal.cases.title')}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Review your active and completed case profiles in read-only mode.
+              {t('portal.cases.description')}
             </p>
           </div>
           <button
@@ -191,7 +219,7 @@ export function CustomerPortalCasesPage() {
               className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
               aria-hidden="true"
             />
-            Refresh
+            {t('common.refresh')}
           </button>
         </div>
       </header>
@@ -203,7 +231,7 @@ export function CustomerPortalCasesPage() {
           onSubmit={handleSubmit}
         >
           <label className="relative block">
-            <span className="sr-only">Search cases</span>
+            <span className="sr-only">{t('portal.cases.search')}</span>
             <Search
               className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400"
               aria-hidden="true"
@@ -211,12 +239,12 @@ export function CustomerPortalCasesPage() {
             <input
               className="min-h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search by case code or title"
+              placeholder={t('portal.cases.searchPlaceholder')}
               value={searchInput}
             />
           </label>
           <label>
-            <span className="sr-only">Filter by status</span>
+            <span className="sr-only">{t('portal.cases.filterByStatus')}</span>
             <select
               className="min-h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               onChange={(event) =>
@@ -224,10 +252,10 @@ export function CustomerPortalCasesPage() {
               }
               value={status}
             >
-              <option value="">All statuses</option>
+              <option value="">{t('portal.cases.allStatuses')}</option>
               {portalCaseStatuses.map((caseStatus) => (
                 <option key={caseStatus} value={caseStatus}>
-                  {formatPortalLabel(caseStatus)}
+                  {getStatusLabel(t, 'case', caseStatus)}
                 </option>
               ))}
             </select>
@@ -237,7 +265,7 @@ export function CustomerPortalCasesPage() {
             type="submit"
           >
             <Search className="h-4 w-4" aria-hidden="true" />
-            Apply
+            {t('common.apply')}
           </button>
           <button
             className="min-h-10 rounded-lg px-3 text-sm font-bold text-slate-500 transition hover:bg-slate-100 disabled:opacity-40"
@@ -245,7 +273,7 @@ export function CustomerPortalCasesPage() {
             onClick={clearFilters}
             type="button"
           >
-            Clear
+            {t('common.clear')}
           </button>
         </form>
         {filterError ? (
@@ -263,7 +291,7 @@ export function CustomerPortalCasesPage() {
           <div>
             <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
             <h2 className="mt-4 font-bold text-slate-950">
-              Could not load cases
+              {t('portal.cases.loadErrorTitle')}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-rose-700">
               {loadError}
@@ -273,7 +301,7 @@ export function CustomerPortalCasesPage() {
               onClick={() => void loadCases()}
               type="button"
             >
-              Try again
+              {t('common.tryAgain')}
             </button>
           </div>
         </section>
@@ -282,7 +310,7 @@ export function CustomerPortalCasesPage() {
           <div>
             <BriefcaseBusiness className="mx-auto h-8 w-8 animate-pulse text-emerald-600" />
             <p className="mt-4 text-sm font-bold text-slate-600">
-              Loading cases...
+              {t('portal.cases.loading')}
             </p>
           </div>
         </section>
@@ -291,12 +319,12 @@ export function CustomerPortalCasesPage() {
           <div>
             <SearchX className="mx-auto h-8 w-8 text-slate-400" />
             <h2 className="mt-4 font-bold text-slate-950">
-              No cases are available in your portal yet.
+              {t('portal.cases.emptyTitle')}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
               {hasFilters
-                ? 'Try changing or clearing the current filters.'
-                : 'Your case profiles will appear here once your workspace team publishes them to your customer account.'}
+                ? t('portal.cases.emptyFiltered')
+                : t('portal.cases.emptyDefault')}
             </p>
           </div>
         </section>
@@ -307,7 +335,7 @@ export function CustomerPortalCasesPage() {
               className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
               role="alert"
             >
-              Refresh failed: {loadError}. Showing the latest loaded cases.
+              {t('portal.cases.refreshFailed', { message: loadError })}
             </div>
           ) : null}
           <div className="grid gap-4">
@@ -318,16 +346,19 @@ export function CustomerPortalCasesPage() {
           <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-4">
               <span>
-                Page {meta.page} of {Math.max(meta.totalPages, 1)}
+                {t('portal.cases.pageOf', {
+                  page: meta.page,
+                  totalPages: Math.max(meta.totalPages, 1),
+                })}
               </span>
-              <span>{meta.total} total cases</span>
+              <span>{t('portal.cases.totalCases', { count: meta.total })}</span>
               <span className="inline-flex items-center gap-1">
                 <CalendarClock className="h-4 w-4" aria-hidden="true" />
-                Updated newest first
+                {t('portal.cases.updatedNewestFirst')}
               </span>
               <span className="inline-flex items-center gap-1">
                 <FileText className="h-4 w-4" aria-hidden="true" />
-                Metadata only
+                {t('portal.cases.metadataOnly')}
               </span>
             </div>
             <div className="flex gap-2">
@@ -338,7 +369,7 @@ export function CustomerPortalCasesPage() {
                 type="button"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                Previous
+                {t('portal.cases.previous')}
               </button>
               <button
                 className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 px-3 font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
@@ -354,7 +385,7 @@ export function CustomerPortalCasesPage() {
                 }
                 type="button"
               >
-                Next
+                {t('portal.cases.next')}
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>

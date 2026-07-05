@@ -24,6 +24,9 @@ accepted.
 - Step 22 Organization / Workspace foundation is implemented for internal users
   and CRM business data. Current staging/demo uses one default workspace:
   `Advisora Demo Workspace` (`advisora-demo`).
+- Step 28.5 bilingual UI support is implemented for English (`en`) and
+  Vietnamese (`vi`). Locale preference is browser-only and stored in
+  `advisora_locale`.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -57,6 +60,14 @@ Admin CRM modules:
 - Documents.
 - Reports.
 
+Bilingual UI:
+
+- English/Vietnamese resources live in the client application.
+- Language switchers are available on public, admin, and portal surfaces.
+- Core navigation, login flows, common actions, status labels, and portal
+  case-tracking labels are localized.
+- Database values and user-generated content are intentionally not translated.
+
 ## Required Environment Variables
 
 Server:
@@ -84,6 +95,12 @@ Client:
 | Variable | Purpose |
 | --- | --- |
 | `VITE_API_BASE_URL` | Deployed backend API base URL, including `/api`. |
+
+Client-side locale preference:
+
+| Key | Purpose |
+| --- | --- |
+| `advisora_locale` | Browser local-storage key for `en`/`vi` UI language preference. |
 
 Production rules:
 
@@ -253,6 +270,9 @@ Recommended later upgrade:
   gated by `WORKSPACE_SIGNUP_ENABLED`; keep it disabled for production until
   abuse protection and session hardening are reviewed.
 - Public contact and appointment forms are validation/demo flows only.
+- Bilingual UI is frontend-only. Backend API response localization, email
+  template localization, and automatic translation of user-generated data are
+  not implemented.
 - No password reset or account-management UI yet.
 - Workspace invitations include email delivery abstraction and Resend support,
   but real delivery depends on provider DNS/sender setup and secrets configured

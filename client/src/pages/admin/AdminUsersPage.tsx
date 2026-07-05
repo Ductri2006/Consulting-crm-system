@@ -17,6 +17,7 @@ import {
   useState,
 } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   DataTable,
   EmptyState,
@@ -46,6 +47,7 @@ import {
   type TeamMemberRole,
   type UpdateTeamMemberInput,
 } from '../../features/users'
+import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -232,6 +234,7 @@ function ModalActions({
 }
 
 function RoleBadge({ role }: { role: TeamMemberRole }) {
+  const { t } = useTranslation()
   const styles: Record<TeamMemberRole, string> = {
     ADMIN: 'bg-violet-50 text-violet-700 ring-violet-600/20',
     MANAGER: 'bg-blue-50 text-blue-700 ring-blue-600/20',
@@ -245,12 +248,14 @@ function RoleBadge({ role }: { role: TeamMemberRole }) {
         styles[role],
       )}
     >
-      {formatLabel(role)}
+      {getStatusLabel(t, 'role', role)}
     </span>
   )
 }
 
 function StatusBadge({ isActive }: { isActive: boolean }) {
+  const { t } = useTranslation()
+
   return (
     <span
       className={cn(
@@ -260,7 +265,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
           : 'bg-rose-50 text-rose-700 ring-rose-600/20',
       )}
     >
-      {isActive ? 'Active' : 'Inactive'}
+      {isActive ? t('common.active') : t('common.inactive')}
     </span>
   )
 }
@@ -716,6 +721,7 @@ function AccountStatusDialog({
 }
 
 export function AdminUsersPage() {
+  const { t } = useTranslation()
   const { user: currentUser } = useAuth()
   const [members, setMembers] = useState<TeamMember[]>([])
   const [meta, setMeta] = useState<PaginationMeta>(EMPTY_META)
@@ -1118,7 +1124,7 @@ export function AdminUsersPage() {
             <option value="">All roles</option>
             {userRoles.map((userRole) => (
               <option key={userRole} value={userRole}>
-                {formatLabel(userRole)}
+                {getStatusLabel(t, 'role', userRole)}
               </option>
             ))}
           </select>

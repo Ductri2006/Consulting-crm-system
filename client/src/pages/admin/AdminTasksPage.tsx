@@ -453,7 +453,7 @@ function StatusForm({
         <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
           <p className="font-bold">Current status</p>
           <div className="mt-2">
-            <StatusBadge status={task.status} />
+            <StatusBadge namespace="task" status={task.status} />
           </div>
         </div>
         <label className="field-label" htmlFor="task-status">
@@ -833,7 +833,7 @@ export function AdminTasksPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (task) => <StatusBadge status={task.status} />,
+      render: (task) => <StatusBadge namespace="task" status={task.status} />,
     },
     {
       key: 'deadline',

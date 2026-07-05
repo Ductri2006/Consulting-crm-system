@@ -11,84 +11,68 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LoadingState, StatCard, StatusBadge } from '../../components/admin'
 import {
   getDashboardData,
   type DashboardData,
   type UpcomingDeadlineItem,
 } from '../../features/dashboard'
+import { formatDate, formatDateTime } from '../../i18n/format'
+import type { StatusNamespace } from '../../i18n/statusLabels'
+import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
 
 const statDefinitions = [
   {
     key: 'totalCustomers',
-    label: 'Total Customers',
     icon: UsersRound,
     iconClassName: 'bg-blue-50 text-blue-600',
-    description: 'Customer records',
   },
   {
     key: 'totalCases',
-    label: 'Total Cases',
     icon: FolderKanban,
     iconClassName: 'bg-indigo-50 text-indigo-600',
-    description: 'All case profiles',
   },
   {
     key: 'casesInProgress',
-    label: 'Cases In Progress',
     icon: Clock3,
     iconClassName: 'bg-amber-50 text-amber-600',
-    description: 'Active processing',
   },
   {
     key: 'completedCases',
-    label: 'Completed Cases',
     icon: CheckCircle2,
     iconClassName: 'bg-emerald-50 text-emerald-600',
-    description: 'Successfully completed',
   },
   {
     key: 'overdueCases',
-    label: 'Overdue Cases',
     icon: AlertTriangle,
     iconClassName: 'bg-rose-50 text-rose-600',
-    description: 'Require attention',
   },
   {
     key: 'todayAppointments',
-    label: 'Today Appointments',
     icon: CalendarCheck2,
     iconClassName: 'bg-cyan-50 text-cyan-600',
-    description: 'Scheduled today',
   },
   {
     key: 'pendingTasks',
-    label: 'Pending Tasks',
     icon: ClipboardList,
     iconClassName: 'bg-violet-50 text-violet-600',
-    description: 'Open team tasks',
   },
   {
     key: 'overdueTasks',
-    label: 'Overdue Tasks',
     icon: AlertTriangle,
     iconClassName: 'bg-orange-50 text-orange-600',
-    description: 'Past their deadline',
   },
   {
     key: 'totalDocuments',
-    label: 'Total Documents',
     icon: FileStack,
     iconClassName: 'bg-slate-100 text-slate-600',
-    description: 'Files on record',
   },
   {
     key: 'newConsultationRequests',
-    label: 'New Consultations',
     icon: Inbox,
     iconClassName: 'bg-fuchsia-50 text-fuchsia-600',
-    description: 'Awaiting contact',
   },
 ] as const
 
@@ -107,29 +91,24 @@ const deadlineTypeStyles: Record<UpcomingDeadlineItem['type'], string> = {
   APPOINTMENT: 'bg-cyan-50 text-cyan-700',
 }
 
-function formatDate(value: string, includeTime = false) {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {}),
-  }).format(date)
+const getDeadlineStatusNamespace = (
+  type: UpcomingDeadlineItem['type'],
+): StatusNamespace => {
+  if (type === 'TASK') return 'task'
+  if (type === 'APPOINTMENT') return 'appointment'
+  return 'case'
 }
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useTranslation()
+
   return (
     <div className="rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
       <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-rose-50 text-rose-600">
         <AlertTriangle className="h-6 w-6" />
       </span>
       <h2 className="mt-4 text-lg font-bold text-slate-900">
-        We couldn&apos;t load the dashboard
+        {t('admin.dashboard.loadErrorTitle')}
       </h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
         {message}
@@ -140,13 +119,14 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
         type="button"
       >
         <RefreshCw className="h-4 w-4" />
-        Try again
+        {t('common.tryAgain')}
       </button>
     </div>
   )
 }
 
 export function AdminDashboardPage() {
+  const { t } = useTranslation()
   const [data, setData] = useState<DashboardData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -161,12 +141,12 @@ export function AdminDashboardPage() {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : 'The CRM API did not return dashboard data. Please try again.',
+          : t('admin.dashboard.loadErrorFallback'),
       )
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void loadDashboard()
@@ -194,12 +174,14 @@ export function AdminDashboardPage() {
     <div className="mx-auto max-w-[1600px]">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-blue-600">Overview</p>
+          <p className="text-sm font-semibold text-blue-600">
+            {t('admin.dashboard.overview')}
+          </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Dashboard
+            {t('admin.dashboard.title')}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Monitor cases, deadlines and recent team activity.
+            {t('admin.dashboard.pageDescription')}
           </p>
         </div>
         <button
@@ -209,7 +191,7 @@ export function AdminDashboardPage() {
           type="button"
         >
           <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-          Refresh
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -218,25 +200,25 @@ export function AdminDashboardPage() {
           className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
           role="alert"
         >
-          <span>Refresh failed: {error}. Showing the latest available data.</span>
+          <span>{t('admin.dashboard.refreshFailed', { message: error })}</span>
           <button className="font-bold underline" onClick={() => void loadDashboard()}>
-            Retry
+            {t('common.tryAgain')}
           </button>
         </div>
       ) : null}
 
       <section
-        aria-label="Dashboard statistics"
+        aria-label={t('admin.dashboard.statistics')}
         className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
       >
         {statDefinitions.map(
-          ({ key, label, icon: Icon, iconClassName, description }) => (
+          ({ key, icon: Icon, iconClassName }) => (
             <StatCard
-              description={description}
+              description={t(`admin.dashboard.stats.${key}.description`)}
               icon={<Icon className="h-5 w-5" aria-hidden="true" />}
               iconClassName={iconClassName}
               key={key}
-              label={label}
+              label={t(`admin.dashboard.stats.${key}.label`)}
               value={data.overview[key]}
             />
           ),
@@ -246,9 +228,11 @@ export function AdminDashboardPage() {
       <section className="mt-6 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
         <article className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
           <div>
-            <h2 className="text-lg font-bold text-slate-950">Cases by status</h2>
+            <h2 className="text-lg font-bold text-slate-950">
+              {t('admin.dashboard.casesByStatus')}
+            </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Distribution across the case workflow.
+              {t('admin.dashboard.casesByStatusDescription')}
             </p>
           </div>
           <div className="mt-7 space-y-5">
@@ -281,9 +265,11 @@ export function AdminDashboardPage() {
 
         <article className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
           <div className="border-b border-slate-100 p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-950">Upcoming deadlines</h2>
+            <h2 className="text-lg font-bold text-slate-950">
+              {t('admin.dashboard.upcomingDeadlines')}
+            </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Items due within the next seven days.
+              {t('admin.dashboard.upcomingDeadlinesDescription')}
             </p>
           </div>
           {data.upcomingDeadlines.length === 0 ? (
@@ -292,9 +278,11 @@ export function AdminDashboardPage() {
                 <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-emerald-600">
                   <CheckCircle2 className="h-6 w-6" />
                 </span>
-                <p className="mt-4 font-semibold text-slate-800">No deadlines ahead</p>
+                <p className="mt-4 font-semibold text-slate-800">
+                  {t('admin.dashboard.noDeadlines')}
+                </p>
                 <p className="mt-1 text-sm text-slate-400">
-                  You&apos;re clear for the next seven days.
+                  {t('admin.dashboard.noDeadlinesDescription')}
                 </p>
               </div>
             </div>
@@ -313,11 +301,13 @@ export function AdminDashboardPage() {
                           deadlineTypeStyles[item.type],
                         )}
                       >
-                        {item.type}
+                        {t(`admin.dashboard.deadlineType.${item.type}`)}
                       </span>
                       {item.priority ? (
                         <span className="text-xs font-semibold text-slate-400">
-                          {item.priority} priority
+                          {t('admin.dashboard.priority', {
+                            priority: getStatusLabel(t, 'priority', item.priority),
+                          })}
                         </span>
                       ) : null}
                     </div>
@@ -336,7 +326,10 @@ export function AdminDashboardPage() {
                         </p>
                       ) : null}
                     </div>
-                    <StatusBadge status={item.status} />
+                    <StatusBadge
+                      namespace={getDeadlineStatusNamespace(item.type)}
+                      status={item.status}
+                    />
                   </div>
                 </li>
               ))}
@@ -348,9 +341,11 @@ export function AdminDashboardPage() {
       <section className="mt-6">
         <article className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
           <div className="border-b border-slate-100 p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-950">Recent activities</h2>
+            <h2 className="text-lg font-bold text-slate-950">
+              {t('admin.dashboard.recentActivities')}
+            </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Latest updates across active case profiles.
+              {t('admin.dashboard.recentActivitiesDescription')}
             </p>
           </div>
           {data.recentActivities.length === 0 ? (
@@ -359,9 +354,11 @@ export function AdminDashboardPage() {
                 <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-500">
                   <Inbox className="h-6 w-6" />
                 </span>
-                <p className="mt-4 font-semibold text-slate-800">No activity yet</p>
+                <p className="mt-4 font-semibold text-slate-800">
+                  {t('admin.dashboard.noActivity')}
+                </p>
                 <p className="mt-1 text-sm text-slate-400">
-                  Case updates will appear here.
+                  {t('admin.dashboard.noActivityDescription')}
                 </p>
               </div>
             </div>
@@ -376,7 +373,7 @@ export function AdminDashboardPage() {
                     <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-start sm:gap-4">
                       <p className="text-sm leading-6 text-slate-700">
                         <span className="font-bold text-slate-900">
-                          {activity.user?.fullName ?? 'System'}
+                          {activity.user?.fullName ?? t('admin.dashboard.system')}
                         </span>{' '}
                         {activity.description}
                       </p>
@@ -384,7 +381,7 @@ export function AdminDashboardPage() {
                         className="shrink-0 text-xs text-slate-400"
                         dateTime={activity.createdAt}
                       >
-                        {formatDate(activity.createdAt, true)}
+                        {formatDateTime(activity.createdAt)}
                       </time>
                     </div>
                     <p className="mt-1 truncate text-xs text-slate-400">
@@ -397,7 +394,7 @@ export function AdminDashboardPage() {
                           <StatusBadge status={activity.oldStatus} />
                         ) : null}
                         {activity.oldStatus ? (
-                          <span className="text-xs text-slate-300">→</span>
+                          <span className="text-xs text-slate-300">-&gt;</span>
                         ) : null}
                         <StatusBadge status={activity.newStatus} />
                       </div>

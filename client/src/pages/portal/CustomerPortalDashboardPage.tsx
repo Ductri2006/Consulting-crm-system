@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
   getPortalCaseSummary,
@@ -105,6 +106,8 @@ function ComingSoonItem({
 }
 
 function RecentCaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
+  const { t } = useTranslation()
+
   return (
     <Link
       className="block rounded-lg border border-slate-200 bg-white p-4 transition hover:border-emerald-200 hover:shadow-md"
@@ -119,7 +122,7 @@ function RecentCaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
             {caseProfile.title}
           </h3>
           <p className="mt-1 text-xs font-semibold text-slate-500">
-            Updated {formatPortalDateTime(caseProfile.updatedAt)}
+            {t('common.updated')} {formatPortalDateTime(caseProfile.updatedAt)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -132,6 +135,7 @@ function RecentCaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
 }
 
 export function CustomerPortalDashboardPage() {
+  const { t } = useTranslation()
   const { session } = usePortalAuth()
   const [profile, setProfile] = useState<PortalProfileData | null>(null)
   const [caseSummary, setCaseSummary] =
@@ -154,12 +158,14 @@ export function CustomerPortalDashboardPage() {
       setLoadError(
         error instanceof Error
           ? error.message
-          : 'Customer portal data could not be loaded.',
+          : t('portal.dashboard.loadError', {
+              defaultValue: 'Customer portal data could not be loaded.',
+            }),
       )
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void loadPortalData()
@@ -171,7 +177,9 @@ export function CustomerPortalDashboardPage() {
     return (
       <div className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
         <p className="text-sm font-semibold text-slate-600">
-          Portal session is not available.
+          {t('portal.dashboard.portalSessionUnavailable', {
+            defaultValue: 'Portal session is not available.',
+          })}
         </p>
       </div>
     )
@@ -186,11 +194,11 @@ export function CustomerPortalDashboardPage() {
               {data.organization.name}
             </p>
             <h1 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">
-              Welcome, {data.customer.fullName}
+              {t('portal.dashboard.title', { name: data.customer.fullName })}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
               {profile?.overview.message ??
-                'Case tracking is available in your portal.'}
+                t('portal.dashboard.fallbackMessage')}
             </p>
           </div>
           <button
@@ -203,7 +211,7 @@ export function CustomerPortalDashboardPage() {
               className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
               aria-hidden="true"
             />
-            Refresh
+            {t('common.refresh')}
           </button>
         </div>
       </header>
@@ -213,30 +221,29 @@ export function CustomerPortalDashboardPage() {
           className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
           role="alert"
         >
-          Refresh failed: {loadError}. Showing the latest available portal
-          session.
+          {t('portal.dashboard.refreshFailed', { message: loadError })}
         </div>
       ) : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={<BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />}
-          label="Total cases"
+          label={t('portal.dashboard.totalCases')}
           value={caseSummary?.totalCases ?? 0}
         />
         <StatCard
           icon={<CalendarClock className="h-5 w-5" aria-hidden="true" />}
-          label="Active cases"
+          label={t('portal.dashboard.activeCases')}
           value={caseSummary?.activeCases ?? 0}
         />
         <StatCard
           icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
-          label="Completed cases"
+          label={t('portal.dashboard.completedCases')}
           value={caseSummary?.completedCases ?? 0}
         />
         <StatCard
           icon={<CalendarClock className="h-5 w-5" aria-hidden="true" />}
-          label="Upcoming appointments"
+          label={t('portal.dashboard.upcomingAppointments')}
           value={caseSummary?.upcomingAppointments ?? 0}
         />
       </section>
@@ -246,10 +253,10 @@ export function CustomerPortalDashboardPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-bold text-slate-950">
-                Recent Cases
+                {t('portal.dashboard.recentCases')}
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Updated newest first.
+                {t('portal.dashboard.recentCasesDescription')}
               </p>
             </div>
             <Link
@@ -257,7 +264,7 @@ export function CustomerPortalDashboardPage() {
               to="/portal/cases"
             >
               <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
-              View my cases
+              {t('portal.dashboard.viewMyCases')}
             </Link>
           </div>
 
@@ -272,14 +279,14 @@ export function CustomerPortalDashboardPage() {
             </div>
           ) : (
             <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-              No cases are available in your portal yet.
+              {t('portal.dashboard.noCases')}
             </p>
           )}
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-slate-950">
-            Next Appointment
+            {t('portal.dashboard.nextAppointment')}
           </h2>
           {caseSummary?.nextAppointment ? (
             <div className="mt-5 rounded-lg border border-slate-200 p-4">
@@ -293,14 +300,14 @@ export function CustomerPortalDashboardPage() {
                   : ''}
               </p>
               <p className="mt-3 text-sm font-semibold text-slate-700">
-                Staff:{' '}
+                {t('portal.caseDetail.staff')}:{' '}
                 {caseSummary.nextAppointment.staff?.fullName ??
-                  'Not assigned yet'}
+                  t('common.notAssigned')}
               </p>
             </div>
           ) : (
             <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-              No upcoming appointment is scheduled.
+              {t('portal.dashboard.noUpcomingAppointment')}
             </p>
           )}
         </div>
@@ -311,7 +318,7 @@ export function CustomerPortalDashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold text-slate-950">
-                Customer Profile
+                {t('portal.dashboard.customerProfile')}
               </h2>
               <p className="mt-1 text-sm text-slate-500">
                 {data.organization.slug}
@@ -319,51 +326,59 @@ export function CustomerPortalDashboardPage() {
             </div>
             <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-600/20">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-              Active
+              {t('common.active')}
             </span>
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <InfoRow
               icon={<Phone className="h-4 w-4" aria-hidden="true" />}
-              label="Phone"
+              label={t('portal.dashboard.phone')}
               value={data.customer.phone}
             />
             <InfoRow
               icon={<Mail className="h-4 w-4" aria-hidden="true" />}
-              label="Email"
+              label={t('common.email')}
               value={data.customer.email ?? data.portalAccount.email}
             />
             <InfoRow
               icon={<MapPin className="h-4 w-4" aria-hidden="true" />}
-              label="Address"
-              value={data.customer.address ?? 'Not provided'}
+              label={t('portal.dashboard.address')}
+              value={data.customer.address ?? t('common.notProvided')}
             />
             <InfoRow
               icon={<ShieldCheck className="h-4 w-4" aria-hidden="true" />}
-              label="Last login"
+              label={t('portal.dashboard.lastLogin')}
               value={formatPortalDateTime(data.portalAccount.lastLoginAt)}
             />
           </div>
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-950">Portal Account</h2>
+          <h2 className="text-lg font-bold text-slate-950">
+            {t('portal.dashboard.portalAccount')}
+          </h2>
           <dl className="mt-5 space-y-4 text-sm">
             <div>
-              <dt className="font-bold text-slate-400">Login email</dt>
+              <dt className="font-bold text-slate-400">
+                {t('portal.dashboard.loginEmail')}
+              </dt>
               <dd className="mt-1 break-all font-semibold text-slate-800">
                 {data.portalAccount.email}
               </dd>
             </div>
             <div>
-              <dt className="font-bold text-slate-400">Status</dt>
+              <dt className="font-bold text-slate-400">
+                {t('portal.dashboard.status')}
+              </dt>
               <dd className="mt-1 font-semibold text-slate-800">
-                {data.portalAccount.isActive ? 'Active' : 'Inactive'}
+                {data.portalAccount.isActive
+                  ? t('common.active')
+                  : t('common.inactive')}
               </dd>
             </div>
             <div>
-              <dt className="font-bold text-slate-400">Created</dt>
+              <dt className="font-bold text-slate-400">{t('common.created')}</dt>
               <dd className="mt-1 font-semibold text-slate-800">
                 {formatPortalDateTime(data.portalAccount.createdAt)}
               </dd>
@@ -375,13 +390,15 @@ export function CustomerPortalDashboardPage() {
       <section className="grid gap-4 md:grid-cols-2">
         <ComingSoonItem
           icon={<FileText className="h-5 w-5" aria-hidden="true" />}
-          title="Documents"
-          description="Customer document upload and download remain reserved for Step 29."
+          title={t('portal.caseDetail.documents')}
+          description={t('portal.dashboard.documentsFuture')}
         />
         <ComingSoonItem
           icon={<MessageSquareText className="h-5 w-5" aria-hidden="true" />}
-          title="Messages"
-          description="Secure customer updates are reserved for a later portal step."
+          title={t('portal.dashboard.messages', {
+            defaultValue: 'Messages',
+          })}
+          description={t('portal.dashboard.messagesFuture')}
         />
       </section>
     </div>

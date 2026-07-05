@@ -16,6 +16,7 @@ import {
   useState,
 } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   ConfirmDialog,
   DataTable,
@@ -48,6 +49,7 @@ import {
   type PaginationMeta,
   type UserOption,
 } from '../../features/documents'
+import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -229,6 +231,7 @@ function ModalActions({
 }
 
 function DocumentTypeBadge({ fileType }: { fileType: DocumentType }) {
+  const { t } = useTranslation()
   const styles: Record<DocumentType, string> = {
     IDENTITY_DOCUMENT: 'bg-sky-50 text-sky-700 ring-sky-600/20',
     REAL_ESTATE_DOCUMENT: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -245,7 +248,7 @@ function DocumentTypeBadge({ fileType }: { fileType: DocumentType }) {
         styles[fileType],
       )}
     >
-      {formatLabel(fileType)}
+      {getStatusLabel(t, 'document', fileType)}
     </span>
   )
 }
@@ -491,6 +494,7 @@ function DocumentDetailView({
 }
 
 export function AdminDocumentsPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
   const [documents, setDocuments] = useState<DocumentRecord[]>([])
@@ -913,7 +917,7 @@ export function AdminDocumentsPage() {
             <option value="">All file types</option>
             {documentTypes.map((type) => (
               <option key={type} value={type}>
-                {formatLabel(type)}
+                {getStatusLabel(t, 'document', type)}
               </option>
             ))}
           </select>

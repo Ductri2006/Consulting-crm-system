@@ -6,15 +6,18 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Container } from '../common/Container'
 
 const highlights = [
-  { label: 'Structured advice', icon: ShieldCheck },
-  { label: 'Clear next steps', icon: CheckCircle2 },
+  { labelKey: 'structuredAdvice', icon: ShieldCheck },
+  { labelKey: 'clearNextSteps', icon: CheckCircle2 },
 ]
 
 export function HeroSection() {
+  const { t } = useTranslation()
+
   return (
     <section className="relative isolate overflow-hidden bg-slate-950 py-20 text-white sm:py-24 lg:py-28">
       <div
@@ -30,40 +33,40 @@ export function HeroSection() {
         <div>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-400/25 bg-blue-400/10 px-3.5 py-2 text-sm font-medium text-blue-100">
             <Sparkles className="h-4 w-4 text-amber-300" />
-            Clarity for complex business decisions
+            {t('public.home.heroEyebrow')}
           </div>
           <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl lg:leading-[1.08]">
-            Advisory expertise that turns complexity into{' '}
-            <span className="text-blue-400">confident action.</span>
+            {t('public.home.heroTitlePrefix')}{' '}
+            <span className="text-blue-400">
+              {t('public.home.heroTitleAccent')}
+            </span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            Advisora is a consulting business platform connecting organizations
-            with practical guidance across real estate, legal, investment, and
-            construction decisions.
+            {t('public.home.heroDescription')}
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link
               to="/consultation"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
             >
-              Get Consultation
+              {t('public.getConsultation')}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/services"
               className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-600 bg-white/5 px-6 py-3 font-semibold text-white transition hover:border-slate-400 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
             >
-              View Services
+              {t('public.viewServices')}
             </Link>
           </div>
           <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
-            {highlights.map(({ label, icon: Icon }) => (
+            {highlights.map(({ labelKey, icon: Icon }) => (
               <span
-                key={label}
+                key={labelKey}
                 className="inline-flex items-center gap-2 text-sm text-slate-300"
               >
                 <Icon className="h-4 w-4 text-blue-400" />
-                {label}
+                {t(`public.home.${labelKey}`)}
               </span>
             ))}
           </div>
@@ -78,19 +81,23 @@ export function HeroSection() {
             <div className="flex items-center justify-between border-b border-slate-700/80 pb-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Advisory workspace
+                  {t('public.home.advisoryWorkspace')}
                 </p>
-                <p className="mt-1 font-semibold">Engagement overview</p>
+                <p className="mt-1 font-semibold">
+                  {t('public.home.engagementOverview')}
+                </p>
               </div>
               <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                On track
+                {t('public.home.onTrack')}
               </span>
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl bg-slate-800 p-4 sm:col-span-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-slate-400">Decision readiness</p>
+                  <p className="text-sm text-slate-400">
+                    {t('public.home.decisionReadiness')}
+                  </p>
                   <BarChart3 className="h-4 w-4 text-blue-400" />
                 </div>
                 <p className="mt-3 text-3xl font-bold">84%</p>
@@ -101,7 +108,9 @@ export function HeroSection() {
               <div className="rounded-2xl bg-amber-400 p-4 text-slate-950">
                 <Clock3 className="h-5 w-5" />
                 <p className="mt-6 text-2xl font-bold">12</p>
-                <p className="text-xs font-medium">Actions resolved</p>
+                <p className="text-xs font-medium">
+                  {t('public.home.actionsResolved')}
+                </p>
               </div>
             </div>
 
@@ -109,9 +118,11 @@ export function HeroSection() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Current stage
+                    {t('public.home.currentStage')}
                   </p>
-                  <p className="mt-1 font-bold">Solution assessment</p>
+                  <p className="mt-1 font-bold">
+                    {t('public.home.solutionAssessment')}
+                  </p>
                 </div>
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600">
                   <CheckCircle2 className="h-5 w-5" />

@@ -16,6 +16,7 @@ import {
   useState,
 } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   DataTable,
   EmptyState,
@@ -42,6 +43,7 @@ import {
   type PaginationMeta,
   type WorkspaceInvitation,
 } from '../../features/invitations'
+import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
 
 const PAGE_SIZE = 10
@@ -289,6 +291,7 @@ function ModalActions({
 }
 
 function RoleBadge({ role }: { role: InvitationRole }) {
+  const { t } = useTranslation()
   const styles: Record<InvitationRole, string> = {
     ADMIN: 'bg-violet-50 text-violet-700 ring-violet-600/20',
     MANAGER: 'bg-blue-50 text-blue-700 ring-blue-600/20',
@@ -302,12 +305,13 @@ function RoleBadge({ role }: { role: InvitationRole }) {
         styles[role],
       )}
     >
-      {formatLabel(role)}
+      {getStatusLabel(t, 'role', role)}
     </span>
   )
 }
 
 function InvitationStatusBadge({ status }: { status: InvitationStatus }) {
+  const { t } = useTranslation()
   const styles: Record<InvitationStatus, string> = {
     PENDING: 'bg-amber-50 text-amber-700 ring-amber-600/20',
     ACCEPTED: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -322,7 +326,7 @@ function InvitationStatusBadge({ status }: { status: InvitationStatus }) {
         styles[status],
       )}
     >
-      {formatLabel(status)}
+      {getStatusLabel(t, 'invitation', status)}
     </span>
   )
 }
@@ -610,6 +614,7 @@ function ResendInvitationDialog({
 }
 
 export function AdminInvitationsPage() {
+  const { t } = useTranslation()
   const { user: currentUser } = useAuth()
   const [invitations, setInvitations] = useState<WorkspaceInvitation[]>([])
   const [meta, setMeta] = useState<PaginationMeta>(EMPTY_META)
@@ -963,7 +968,7 @@ export function AdminInvitationsPage() {
             <option value="">All roles</option>
             {invitationRoles.map((invitationRole) => (
               <option key={invitationRole} value={invitationRole}>
-                {formatLabel(invitationRole)}
+                {getStatusLabel(t, 'role', invitationRole)}
               </option>
             ))}
           </select>
@@ -979,7 +984,7 @@ export function AdminInvitationsPage() {
             <option value="">All statuses</option>
             {invitationStatuses.map((invitationStatus) => (
               <option key={invitationStatus} value={invitationStatus}>
-                {formatLabel(invitationStatus)}
+                {getStatusLabel(t, 'invitation', invitationStatus)}
               </option>
             ))}
           </select>

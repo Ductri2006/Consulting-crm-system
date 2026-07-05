@@ -64,6 +64,13 @@ Public visitors do not need an account. Admin, manager, and staff users are
 internal CRM users. Customer portal accounts are separate and are created for
 existing customers by an internal Admin or Manager.
 
+Step 28.5 adds bilingual English/Vietnamese UI support. The selected language
+is stored in local storage as `advisora_locale`. The language switcher appears
+in the public layout, admin surfaces, and customer portal surfaces. Database
+content and user-generated values such as customer names, case titles, notes,
+and file names are not translated. Backend API response localization and email
+template localization remain future work.
+
 Default demo workspace:
 
 ```text
@@ -249,6 +256,12 @@ Show:
 - `/consultation`
 - `/appointment`
 
+Language smoke:
+
+- Switch EN -> VI from the public header.
+- Refresh the page and confirm Vietnamese persists.
+- Switch VI -> EN and confirm English persists.
+
 Talk track:
 
 - The public website introduces the fictional consulting brand.
@@ -275,6 +288,7 @@ Open:
 
 Show:
 
+- Language switcher works on the login page.
 - Invalid login error.
 - Valid demo login with admin, manager, or staff credentials.
 - Refreshing a protected route keeps or restores the session.
@@ -302,6 +316,7 @@ Show:
 - Case status distribution.
 - Upcoming deadlines.
 - Recent activities.
+- Sidebar/topbar labels follow the selected English/Vietnamese locale.
 
 Note: dashboard calls are real API calls. Local latency can vary when the Neon
 database is cold or the network is slow.
@@ -427,6 +442,8 @@ Show:
 - Sign out of admin or open a separate browser session.
 - Log in at `/portal/login` with workspace slug `advisora-demo`, portal email,
   and temporary password.
+- Switch EN/VI on `/portal/login` and confirm the choice persists after
+  refresh through `advisora_locale`.
 - Confirm `/portal/dashboard` shows workspace, customer profile, portal account
   info, case summary, recent cases, and future placeholders for documents and
   messages.
@@ -435,6 +452,8 @@ Show:
 - Confirm the portal case detail shows safe overview, timeline, appointments,
   document metadata, and task summary without edit, upload, download, or delete
   actions.
+- Confirm status, priority, appointment method, document type, and task status
+  labels translate in both English and Vietnamese.
 - Return to Admin Customers and reset the portal password.
 - Confirm the old password no longer logs in and the new/generated password
   works.
@@ -582,6 +601,10 @@ Talk track:
 - Customer portal supports login/dashboard/profile and read-only case tracking;
   customer document upload/download, messages, billing, and self-registration
   remain future work.
+- Bilingual UI focuses on core UI, navigation, login flows, common actions,
+  status labels, and portal case tracking. Backend API response localization,
+  email template localization, and user-generated content translation remain
+  future work.
 - No OCR, malware scanning, or private object storage yet.
 - No public CMS APIs for news/projects yet.
 - No report exports yet.

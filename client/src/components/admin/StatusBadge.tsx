@@ -1,3 +1,6 @@
+import { useTranslation } from 'react-i18next'
+import type { StatusNamespace } from '../../i18n/statusLabels'
+import { getStatusLabel } from '../../i18n/statusLabels'
 import { cn } from '../../utils/cn'
 
 const statusStyles: Record<string, string> = {
@@ -14,20 +17,19 @@ const statusStyles: Record<string, string> = {
   PENDING: 'bg-orange-50 text-orange-700 ring-orange-600/20',
 }
 
-function formatStatus(value: string) {
-  return value
-    .toLowerCase()
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ')
-}
-
 export interface StatusBadgeProps {
   status: string
   className?: string
+  namespace?: StatusNamespace
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function StatusBadge({
+  status,
+  className,
+  namespace = 'case',
+}: StatusBadgeProps) {
+  const { t } = useTranslation()
+
   return (
     <span
       className={cn(
@@ -36,7 +38,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
         className,
       )}
     >
-      {formatStatus(status)}
+      {getStatusLabel(t, namespace, status)}
     </span>
   )
 }

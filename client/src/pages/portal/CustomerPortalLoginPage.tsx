@@ -1,13 +1,31 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { TFunction } from 'i18next'
 import { ArrowLeft, LockKeyhole } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import {
-  portalLoginFormSchema,
-  type PortalLoginFormValues,
-  usePortalAuth,
-} from '../../features/customerPortal'
+import { z } from 'zod'
+import { LanguageSwitcher } from '../../components/common/LanguageSwitcher'
+import { usePortalAuth } from '../../features/customerPortal'
+
+const createPortalLoginFormSchema = (t: TFunction) =>
+  z.object({
+    workspaceSlug: z
+      .string()
+      .trim()
+      .min(1, t('validation.workspaceSlugRequired'))
+      .max(50, t('validation.workspaceSlugMax'))
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, t('validation.workspaceSlugFormat')),
+    email: z
+      .string()
+      .trim()
+      .min(1, t('validation.emailRequired'))
+      .email(t('validation.email')),
+    password: z.string().min(1, t('validation.passwordRequired')),
+  })
+
+type PortalLoginFormValues = z.infer<ReturnType<typeof createPortalLoginFormSchema>>
 
 const DEFAULT_VALUES: PortalLoginFormValues = {
   workspaceSlug: '',
@@ -56,7 +74,12 @@ const getRedirectPath = (state: unknown): string => {
 }
 
 export function CustomerPortalLoginPage() {
+  const { t } = useTranslation()
   const { isAuthenticated, login } = usePortalAuth()
+  const portalLoginFormSchema = useMemo(
+    () => createPortalLoginFormSchema(t),
+    [t],
+  )
   const navigate = useNavigate()
   const location = useLocation()
   const [formError, setFormError] = useState<string | null>(null)
@@ -83,7 +106,7 @@ export function CustomerPortalLoginPage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Portal login failed. Please try again.',
+          : t('auth.portalLogin.fallbackError'),
       )
     }
   }
@@ -92,42 +115,47 @@ export function CustomerPortalLoginPage() {
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-8 px-4 py-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,28rem)]">
         <section className="hidden lg:block">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
-            Advisora customer portal
-          </p>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
+              {t('auth.portalLogin.eyebrow')}
+            </p>
+            <LanguageSwitcher />
+          </div>
           <h1 className="mt-4 max-w-2xl text-4xl font-bold tracking-tight text-slate-950">
-            Secure access for your consulting workspace
+            {t('auth.portalLogin.heading')}
           </h1>
           <div className="mt-8 grid max-w-2xl gap-3 text-sm font-medium text-slate-600">
             <div className="rounded-lg border border-slate-200 bg-white p-4">
-              View your workspace and profile details.
+              {t('auth.portalLogin.profileCard')}
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-4">
-              Case tracking, documents, and messages are prepared for the next
-              portal steps.
+              {t('auth.portalLogin.caseCard')}
             </div>
           </div>
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
-            <Link
-              className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-slate-900"
-              to="/"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Public site
-            </Link>
+            <div className="flex items-center justify-between gap-3">
+              <Link
+                className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-slate-900"
+                to="/"
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                {t('auth.portalLogin.backHome')}
+              </Link>
+              <LanguageSwitcher compact className="lg:hidden" />
+            </div>
             <div className="mt-5 flex items-center gap-3">
               <span className="grid h-11 w-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
                 <LockKeyhole className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
                 <h2 className="text-xl font-bold text-slate-950">
-                  Customer Portal
+                  {t('auth.portalLogin.title')}
                 </h2>
                 <p className="text-sm text-slate-500">
-                  Sign in with your workspace details.
+                  {t('auth.portalLogin.subtitle')}
                 </p>
               </div>
             </div>
@@ -146,7 +174,7 @@ export function CustomerPortalLoginPage() {
 
               <div>
                 <label className="field-label" htmlFor="portal-workspace-slug">
-                  Workspace slug
+                  {t('auth.portalLogin.workspaceSlug')}
                 </label>
                 <input
                   aria-describedby={
@@ -158,7 +186,7 @@ export function CustomerPortalLoginPage() {
                   autoComplete="organization"
                   className="field-input"
                   id="portal-workspace-slug"
-                  placeholder="advisora-demo"
+                  placeholder={t('auth.portalLogin.workspaceSlugPlaceholder')}
                   {...register('workspaceSlug')}
                 />
                 <FieldError
@@ -169,7 +197,7 @@ export function CustomerPortalLoginPage() {
 
               <div>
                 <label className="field-label" htmlFor="portal-email">
-                  Email
+                  {t('common.email')}
                 </label>
                 <input
                   aria-describedby={
@@ -179,6 +207,7 @@ export function CustomerPortalLoginPage() {
                   autoComplete="email"
                   className="field-input"
                   id="portal-email"
+                  placeholder={t('auth.portalLogin.emailPlaceholder')}
                   type="email"
                   {...register('email')}
                 />
@@ -190,7 +219,7 @@ export function CustomerPortalLoginPage() {
 
               <div>
                 <label className="field-label" htmlFor="portal-password">
-                  Password
+                  {t('common.password')}
                 </label>
                 <input
                   aria-describedby={
@@ -200,6 +229,7 @@ export function CustomerPortalLoginPage() {
                   autoComplete="current-password"
                   className="field-input"
                   id="portal-password"
+                  placeholder={t('auth.portalLogin.passwordPlaceholder')}
                   type="password"
                   {...register('password')}
                 />
@@ -216,7 +246,9 @@ export function CustomerPortalLoginPage() {
                 disabled={isSubmitting}
                 type="submit"
               >
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
+                {isSubmitting
+                  ? t('auth.portalLogin.signingIn')
+                  : t('auth.portalLogin.signIn')}
               </button>
             </div>
           </form>

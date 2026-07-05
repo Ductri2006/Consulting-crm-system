@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
 import { ArrowRight, Menu, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 
-import type { NavItem } from '../../types'
 import { cn } from '../../utils/cn'
 import { Button } from '../common/Button'
 import { Container } from '../common/Container'
+import { LanguageSwitcher } from '../common/LanguageSwitcher'
 
-const navigation: NavItem[] = [
-  { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Services', href: '/services' },
-  { label: 'Projects', href: '/projects' },
-  { label: 'News', href: '/news' },
-  { label: 'Contact', href: '/contact' },
+const navigation = [
+  { labelKey: 'home', href: '/' },
+  { labelKey: 'about', href: '/about' },
+  { labelKey: 'services', href: '/services' },
+  { labelKey: 'projects', href: '/projects' },
+  { labelKey: 'news', href: '/news' },
+  { labelKey: 'contact', href: '/contact' },
 ]
 
 function BrandMark() {
@@ -28,6 +29,7 @@ function BrandMark() {
 }
 
 export function Header() {
+  const { t } = useTranslation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { pathname } = useLocation()
 
@@ -58,7 +60,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
       <Container className="flex h-18 items-center justify-between gap-6 py-3">
         <Link
-          aria-label="Advisora home"
+          aria-label={t('navigation.home')}
           className="flex shrink-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           to="/"
         >
@@ -68,7 +70,7 @@ export function Header() {
           </span>
         </Link>
 
-        <nav aria-label="Primary navigation" className="hidden lg:block">
+        <nav aria-label={t('public.primaryNavigation')} className="hidden lg:block">
           <ul className="flex items-center gap-1">
             {navigation.map((item) => (
               <li key={item.href}>
@@ -77,7 +79,7 @@ export function Header() {
                   end={item.href === '/'}
                   to={item.href}
                 >
-                  {item.label}
+                  {t(`navigation.${item.labelKey}`)}
                 </NavLink>
               </li>
             ))}
@@ -85,11 +87,12 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
+          <LanguageSwitcher compact />
           <Button size="sm" to="/workspace-signup" variant="outline">
-            Create workspace
+            {t('common.createWorkspace')}
           </Button>
           <Button size="sm" to="/consultation">
-            Get Consultation
+            {t('public.getConsultation')}
             <ArrowRight aria-hidden="true" className="size-4" />
           </Button>
         </div>
@@ -97,7 +100,11 @@ export function Header() {
         <button
           aria-controls="mobile-navigation"
           aria-expanded={isMenuOpen}
-          aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-label={
+            isMenuOpen
+              ? t('public.closeNavigation')
+              : t('public.openNavigation')
+          }
           className="grid size-11 place-items-center rounded-lg text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:hidden"
           onClick={() => setIsMenuOpen((current) => !current)}
           type="button"
@@ -118,7 +125,7 @@ export function Header() {
         id="mobile-navigation"
       >
         <Container className="py-4">
-          <nav aria-label="Mobile navigation">
+          <nav aria-label={t('public.mobileNavigation')}>
             <ul className="space-y-1">
               {navigation.map((item) => (
                 <li key={item.href}>
@@ -130,14 +137,15 @@ export function Header() {
                     onClick={() => setIsMenuOpen(false)}
                     to={item.href}
                   >
-                    {item.label}
+                    {t(`navigation.${item.labelKey}`)}
                   </NavLink>
                 </li>
               ))}
             </ul>
           </nav>
+          <LanguageSwitcher className="mt-4 w-full justify-center" />
           <Button className="mt-4 w-full" size="md" to="/consultation">
-            Get Consultation
+            {t('public.getConsultation')}
             <ArrowRight aria-hidden="true" className="size-4" />
           </Button>
           <Button
@@ -146,7 +154,7 @@ export function Header() {
             to="/workspace-signup"
             variant="outline"
           >
-            Create workspace
+            {t('common.createWorkspace')}
           </Button>
         </Container>
       </div>

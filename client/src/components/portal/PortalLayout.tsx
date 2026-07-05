@@ -4,24 +4,27 @@ import {
   LogOut,
   ShieldCheck,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { usePortalAuth } from '../../features/customerPortal'
 import { cn } from '../../utils/cn'
+import { LanguageSwitcher } from '../common/LanguageSwitcher'
 
 const portalNavItems = [
   {
     href: '/portal/dashboard',
-    label: 'Dashboard',
+    labelKey: 'dashboard',
     icon: LayoutDashboard,
   },
   {
     href: '/portal/cases',
-    label: 'My Cases',
+    labelKey: 'myCases',
     icon: BriefcaseBusiness,
   },
 ]
 
 export function PortalLayout() {
+  const { t } = useTranslation()
   const { logout, session } = usePortalAuth()
   const navigate = useNavigate()
 
@@ -40,10 +43,10 @@ export function PortalLayout() {
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-slate-950">
-                {session?.organization.name ?? 'Customer Portal'}
+                {session?.organization.name ?? t('navigation.portal')}
               </p>
               <p className="truncate text-xs font-medium text-slate-500">
-                {session?.customer.fullName ?? 'Secure customer workspace'}
+                {session?.customer.fullName ?? t('portal.secureWorkspace')}
               </p>
             </div>
           </div>
@@ -66,18 +69,19 @@ export function PortalLayout() {
                     to={item.href}
                   >
                     <Icon className="h-4 w-4" aria-hidden="true" />
-                    {item.label}
+                    {t(`navigation.${item.labelKey}`)}
                   </NavLink>
                 )
               })}
             </nav>
+            <LanguageSwitcher compact />
             <button
               className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               onClick={() => void handleLogout()}
               type="button"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
-              Logout
+              {t('common.logout')}
             </button>
           </div>
         </div>

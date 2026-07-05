@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
   getPortalCase,
@@ -26,6 +27,7 @@ import {
   formatPortalFileSize,
   formatPortalLabel,
 } from '../../features/customerPortal/portalCases.format'
+import { getStatusLabel } from '../../i18n/statusLabels'
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
@@ -65,6 +67,7 @@ function SectionTitle({
 }
 
 export function CustomerPortalCaseDetailPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const [caseDetail, setCaseDetail] = useState<PortalCaseDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -72,7 +75,9 @@ export function CustomerPortalCaseDetailPage() {
 
   const loadCase = useCallback(async () => {
     if (!id) {
-      setLoadError('Case id is missing.')
+      setLoadError(t('portal.caseDetail.missingCaseId', {
+        defaultValue: 'Case id is missing.',
+      }))
       setIsLoading(false)
       return
     }
@@ -83,11 +88,18 @@ export function CustomerPortalCaseDetailPage() {
     try {
       setCaseDetail(await getPortalCase(id))
     } catch (error) {
-      setLoadError(getErrorMessage(error, 'Case details could not be loaded.'))
+      setLoadError(
+        getErrorMessage(
+          error,
+          t('portal.caseDetail.loadErrorFallback', {
+            defaultValue: 'Case details could not be loaded.',
+          }),
+        ),
+      )
     } finally {
       setIsLoading(false)
     }
-  }, [id])
+  }, [id, t])
 
   useEffect(() => {
     void loadCase()
@@ -99,7 +111,7 @@ export function CustomerPortalCaseDetailPage() {
         <div>
           <BriefcaseBusiness className="mx-auto h-8 w-8 animate-pulse text-emerald-600" />
           <p className="mt-4 text-sm font-bold text-slate-600">
-            Loading case details...
+            {t('portal.caseDetail.loading')}
           </p>
         </div>
       </section>
@@ -115,7 +127,7 @@ export function CustomerPortalCaseDetailPage() {
         <div>
           <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
           <h1 className="mt-4 font-bold text-slate-950">
-            Could not load this case
+            {t('portal.caseDetail.loadErrorTitle')}
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm text-rose-700">
             {loadError}
@@ -126,7 +138,7 @@ export function CustomerPortalCaseDetailPage() {
               to="/portal/cases"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Back to My Cases
+              {t('portal.caseDetail.backToCases')}
             </Link>
             <button
               className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-slate-950 px-3 text-sm font-bold text-white"
@@ -134,7 +146,7 @@ export function CustomerPortalCaseDetailPage() {
               type="button"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              Try again
+              {t('common.tryAgain')}
             </button>
           </div>
         </div>
@@ -156,7 +168,7 @@ export function CustomerPortalCaseDetailPage() {
               to="/portal/cases"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Back to My Cases
+              {t('portal.caseDetail.backToCases')}
             </Link>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <span className="font-mono text-sm font-bold text-emerald-700">
@@ -169,7 +181,7 @@ export function CustomerPortalCaseDetailPage() {
               {caseDetail.title}
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              {caseDetail.description ?? 'No public description is available.'}
+              {caseDetail.description ?? t('portal.caseDetail.noPublicDescription')}
             </p>
           </div>
           <button
@@ -182,7 +194,7 @@ export function CustomerPortalCaseDetailPage() {
               className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
               aria-hidden="true"
             />
-            Refresh
+            {t('common.refresh')}
           </button>
         </div>
       </header>
@@ -192,44 +204,53 @@ export function CustomerPortalCaseDetailPage() {
           className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
           role="alert"
         >
-          Refresh failed: {loadError}. Showing the latest loaded case details.
+          {t('portal.caseDetail.refreshFailed', { message: loadError })}
         </div>
       ) : null}
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <SectionTitle
           icon={<BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />}
-          title="Case Overview"
+          title={t('portal.caseDetail.overview')}
         />
         <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <DetailField label="Service" value={caseDetail.service.name} />
           <DetailField
-            label="Assigned consultant"
-            value={caseDetail.assignedStaff?.fullName ?? 'Not assigned yet'}
+            label={t('portal.caseDetail.service')}
+            value={caseDetail.service.name}
           />
           <DetailField
-            label="Created"
+            label={t('portal.caseDetail.assignedConsultant')}
+            value={caseDetail.assignedStaff?.fullName ?? t('common.notAssigned')}
+          />
+          <DetailField
+            label={t('common.created')}
             value={formatPortalDateTime(caseDetail.createdAt)}
           />
           <DetailField
-            label="Updated"
+            label={t('common.updated')}
             value={formatPortalDateTime(caseDetail.updatedAt)}
           />
           <DetailField
-            label="Deadline"
+            label={t('portal.caseDetail.deadline')}
             value={formatPortalDateTime(caseDetail.deadline)}
           />
           <DetailField
-            label="Completed"
+            label={t('common.completed')}
             value={formatPortalDateTime(caseDetail.completedAt)}
           />
           <DetailField
-            label="Customer"
+            label={t('portal.caseDetail.customer')}
             value={caseDetail.customer.fullName}
           />
           <DetailField
-            label="Related records"
-            value={`${caseDetail.counts.documents} documents, ${caseDetail.counts.tasks} tasks, ${caseDetail.counts.appointments} appointments`}
+            label={t('portal.caseDetail.relatedRecords')}
+            value={t('portal.caseDetail.relatedRecordsValue', {
+              appointments: caseDetail.counts.appointments,
+              documents: caseDetail.counts.documents,
+              tasks: caseDetail.counts.tasks,
+              defaultValue:
+                '{{documents}} documents, {{tasks}} tasks, {{appointments}} appointments',
+            })}
           />
         </dl>
       </section>
@@ -238,11 +259,11 @@ export function CustomerPortalCaseDetailPage() {
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <SectionTitle
             icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
-            title="Progress Timeline"
+            title={t('portal.caseDetail.timeline')}
           />
           {caseDetail.timeline.length === 0 ? (
             <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-              No timeline activity is available yet.
+              {t('portal.caseDetail.noTimeline')}
             </p>
           ) : (
             <ol className="mt-5 space-y-4">
@@ -255,7 +276,12 @@ export function CustomerPortalCaseDetailPage() {
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-500">
                       {formatPortalDateTime(item.createdAt)}
-                      {item.user ? ` by ${item.user.fullName}` : ''}
+                      {item.user
+                        ? t('portal.caseDetail.byUser', {
+                            defaultValue: ' by {{name}}',
+                            name: item.user.fullName,
+                          })
+                        : ''}
                     </p>
                   </div>
                 </li>
@@ -267,11 +293,11 @@ export function CustomerPortalCaseDetailPage() {
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <SectionTitle
             icon={<CalendarClock className="h-5 w-5" aria-hidden="true" />}
-            title="Appointments"
+            title={t('portal.caseDetail.appointments')}
           />
           {caseDetail.appointments.length === 0 ? (
             <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-              No appointments are linked to this case yet.
+              {t('portal.caseDetail.noAppointments')}
             </p>
           ) : (
             <div className="mt-5 space-y-3">
@@ -290,15 +316,16 @@ export function CustomerPortalCaseDetailPage() {
                         {appointment.endTime
                           ? ` - ${appointment.endTime}`
                           : ''}{' '}
-                        - {formatPortalLabel(appointment.method)}
+                        - {getStatusLabel(t, 'method', appointment.method)}
                       </p>
                     </div>
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-                      {formatPortalLabel(appointment.status)}
+                      {getStatusLabel(t, 'appointment', appointment.status)}
                     </span>
                   </div>
                   <p className="mt-3 text-sm font-semibold text-slate-600">
-                    Staff: {appointment.staff?.fullName ?? 'Not assigned yet'}
+                    {t('portal.caseDetail.staff')}:{' '}
+                    {appointment.staff?.fullName ?? t('common.notAssigned')}
                   </p>
                 </article>
               ))}
@@ -311,14 +338,14 @@ export function CustomerPortalCaseDetailPage() {
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <SectionTitle
             icon={<FileText className="h-5 w-5" aria-hidden="true" />}
-            title="Documents"
+            title={t('portal.caseDetail.documents')}
           />
           <p className="mt-3 text-sm font-semibold text-slate-500">
-            Document download/upload will be available in a future step.
+            {t('portal.caseDetail.documentsFuture')}
           </p>
           {caseDetail.documents.length === 0 ? (
             <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-              No document metadata is linked to this case yet.
+              {t('portal.caseDetail.noDocuments')}
             </p>
           ) : (
             <div className="mt-5 divide-y divide-slate-100 rounded-lg border border-slate-200">
@@ -328,12 +355,18 @@ export function CustomerPortalCaseDetailPage() {
                     {document.fileName}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-slate-500">
-                    {formatPortalLabel(document.fileType)} -{' '}
-                    {document.mimeType ?? 'Unknown type'} -{' '}
+                    {getStatusLabel(t, 'document', document.fileType)} -{' '}
+                    {document.mimeType ??
+                      t('portal.caseDetail.unknownType', {
+                        defaultValue: 'Unknown type',
+                      })}{' '}
+                    -{' '}
                     {formatPortalFileSize(document.size)}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-slate-400">
-                    Added {formatPortalDateTime(document.createdAt)}
+                    {t('portal.caseDetail.added', {
+                      date: formatPortalDateTime(document.createdAt),
+                    })}
                   </p>
                 </div>
               ))}
@@ -344,11 +377,11 @@ export function CustomerPortalCaseDetailPage() {
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <SectionTitle
             icon={<ClipboardList className="h-5 w-5" aria-hidden="true" />}
-            title="Tasks and Next Steps"
+            title={t('portal.caseDetail.tasks')}
           />
           {caseDetail.tasks.length === 0 ? (
             <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-              No task summary is available for this case yet.
+              {t('portal.caseDetail.noTasks')}
             </p>
           ) : (
             <div className="mt-5 space-y-3">
@@ -363,11 +396,13 @@ export function CustomerPortalCaseDetailPage() {
                         {task.title}
                       </p>
                       <p className="mt-1 text-xs font-semibold text-slate-500">
-                        Due {formatPortalDateTime(task.deadline)}
+                        {t('portal.caseDetail.due', {
+                          date: formatPortalDateTime(task.deadline),
+                        })}
                       </p>
                     </div>
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-                      {formatPortalLabel(task.status)}
+                      {getStatusLabel(t, 'task', task.status)}
                     </span>
                   </div>
                 </article>
@@ -380,18 +415,24 @@ export function CustomerPortalCaseDetailPage() {
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <SectionTitle
           icon={<UserRound className="h-5 w-5" aria-hidden="true" />}
-          title="Customer Summary"
+          title={t('portal.caseDetail.customerSummary')}
         />
         <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <DetailField label="Name" value={caseDetail.customer.fullName} />
-          <DetailField label="Phone" value={caseDetail.customer.phone} />
           <DetailField
-            label="Email"
-            value={caseDetail.customer.email ?? 'Not provided'}
+            label={t('portal.caseDetail.name')}
+            value={caseDetail.customer.fullName}
           />
           <DetailField
-            label="Address"
-            value={caseDetail.customer.address ?? 'Not provided'}
+            label={t('portal.dashboard.phone')}
+            value={caseDetail.customer.phone}
+          />
+          <DetailField
+            label={t('common.email')}
+            value={caseDetail.customer.email ?? t('common.notProvided')}
+          />
+          <DetailField
+            label={t('portal.dashboard.address')}
+            value={caseDetail.customer.address ?? t('common.notProvided')}
           />
         </dl>
       </section>

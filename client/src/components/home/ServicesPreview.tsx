@@ -1,4 +1,5 @@
 import { ArrowUpRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { services } from '../../data/services'
 import { Card } from '../common/Card'
@@ -6,20 +7,22 @@ import { Container } from '../common/Container'
 import { SectionHeading } from '../common/SectionHeading'
 
 export function ServicesPreview() {
+  const { t } = useTranslation()
+
   return (
     <section className="bg-white py-20 sm:py-24">
       <Container>
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
-            eyebrow="What we do"
-            title="Expertise built around your decisions"
-            description="Focused advice, rigorous thinking, and a practical route from question to action."
+            eyebrow={t('public.home.servicesEyebrow')}
+            title={t('public.home.servicesTitle')}
+            description={t('public.home.servicesDescription')}
           />
           <Link
             to="/services"
             className="inline-flex shrink-0 items-center gap-2 font-semibold text-blue-700 transition hover:text-blue-900"
           >
-            Explore all services
+            {t('public.exploreAllServices')}
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
@@ -49,7 +52,7 @@ export function ServicesPreview() {
                   to={`/services/${service.slug}`}
                   className="relative mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 transition group-hover:gap-3"
                 >
-                  View service
+                  {t('public.viewService')}
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </Card>
