@@ -51,8 +51,8 @@ Evidence rules:
 - Backend: Node-compatible runtime serving the Express API.
 - Database: dedicated staging Neon PostgreSQL database or another dedicated
   staging PostgreSQL database.
-- Files: current local `UPLOAD_DIR` storage only for limited staging smoke
-  tests; use private persistent object storage before real document handling.
+- Files: `DOCUMENT_STORAGE_PROVIDER=local` works for limited staging smoke
+  tests; use `s3` with a private bucket before real document handling.
 - Network: HTTPS for both frontend and backend.
 - Isolation: staging must not share the production database, production JWT
   secret, or production provider credentials.
@@ -72,6 +72,8 @@ Database: <staging-postgres-database>
 - Dedicated staging PostgreSQL or Neon project/database.
 - Secure environment-variable storage in the hosting providers.
 - Optional persistent object-storage provider before handling real documents.
+- Optional malware scanner and OCR infrastructure for production-like document
+  security tests.
 - Access to deployment logs for backend and frontend.
 - A secure staging admin account provisioning plan.
 - Optional monitoring/log access for staging smoke-test triage.
@@ -363,9 +365,10 @@ For staging:
 
 Before real customer documents:
 
-- Use private persistent object storage.
-- Keep downloads authenticated or use short-lived signed URLs.
-- Add malware scanning.
+- Use private persistent object storage with no public ACL/policy.
+- Keep downloads authenticated or use short-lived signed URLs after auth checks.
+- Configure malware scanning and decide scan failure policy.
+- Configure OCR only for approved MIME types and size limits.
 - Add retention and deletion policies.
 
 ## Smoke Test Checklist
@@ -417,7 +420,14 @@ Before real customer documents:
 - [ ] Portal token cannot call `/api/documents/:id/download`; internal token
   cannot call `/api/portal/documents`.
 - [ ] Portal document responses do not include `fileUrl`, `filePath`, raw upload
-  paths, `passwordHash`, `tokenHash`, or internal-only documents.
+  paths, `storageKey`, bucket names, `passwordHash`, `tokenHash`, or
+  internal-only documents.
+- [ ] Downloads create `DocumentDownloadAudit` records.
+- [ ] `downloadCount` increments and `lastDownloadedAt` updates after a
+  successful internal and portal download.
+- [ ] Mock `INFECTED` and `FAILED` scan statuses block portal download according
+  to policy.
+- [ ] OCR status and preview are visible in admin document detail when enabled.
 - [ ] Portal account deactivate blocks login with the generic failure message.
 - [ ] Portal account activate allows login again.
 - [ ] Portal password reset invalidates the old password and allows the new
@@ -590,7 +600,8 @@ Known staging limitations to acknowledge:
 - No real production deployment has been performed yet.
 - Render Free may cold start, so the first staging API call can be slow.
 - Local disk upload storage is not suitable for real multi-instance document
-  handling.
+  handling. Use `DOCUMENT_STORAGE_PROVIDER=s3` and private bucket credentials
+  from provider secrets for production-like tests.
 - Access tokens are stored in browser local storage in this portfolio phase.
 - Workspace signup is guarded by `WORKSPACE_SIGNUP_ENABLED` and should be
   enabled only for controlled QA windows.
@@ -598,7 +609,7 @@ Known staging limitations to acknowledge:
   billing, workspace switching, and multi-membership remain future work.
 - Customer portal supports login, dashboard, profile/account summary, internal
   access controls, read-only case tracking, and customer document
-  upload/download in the local-storage portfolio phase. Messages, billing, and
+  upload/download with safe scan status and download availability. Messages, billing, and
   self-registration remain future work.
 - Public contact and appointment forms are validation/demo flows only.
 - No production-grade rate limiting, captcha, centralized monitoring, alerting,

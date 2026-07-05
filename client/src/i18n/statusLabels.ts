@@ -4,12 +4,16 @@ export type StatusNamespace =
   | 'appointment'
   | 'case'
   | 'document'
+  | 'downloadUnavailableReason'
   | 'invitation'
   | 'method'
+  | 'ocrStatus'
   | 'priority'
   | 'publish'
   | 'request'
   | 'role'
+  | 'scanStatus'
+  | 'storageProvider'
   | 'task'
 
 export const fallbackEnumLabel = (value: string): string =>

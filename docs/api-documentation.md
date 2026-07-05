@@ -686,10 +686,10 @@ Safe response items include:
   "id": "document_id",
   "fileName": "passport.pdf",
   "fileType": "IDENTITY_DOCUMENT",
-  "mimeType": "application/pdf",
   "size": 245760,
   "source": "CUSTOMER_PORTAL",
   "visibility": "CUSTOMER_VISIBLE",
+  "scanStatus": "CLEAN",
   "caseProfile": {
     "id": "case_id",
     "caseCode": "CASE-2026-001",
@@ -698,12 +698,14 @@ Safe response items include:
   },
   "uploadedByLabel": "Customer",
   "downloadAvailable": true,
+  "downloadUnavailableReason": null,
   "createdAt": "2026-07-05T00:00:00.000Z"
 }
 ```
 
-Portal responses do not include `fileUrl`, raw upload paths, `passwordHash`,
-`tokenHash`, staff email, or internal-only documents.
+Portal responses do not include `fileUrl`, `storageKey`, bucket names, object
+keys, local paths, raw upload paths, `passwordHash`, `tokenHash`, staff email,
+or internal-only documents.
 
 ```http
 POST /api/portal/documents
@@ -729,8 +731,12 @@ Authorization: Bearer <portal-token>
 
 The portal download route is separate from `/api/documents/:id/download`. It
 queries the database with organization, customer, visibility, and case-ownership
-predicates before resolving the local file. Unauthorized, hidden,
-cross-customer, cross-workspace, or missing documents return a generic `404`.
+predicates before resolving the stored object. The backend enforces scan policy
+before streaming; `INFECTED` documents and, by default, `FAILED` scans cannot be
+downloaded. Unauthorized, hidden, cross-customer, cross-workspace, or missing
+documents return a generic `404`. Successful streams write a
+`DocumentDownloadAudit` row and update backend/admin `downloadCount` plus
+`lastDownloadedAt`.
 
 ## 3. Customer API
 
@@ -1268,6 +1274,10 @@ Form data:
 
 At least one of `customerId` or `caseProfileId` should be supplied. File type, MIME type, and size must be validated before storage.
 Internal uploads default to `source=INTERNAL` and `visibility=INTERNAL_ONLY`.
+Uploads use the configured storage provider. `DOCUMENT_STORAGE_PROVIDER=local`
+stores server-local objects for development; `s3` stores objects in a private
+S3-compatible bucket. The API stores generated object keys internally and does
+not return them to clients.
 
 ### Get Documents
 
@@ -1297,6 +1307,11 @@ GET /api/documents/:id/download
 
 This route uses internal CRM auth only. Customer portal downloads must use
 `/api/portal/documents/:id/download`.
+
+The backend checks internal authorization, scan policy, and object existence
+before streaming. Successful streams create `DocumentDownloadAudit` records and
+increment `downloadCount`; unsafe scan statuses are blocked before the object is
+opened.
 
 ### Update Portal Visibility
 
@@ -1561,4 +1576,4 @@ Recommended HTTP status codes:
 - Use database transactions for multi-record operations such as request conversion.
 - Prevent duplicate slugs, user emails, and case codes through both validation and database constraints.
 - Apply rate limiting and abuse protection to login and public form endpoints.
-- Final field-level permissions, refresh-token handling, file-storage rules, and deletion policies will be decided during backend implementation.
+- Field-level permissions, refresh-token handling, protected document downloads, and deletion policies are enforced in backend services and must stay covered by regression tests.

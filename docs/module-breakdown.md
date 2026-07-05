@@ -322,7 +322,7 @@ Document types:
 - Construction Document
 - Other
 
-Document metadata should include the file name, storage URL or key, MIME type, size, uploader, type, related record, and upload time. Physical file storage may later use Cloudinary or Supabase Storage.
+Document metadata should include the file name, MIME type, size, uploader, type, related record, upload time, storage provider status, scan status, OCR status, and download audit counters. Raw storage keys, bucket names, local paths, and legacy file URLs stay backend-only; downloads use authenticated internal and portal routes backed by the configured local or S3-compatible private storage provider.
 
 ## 12. Dashboard Module
 

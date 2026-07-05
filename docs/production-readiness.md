@@ -30,6 +30,11 @@ accepted.
 - Step 29 customer portal documents are implemented with portal-authenticated
   list/upload/download, hidden-by-default internal documents, Admin/Manager
   customer-visible controls, and no portal file-path exposure.
+- Step 29.5 document hardening adds local/S3-compatible storage providers,
+  protected streaming downloads, download audit logging, scan-status download
+  blocking, and malware/OCR provider abstractions. Real S3, ClamAV, or OCR
+  operation requires provider infrastructure and secrets configured outside the
+  repository.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -204,12 +209,14 @@ Production risk:
 - Local folders are not suitable for multi-instance deployments.
 - Uploaded files must not be committed.
 
-Recommended later upgrade:
+Production document requirements:
 
-- Move documents to private persistent object storage.
-- Keep downloads authenticated or use short-lived signed URLs.
-- Add malware scanning and retention policies before handling real customer
-  documents.
+- Use a private persistent S3-compatible bucket with no public ACL/policy.
+- Keep downloads authenticated through backend-protected routes or short-lived
+  signed URLs issued only after authorization.
+- Configure scanner/OCR infrastructure outside the repository when real
+  customer documents are handled.
+- Retain `DocumentDownloadAudit` records according to the compliance policy.
 
 ## Security Checklist
 
@@ -264,7 +271,8 @@ Recommended later upgrade:
 - Staging URLs, provider settings, and credentials are intentionally not
   committed.
 - `/api/health` is a liveness endpoint, not a database readiness check.
-- File storage is local and development-oriented.
+- File storage defaults to local for development. S3-compatible private storage
+  is implemented but must be configured with provider secrets outside the repo.
 - Render Free may cold start during portfolio staging.
 - No refresh tokens or token revocation workflow yet.
 - Current frontend token storage uses local storage for both internal and
@@ -287,8 +295,9 @@ Recommended later upgrade:
 - Workspace logo management is URL-only in this step; there is no logo upload
   pipeline yet.
 - Customer portal supports login/dashboard/profile, read-only case tracking, and
-  customer document upload/download in the local-storage portfolio phase.
-  Messages, billing, and self-registration remain future work.
+  customer document upload/download with safe scan status and download
+  availability. Messages,
+  billing, and self-registration remain future work.
 - No billing, workspace switcher, or workspace-specific public intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production
   tenant onboarding flow.
@@ -299,7 +308,7 @@ Recommended later upgrade:
 
 ## Recommended Next Steps
 
-1. Choose frontend hosting, backend Node runtime, and persistent object storage.
+1. Choose frontend hosting, backend Node runtime, and private persistent object storage.
 2. Create staging environment variables outside the repository.
 3. Complete `docs/staging-deployment-checklist.md`.
 4. Run the full verification commands listed in the deployment checklist.
@@ -308,5 +317,5 @@ Recommended later upgrade:
 7. Replace local/demo credentials with secure production provisioning.
 8. Review token storage and consider HttpOnly secure cookies before handling
    real customer data.
-9. Add rate limiting, monitoring, backups, and private object storage before
-   handling real customer data.
+9. Add rate limiting, monitoring, backups, and production object-storage
+   credentials before handling real customer data.

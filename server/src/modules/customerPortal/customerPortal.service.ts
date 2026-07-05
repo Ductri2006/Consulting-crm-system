@@ -1,8 +1,9 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 
 import {
   AppointmentStatus,
   CaseStatus,
+  DocumentDownloadActorType,
   DocumentSource,
   DocumentVisibility,
   Prisma,
@@ -10,17 +11,16 @@ import {
 import bcrypt from "bcryptjs";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
+import {
+  createDocumentDownloadHandle,
+  getDocumentDownloadAvailability,
+  type DocumentDownloadActor,
+} from "../../lib/documents/documentDownload.service";
+import { prepareDocumentStorage } from "../../lib/documents/documentUpload.service";
 import { prisma } from "../../lib/prisma";
+import { documentStorageService } from "../../lib/storage/storage.service";
 import { AppError } from "../../utils/AppError";
 import { getServerCalendarDate } from "../../utils/dateRange";
-import {
-  buildLocalFileUrl,
-  buildStoredFileName,
-  deleteLocalFile,
-  getLocalFilePathFromUrl,
-  localFileExists,
-  saveLocalFile,
-} from "../../utils/fileStorage";
 import {
   assertValidUploadFile,
   sanitizeOriginalFileName,
@@ -132,10 +132,10 @@ const safePortalDocumentMetadataSelect = {
   customerId: true,
   fileName: true,
   fileType: true,
-  mimeType: true,
   size: true,
   source: true,
   visibility: true,
+  scanStatus: true,
   createdAt: true,
   caseProfile: {
     select: {
@@ -348,22 +348,26 @@ const getPortalDocumentWhere = (
 
 const toSafePortalDocumentMetadata = (
   document: PortalDocumentMetadataRecord,
-) => ({
-  id: document.id,
-  fileName: document.fileName,
-  fileType: document.fileType,
-  mimeType: document.mimeType,
-  size: document.size,
-  source: document.source,
-  visibility: document.visibility,
-  caseProfile: document.caseProfile,
-  createdAt: document.createdAt,
-  uploadedByLabel:
-    document.source === DocumentSource.CUSTOMER_PORTAL
-      ? "Customer"
-      : (document.uploadedBy?.fullName ?? "Workspace team"),
-  downloadAvailable: true,
-});
+) => {
+  const availability = getDocumentDownloadAvailability(document);
+
+  return {
+    id: document.id,
+    fileName: document.fileName,
+    fileType: document.fileType,
+    size: document.size,
+    source: document.source,
+    visibility: document.visibility,
+    scanStatus: document.scanStatus,
+    caseProfile: document.caseProfile,
+    createdAt: document.createdAt,
+    uploadedByLabel:
+      document.source === DocumentSource.CUSTOMER_PORTAL
+        ? "Customer"
+        : (document.uploadedBy?.fullName ?? "Workspace team"),
+    ...availability,
+  };
+};
 
 const isPortalDocumentScopedToSession = (
   document: PortalDocumentMetadataRecord,
@@ -815,32 +819,44 @@ export const uploadPortalDocument = async (
     }
   }
 
-  const storedFileName = buildStoredFileName(file.originalName);
-  const fileUrl = buildLocalFileUrl(storedFileName);
+  const documentId = randomUUID();
+  const fileName = sanitizeOriginalFileName(file.originalName);
+  const storedDocument = await prepareDocumentStorage({
+    organizationId: scope.organizationId,
+    documentId,
+    fileName,
+    mimeType: file.mimeType,
+    size: file.size,
+    buffer: file.buffer,
+  });
 
-  try {
-    await saveLocalFile(storedFileName, file.buffer);
-  } catch {
-    await deleteLocalFile(fileUrl).catch(() => false);
-    throw new AppError(
-      "The document file could not be stored.",
-      HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    );
-  }
 
   try {
     const document = await prisma.$transaction(async (transaction) => {
       const created = await transaction.document.create({
         data: {
+          id: documentId,
           organizationId: scope.organizationId,
           customerId: scope.customerId,
           caseProfileId: input.caseProfileId,
           uploadedByPortalAccountId: session.portalAccount.id,
-          fileName: sanitizeOriginalFileName(file.originalName),
-          fileUrl,
+          fileName,
+          fileUrl: storedDocument.fileUrl,
           fileType: input.fileType,
           source: DocumentSource.CUSTOMER_PORTAL,
           visibility: DocumentVisibility.CUSTOMER_VISIBLE,
+          storageProvider: storedDocument.storageProvider,
+          storageKey: storedDocument.storageKey,
+          storageBucket: storedDocument.storageBucket,
+          storageRegion: storedDocument.storageRegion,
+          checksumSha256: storedDocument.checksumSha256,
+          scanStatus: storedDocument.scanStatus,
+          scanMessage: storedDocument.scanMessage,
+          scannedAt: storedDocument.scannedAt,
+          ocrStatus: storedDocument.ocrStatus,
+          ocrText: storedDocument.ocrText,
+          ocrTextPreview: storedDocument.ocrTextPreview,
+          ocrProcessedAt: storedDocument.ocrProcessedAt,
           mimeType: file.mimeType,
           size: file.size,
         },
@@ -864,7 +880,9 @@ export const uploadPortalDocument = async (
 
     return toSafePortalDocumentMetadata(document);
   } catch (error) {
-    await deleteLocalFile(fileUrl).catch(() => false);
+    await documentStorageService
+      .deleteObject({ objectKey: storedDocument.storageKey })
+      .catch(() => false);
 
     if (isPrismaError(error, "P2003")) {
       throw new AppError(
@@ -880,6 +898,10 @@ export const uploadPortalDocument = async (
 export const getPortalDocumentDownload = async (
   id: string,
   session: PortalSession,
+  downloadActor: Omit<
+    DocumentDownloadActor,
+    "actorType" | "actorPortalAccountId"
+  >,
 ): Promise<PortalDocumentDownload> => {
   const document = await prisma.document.findFirst({
     where: {
@@ -887,8 +909,16 @@ export const getPortalDocumentDownload = async (
       ...getPortalDocumentWhere(session),
     },
     select: {
+      id: true,
+      organizationId: true,
+      customerId: true,
+      caseProfileId: true,
       fileName: true,
       fileUrl: true,
+      mimeType: true,
+      size: true,
+      storageKey: true,
+      scanStatus: true,
     },
   });
 
@@ -896,28 +926,11 @@ export const getPortalDocumentDownload = async (
     throw new AppError("Document not found.", HTTP_STATUS.NOT_FOUND);
   }
 
-  const localPath = getLocalFilePathFromUrl(document.fileUrl);
-  let fileExists = false;
-
-  if (localPath) {
-    try {
-      fileExists = await localFileExists(localPath);
-    } catch {
-      throw new AppError(
-        "The document file could not be accessed.",
-        HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  if (!localPath || !fileExists) {
-    throw new AppError("Document not found.", HTTP_STATUS.NOT_FOUND);
-  }
-
-  return {
-    fileName: document.fileName,
-    localPath,
-  };
+  return createDocumentDownloadHandle(document, {
+    ...downloadActor,
+    actorType: DocumentDownloadActorType.CUSTOMER_PORTAL,
+    actorPortalAccountId: session.portalAccount.id,
+  });
 };
 
 const throwPortalAccountWriteError = (error: unknown): never => {

@@ -27,5 +27,8 @@ export interface DocumentUploadFile {
 
 export interface DocumentDownload {
   fileName: string;
-  localPath: string;
+  contentType: string | null;
+  contentLength: number | null;
+  stream: NodeJS.ReadableStream;
+  finalizeSuccess: () => Promise<void>;
 }

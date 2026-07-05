@@ -114,7 +114,12 @@ Customer Portal:
 - [ ] Portal case responses do not include internal notes, `fileUrl`,
   `passwordHash`, `tokenHash`, or raw upload paths.
 - [ ] Portal document responses do not include `fileUrl`, `filePath`, raw
-  upload paths, `passwordHash`, `tokenHash`, or internal-only documents.
+  upload paths, `storageKey`, bucket names, `passwordHash`, `tokenHash`, or
+  internal-only documents.
+- [ ] Scan `PENDING`, `INFECTED`, and blocked `FAILED` statuses disable portal
+  download and show a safe reason.
+- [ ] Successful portal download creates `DocumentDownloadAudit`, increments
+  `downloadCount`, and updates `lastDownloadedAt`.
 - [ ] Portal case pages have no edit, delete, assign, or status-update controls.
 - [ ] Refreshing `/portal/dashboard` restores the portal session.
 - [ ] Portal password reset invalidates the old password and allows the new
@@ -271,6 +276,9 @@ testing.
 - [ ] Customer portal document list/upload/download works with portal auth only.
 - [ ] Internal-only documents remain hidden until Admin/Manager toggles
   `CUSTOMER_VISIBLE`.
+- [ ] Admin document list/detail shows storage provider, scan status, OCR
+  status, OCR preview, download count, and last downloaded.
+- [ ] S3-compatible provider smoke is run when test bucket env is available.
 - [ ] Reports APIs return data for an admin account.
 - [ ] Admin user management create/edit/reset/deactivate/reactivate smoke works
   with fictional users.

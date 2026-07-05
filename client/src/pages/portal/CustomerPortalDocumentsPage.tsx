@@ -74,6 +74,47 @@ function SourceBadge({ source }: { source: PortalDocumentSource }) {
   )
 }
 
+function PortalStatusBadge({
+  namespace,
+  value,
+}: {
+  namespace: 'scanStatus'
+  value: string
+}) {
+  const { t } = useTranslation()
+  const tone =
+    value === 'CLEAN' || value === 'COMPLETED'
+      ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+      : value === 'INFECTED' || value === 'FAILED'
+        ? 'bg-rose-50 text-rose-700 ring-rose-600/20'
+        : value === 'PENDING'
+          ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
+          : 'bg-slate-100 text-slate-700 ring-slate-500/20'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset',
+        tone,
+      )}
+    >
+      {getStatusLabel(t, namespace, value)}
+    </span>
+  )
+}
+
+const getDownloadUnavailableLabel = (
+  document: PortalDocumentRecord,
+  t: Parameters<typeof getStatusLabel>[0],
+): string =>
+  document.downloadUnavailableReason
+    ? getStatusLabel(
+        t,
+        'downloadUnavailableReason',
+        document.downloadUnavailableReason,
+      )
+    : t('portal.documents.downloadUnavailable')
+
 function FieldError({
   id,
   message,
@@ -295,12 +336,15 @@ function DocumentCard({
             <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 ring-1 ring-inset ring-slate-500/20">
               {getStatusLabel(t, 'document', document.fileType)}
             </span>
+            <PortalStatusBadge
+              namespace="scanStatus"
+              value={document.scanStatus}
+            />
           </div>
           <h2 className="mt-3 break-words text-lg font-bold text-slate-950">
             {document.fileName}
           </h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            {document.mimeType ?? t('portal.documents.unknownType')} -{' '}
             {formatPortalFileSize(document.size)}
           </p>
         </div>
@@ -308,6 +352,11 @@ function DocumentCard({
           className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg bg-emerald-600 px-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isDownloading || !document.downloadAvailable}
           onClick={() => onDownload(document)}
+          title={
+            document.downloadAvailable
+              ? t('portal.documents.download')
+              : getDownloadUnavailableLabel(document, t)
+          }
           type="button"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
@@ -316,6 +365,11 @@ function DocumentCard({
             : t('portal.documents.download')}
         </button>
       </div>
+      {!document.downloadAvailable ? (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+          {getDownloadUnavailableLabel(document, t)}
+        </p>
+      ) : null}
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
         <div>
@@ -468,11 +522,17 @@ export function CustomerPortalDocumentsPage() {
   }
 
   const handleDownload = async (document: PortalDocumentRecord) => {
+    if (!document.downloadAvailable) {
+      setLoadError(getDownloadUnavailableLabel(document, t))
+      return
+    }
+
     setDownloadingId(document.id)
     setFeedback(null)
 
     try {
       await downloadPortalDocument(document.id, document.fileName)
+      await loadDocuments()
     } catch (error) {
       setLoadError(
         getErrorMessage(error, t('portal.documents.downloadFailed')),

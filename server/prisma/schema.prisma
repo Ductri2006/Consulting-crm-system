@@ -83,6 +83,32 @@ enum DocumentVisibility {
   CUSTOMER_VISIBLE
 }
 
+enum DocumentStorageProvider {
+  LOCAL
+  S3
+}
+
+enum DocumentScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  FAILED
+  SKIPPED
+}
+
+enum DocumentOcrStatus {
+  NOT_REQUESTED
+  PENDING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum DocumentDownloadActorType {
+  INTERNAL_USER
+  CUSTOMER_PORTAL
+}
+
 enum PublishStatus {
   DRAFT
   PUBLISHED
@@ -110,6 +136,7 @@ model Organization {
   appointments           Appointment[]
   tasks                  Task[]
   documents              Document[]
+  documentDownloadAudits DocumentDownloadAudit[]
   caseHistories          CaseHistory[]
   activityLogs           ActivityLog[]
   invitations            WorkspaceInvitation[]
@@ -131,18 +158,19 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization                     Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  assignedCases                    CaseProfile[]         @relation("AssignedCases")
+  organization                     Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  assignedCases                    CaseProfile[]           @relation("AssignedCases")
   caseHistories                    CaseHistory[]
-  managedAppointments              Appointment[]         @relation("AppointmentStaff")
-  createdTasks                     Task[]                @relation("CreatedTasks")
-  assignedTasks                    Task[]                @relation("AssignedTasks")
+  managedAppointments              Appointment[]           @relation("AppointmentStaff")
+  createdTasks                     Task[]                  @relation("CreatedTasks")
+  assignedTasks                    Task[]                  @relation("AssignedTasks")
   uploadedDocuments                Document[]
-  portalVisibilityUpdatedDocuments Document[]            @relation("DocumentPortalVisibilityUpdatedBy")
+  portalVisibilityUpdatedDocuments Document[]              @relation("DocumentPortalVisibilityUpdatedBy")
+  documentDownloadAudits           DocumentDownloadAudit[] @relation("UserDocumentDownloadAudits")
   news                             News[]
   activityLogs                     ActivityLog[]
-  sentInvitations                  WorkspaceInvitation[] @relation("WorkspaceInvitationInvitedBy")
-  acceptedInvitations              WorkspaceInvitation[] @relation("WorkspaceInvitationAcceptedBy")
+  sentInvitations                  WorkspaceInvitation[]   @relation("WorkspaceInvitationInvitedBy")
+  acceptedInvitations              WorkspaceInvitation[]   @relation("WorkspaceInvitationAcceptedBy")
 
   @@index([role, isActive])
   @@index([organizationId, role, isActive])
@@ -214,9 +242,10 @@ model CustomerPortalAccount {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  customer          Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  uploadedDocuments Document[]   @relation("PortalUploadedDocuments")
+  organization           Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customer               Customer                @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  uploadedDocuments      Document[]              @relation("PortalUploadedDocuments")
+  documentDownloadAudits DocumentDownloadAudit[] @relation("PortalDocumentDownloadAudits")
 
   @@unique([organizationId, email])
   @@index([organizationId, isActive])
@@ -392,7 +421,7 @@ model Task {
 }
 
 model Document {
-  id                          String             @id @default(uuid())
+  id                          String                  @id @default(uuid())
   organizationId              String
   caseProfileId               String?
   customerId                  String?
@@ -401,21 +430,36 @@ model Document {
   portalVisibilityUpdatedById String?
   fileName                    String
   fileUrl                     String
-  fileType                    DocumentType       @default(OTHER)
-  source                      DocumentSource     @default(INTERNAL)
-  visibility                  DocumentVisibility @default(INTERNAL_ONLY)
+  fileType                    DocumentType            @default(OTHER)
+  source                      DocumentSource          @default(INTERNAL)
+  visibility                  DocumentVisibility      @default(INTERNAL_ONLY)
+  storageProvider             DocumentStorageProvider @default(LOCAL)
+  storageKey                  String?
+  storageBucket               String?
+  storageRegion               String?
+  checksumSha256              String?
+  scanStatus                  DocumentScanStatus      @default(SKIPPED)
+  scanMessage                 String?
+  scannedAt                   DateTime?
+  ocrStatus                   DocumentOcrStatus       @default(NOT_REQUESTED)
+  ocrText                     String?                 @db.Text
+  ocrTextPreview              String?
+  ocrProcessedAt              DateTime?
+  lastDownloadedAt            DateTime?
+  downloadCount               Int                     @default(0)
   mimeType                    String?
   size                        Int?
   portalVisibilityUpdatedAt   DateTime?
-  createdAt                   DateTime           @default(now())
-  updatedAt                   DateTime           @default(now()) @updatedAt
+  createdAt                   DateTime                @default(now())
+  updatedAt                   DateTime                @default(now()) @updatedAt
 
-  organization              Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  caseProfile               CaseProfile?           @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
-  customer                  Customer?              @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  uploadedBy                User?                  @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-  uploadedByPortalAccount   CustomerPortalAccount? @relation("PortalUploadedDocuments", fields: [uploadedByPortalAccountId], references: [id], onDelete: SetNull)
-  portalVisibilityUpdatedBy User?                  @relation("DocumentPortalVisibilityUpdatedBy", fields: [portalVisibilityUpdatedById], references: [id], onDelete: SetNull)
+  organization              Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  caseProfile               CaseProfile?            @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  customer                  Customer?               @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  uploadedBy                User?                   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedByPortalAccount   CustomerPortalAccount?  @relation("PortalUploadedDocuments", fields: [uploadedByPortalAccountId], references: [id], onDelete: SetNull)
+  portalVisibilityUpdatedBy User?                   @relation("DocumentPortalVisibilityUpdatedBy", fields: [portalVisibilityUpdatedById], references: [id], onDelete: SetNull)
+  downloadAudits            DocumentDownloadAudit[]
 
   @@index([caseProfileId, createdAt])
   @@index([customerId, createdAt])
@@ -425,6 +469,10 @@ model Document {
   @@index([fileType])
   @@index([source])
   @@index([visibility])
+  @@index([storageProvider])
+  @@index([scanStatus])
+  @@index([ocrStatus])
+  @@index([lastDownloadedAt])
   @@index([organizationId, caseProfileId, createdAt])
   @@index([organizationId, customerId, createdAt])
   @@index([organizationId, customerId, visibility, createdAt])
@@ -432,6 +480,34 @@ model Document {
   @@index([organizationId, uploadedById])
   @@index([organizationId, fileType])
   @@index([organizationId, source, createdAt])
+  @@index([organizationId, scanStatus, createdAt])
+}
+
+model DocumentDownloadAudit {
+  id                   String                    @id @default(uuid())
+  organizationId       String
+  documentId           String
+  actorUserId          String?
+  actorPortalAccountId String?
+  actorType            DocumentDownloadActorType
+  customerId           String?
+  caseProfileId        String?
+  ipAddress            String?
+  userAgent            String?
+  createdAt            DateTime                  @default(now())
+
+  organization       Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  document           Document               @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  actorUser          User?                  @relation("UserDocumentDownloadAudits", fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorPortalAccount CustomerPortalAccount? @relation("PortalDocumentDownloadAudits", fields: [actorPortalAccountId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([documentId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([actorPortalAccountId, createdAt])
+  @@index([actorType, createdAt])
+  @@index([customerId, createdAt])
+  @@index([caseProfileId, createdAt])
 }
 
 model News {

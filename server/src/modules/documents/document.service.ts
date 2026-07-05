@@ -1,4 +1,7 @@
+import { randomUUID } from "node:crypto";
+
 import {
+  DocumentDownloadActorType,
   DocumentSource,
   DocumentVisibility,
   Prisma,
@@ -6,16 +9,16 @@ import {
 } from "@prisma/client";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
-import { prisma } from "../../lib/prisma";
-import { AppError } from "../../utils/AppError";
 import {
-  buildLocalFileUrl,
-  buildStoredFileName,
-  deleteLocalFile,
-  getLocalFilePathFromUrl,
-  localFileExists,
-  saveLocalFile,
-} from "../../utils/fileStorage";
+  createDocumentDownloadHandle,
+  getDocumentDownloadAvailability,
+  getDocumentObjectKey,
+  type DocumentDownloadActor,
+} from "../../lib/documents/documentDownload.service";
+import { prepareDocumentStorage } from "../../lib/documents/documentUpload.service";
+import { prisma } from "../../lib/prisma";
+import { documentStorageService } from "../../lib/storage/storage.service";
+import { AppError } from "../../utils/AppError";
 import {
   assertValidUploadFile,
   sanitizeOriginalFileName,
@@ -86,12 +89,34 @@ const documentInclude = {
   },
 } satisfies Prisma.DocumentInclude;
 
+type DocumentWithRelations = Prisma.DocumentGetPayload<{
+  include: typeof documentInclude;
+}>;
+
 type DocumentAccessRecord = {
   uploadedById: string | null;
   source: DocumentSource;
   caseProfile: {
     assignedToId: string | null;
   } | null;
+};
+
+const toSafeDocumentResponse = (document: DocumentWithRelations) => {
+  const {
+    fileUrl: _fileUrl,
+    storageKey: _storageKey,
+    storageBucket: _storageBucket,
+    storageRegion: _storageRegion,
+    checksumSha256: _checksumSha256,
+    ocrText: _ocrText,
+    ...safeDocument
+  } = document;
+  const availability = getDocumentDownloadAvailability(document);
+
+  return {
+    ...safeDocument,
+    ...availability,
+  };
 };
 
 const assertCrmActor = (actor: SafeUser): void => {
@@ -183,6 +208,9 @@ export const listDocuments = async (
     limit,
     search,
     fileType,
+    storageProvider,
+    scanStatus,
+    ocrStatus,
     customerId,
     caseProfileId,
     uploadedById,
@@ -251,6 +279,9 @@ export const listDocuments = async (
   const where: Prisma.DocumentWhereInput = {
     organizationId: actor.organizationId,
     ...(fileType && { fileType }),
+    ...(storageProvider && { storageProvider }),
+    ...(scanStatus && { scanStatus }),
+    ...(ocrStatus && { ocrStatus }),
     ...(customerId && { customerId }),
     ...(caseProfileId && { caseProfileId }),
     ...(uploadedById && { uploadedById }),
@@ -268,7 +299,7 @@ export const listDocuments = async (
   ]);
 
   return {
-    items,
+    items: items.map(toSafeDocumentResponse),
     meta: createPaginationMeta(page, limit, total),
   };
 };
@@ -291,7 +322,7 @@ export const findDocumentById = async (
 
   assertDocumentReadAccess(document, actor);
 
-  return document;
+  return toSafeDocumentResponse(document);
 };
 
 export const uploadDocument = async (
@@ -374,38 +405,53 @@ export const uploadDocument = async (
     );
   }
 
-  const storedFileName = buildStoredFileName(file.originalName);
-  const fileUrl = buildLocalFileUrl(storedFileName);
+  const documentId = randomUUID();
+  const fileName = sanitizeOriginalFileName(file.originalName);
+  const storedDocument = await prepareDocumentStorage({
+    organizationId: actor.organizationId,
+    documentId,
+    fileName,
+    mimeType: file.mimeType,
+    size: file.size,
+    buffer: file.buffer,
+  });
 
   try {
-    await saveLocalFile(storedFileName, file.buffer);
-  } catch {
-    await deleteLocalFile(fileUrl).catch(() => false);
-    throw new AppError(
-      "The document file could not be stored.",
-      HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    );
-  }
-
-  try {
-    return await prisma.document.create({
+    const document = await prisma.document.create({
       data: {
+        id: documentId,
         organizationId: actor.organizationId,
         customerId,
         caseProfileId: input.caseProfileId,
         uploadedById: actor.id,
-        fileName: sanitizeOriginalFileName(file.originalName),
-        fileUrl,
+        fileName,
+        fileUrl: storedDocument.fileUrl,
         fileType: input.fileType,
         source: DocumentSource.INTERNAL,
         visibility: DocumentVisibility.INTERNAL_ONLY,
+        storageProvider: storedDocument.storageProvider,
+        storageKey: storedDocument.storageKey,
+        storageBucket: storedDocument.storageBucket,
+        storageRegion: storedDocument.storageRegion,
+        checksumSha256: storedDocument.checksumSha256,
+        scanStatus: storedDocument.scanStatus,
+        scanMessage: storedDocument.scanMessage,
+        scannedAt: storedDocument.scannedAt,
+        ocrStatus: storedDocument.ocrStatus,
+        ocrText: storedDocument.ocrText,
+        ocrTextPreview: storedDocument.ocrTextPreview,
+        ocrProcessedAt: storedDocument.ocrProcessedAt,
         mimeType: file.mimeType,
         size: file.size,
       },
       include: documentInclude,
     });
+
+    return toSafeDocumentResponse(document);
   } catch (error) {
-    await deleteLocalFile(fileUrl).catch(() => false);
+    await documentStorageService
+      .deleteObject({ objectKey: storedDocument.storageKey })
+      .catch(() => false);
     return throwDocumentPersistenceError(error);
   }
 };
@@ -441,15 +487,19 @@ export const deleteDocument = async (
       },
     );
 
+    const objectKey = getDocumentObjectKey(deletedDocument);
+
     try {
-      await deleteLocalFile(deletedDocument.fileUrl);
+      if (objectKey) {
+        await documentStorageService.deleteObject({ objectKey });
+      }
     } catch {
       console.warn(
-        "Document metadata was deleted, but its local file could not be removed.",
+        "Document metadata was deleted, but its stored object could not be removed.",
       );
     }
 
-    return deletedDocument;
+    return toSafeDocumentResponse(deletedDocument);
   } catch (error) {
     return throwDocumentPersistenceError(error);
   }
@@ -458,33 +508,27 @@ export const deleteDocument = async (
 export const getDocumentDownload = async (
   id: string,
   actor: SafeUser,
+  downloadActor: Omit<DocumentDownloadActor, "actorType" | "actorUserId">,
 ): Promise<DocumentDownload> => {
-  const document = await findDocumentById(id, actor);
-  const localPath = getLocalFilePathFromUrl(document.fileUrl);
-  let fileExists = false;
+  const document = await prisma.document.findFirst({
+    where: {
+      id,
+      organizationId: actor.organizationId,
+    },
+    include: documentInclude,
+  });
 
-  if (localPath) {
-    try {
-      fileExists = await localFileExists(localPath);
-    } catch {
-      throw new AppError(
-        "The document file could not be accessed.",
-        HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      );
-    }
+  if (!document) {
+    throw new AppError("Document not found.", HTTP_STATUS.NOT_FOUND);
   }
 
-  if (!localPath || !fileExists) {
-    throw new AppError(
-      "The document file was not found.",
-      HTTP_STATUS.NOT_FOUND,
-    );
-  }
+  assertDocumentReadAccess(document, actor);
 
-  return {
-    fileName: document.fileName,
-    localPath,
-  };
+  return createDocumentDownloadHandle(document, {
+    ...downloadActor,
+    actorType: DocumentDownloadActorType.INTERNAL_USER,
+    actorUserId: actor.id,
+  });
 };
 
 export const setDocumentPortalVisibility = async (
@@ -546,7 +590,7 @@ export const setDocumentPortalVisibility = async (
         },
       });
 
-      return updatedDocument;
+      return toSafeDocumentResponse(updatedDocument);
     });
   } catch (error) {
     return throwDocumentPersistenceError(error);

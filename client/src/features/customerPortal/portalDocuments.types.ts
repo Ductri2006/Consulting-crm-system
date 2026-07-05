@@ -19,6 +19,25 @@ export const portalDocumentVisibilities = [
 export type PortalDocumentVisibility =
   (typeof portalDocumentVisibilities)[number]
 
+export const portalDocumentScanStatuses = [
+  'PENDING',
+  'CLEAN',
+  'INFECTED',
+  'FAILED',
+  'SKIPPED',
+] as const
+
+export type PortalDocumentScanStatus =
+  (typeof portalDocumentScanStatuses)[number]
+
+export type PortalDocumentDownloadUnavailableReason =
+  | 'SCAN_PENDING'
+  | 'SCAN_FAILED'
+  | 'SCAN_INFECTED'
+  | 'FILE_UNAVAILABLE'
+  | 'STORAGE_UNAVAILABLE'
+  | 'DOWNLOAD_BLOCKED'
+
 export interface PortalDocumentCaseSummary {
   id: string
   caseCode: string
@@ -30,14 +49,15 @@ export interface PortalDocumentRecord {
   id: string
   fileName: string
   fileType: PortalDocumentType
-  mimeType: string | null
   size: number | null
   source: PortalDocumentSource
   visibility: PortalDocumentVisibility
+  scanStatus: PortalDocumentScanStatus
   caseProfile: PortalDocumentCaseSummary | null
   createdAt: string
   uploadedByLabel: string
   downloadAvailable: boolean
+  downloadUnavailableReason: PortalDocumentDownloadUnavailableReason | null
 }
 
 export interface PortalDocumentListResponse {

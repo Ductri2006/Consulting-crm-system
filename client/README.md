@@ -134,8 +134,9 @@ workspace-specific public intake forms, custom domains, or logo upload.
 Admin and Manager users can manage basic portal access from `/admin/customers`
 for an existing customer: create, reset password, deactivate, and activate.
 Document management adds search, filters, multipart upload, protected download,
-detail review, role-aware deletion, source/visibility badges, and an
-Admin/Manager customer-visible toggle for portal access.
+detail review, role-aware deletion, source/visibility badges, storage/scan/OCR
+status badges, download counts, OCR previews, and an Admin/Manager
+customer-visible toggle for portal access.
 Reports use the dashboard/reporting APIs for operational insight, with staff
 performance available to administrators and managers only. Admin and public page
 routes are lazy-loaded to keep the initial bundle smaller.
@@ -163,5 +164,7 @@ summary, recent cases, and next appointment data. Portal cases are read-only and
 use the portal API client only. Portal documents also use the portal API client
 only, including FormData upload and blob download helpers that attach the
 portal token rather than the internal admin token. Portal document responses do
-not expose `fileUrl`, file paths, or internal-only documents. Billing, messages,
-and customer self-registration are not part of this step.
+not expose `fileUrl`, storage keys, bucket names, file paths, or internal-only
+documents. The portal UI shows safe scan status and disables downloads when
+the backend marks a document unsafe or unavailable. Billing, messages, and
+customer self-registration are not part of this step.

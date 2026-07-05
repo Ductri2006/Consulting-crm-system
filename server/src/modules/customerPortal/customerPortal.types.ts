@@ -4,6 +4,7 @@ import type {
   CaseStatus,
   Customer,
   CustomerPortalAccount,
+  DocumentScanStatus,
   DocumentSource,
   DocumentType,
   DocumentVisibility,
@@ -157,10 +158,10 @@ export interface SafePortalDocumentMetadata {
   id: string;
   fileName: string;
   fileType: DocumentType;
-  mimeType: string | null;
   size: number | null;
   source: DocumentSource;
   visibility: DocumentVisibility;
+  scanStatus: DocumentScanStatus;
   caseProfile: {
     id: string;
     caseCode: string;
@@ -170,6 +171,7 @@ export interface SafePortalDocumentMetadata {
   createdAt: Date;
   uploadedByLabel: string;
   downloadAvailable: boolean;
+  downloadUnavailableReason: string | null;
 }
 
 export interface SafePortalTaskSummary {
@@ -220,7 +222,10 @@ export interface PortalDocumentListResult {
 
 export interface PortalDocumentDownload {
   fileName: string;
-  localPath: string;
+  contentType: string | null;
+  contentLength: number | null;
+  stream: NodeJS.ReadableStream;
+  finalizeSuccess: () => Promise<void>;
 }
 
 export interface PortalDocumentUploadFile {

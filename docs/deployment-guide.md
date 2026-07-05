@@ -198,15 +198,15 @@ sessions to log in again.
 
 ## File Uploads
 
-The current document module stores files in `UPLOAD_DIR` on local disk. This is
-acceptable for local development and limited single-instance testing, but it is
-not safe for ephemeral or multi-instance production hosting.
+The document module uses a configurable storage provider. `local` stores files
+under `UPLOAD_DIR` for development and single-instance demos; `s3` stores files
+in a private S3-compatible bucket for deployed environments.
 
 Before handling real production documents:
 
-- Use private persistent object storage.
-- Keep downloads authenticated or short-lived.
-- Add malware scanning.
+- Configure private persistent object storage and keep the bucket non-public.
+- Keep downloads authenticated through backend routes or short-lived storage access.
+- Configure real malware scanning infrastructure.
 - Add retention and deletion policies.
 
 ## Health Check

@@ -321,7 +321,7 @@ Security:
 | Frontend still calls localhost | Vercel env var is missing or frontend was not redeployed after changing it | Set `VITE_API_BASE_URL=https://<render-service-name>.onrender.com/api` and redeploy |
 | First API call is slow | Render free instance or Neon compute cold start | Wait, refresh once, review Render/Neon logs, or use a non-sleeping backend/database plan |
 | Refreshing `/admin/reports` shows 404 | Vercel SPA rewrite is missing or not picked up | Confirm `client/vercel.json` is deployed and Root Directory is `client` |
-| Document upload works then disappears later | Render local disk is ephemeral or service was redeployed | Use uploads only for tiny smoke tests; use persistent private object storage before real documents |
+| Document upload works then disappears later | Render local disk is ephemeral, the service was redeployed, or `DOCUMENT_STORAGE_PROVIDER` is still `local` | Use local uploads only for tiny smoke tests; configure the private S3-compatible provider before real documents |
 
 ## Rollback
 

@@ -269,6 +269,35 @@ function DocumentVisibilityBadge({
   )
 }
 
+function SecurityStatusBadge({
+  namespace,
+  value,
+}: {
+  namespace: 'storageProvider' | 'scanStatus' | 'ocrStatus'
+  value: string
+}) {
+  const { t } = useTranslation()
+  const tone =
+    value === 'CLEAN' || value === 'COMPLETED'
+      ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+      : value === 'INFECTED' || value === 'FAILED'
+        ? 'bg-rose-50 text-rose-700 ring-rose-600/20'
+        : value === 'PENDING'
+          ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
+          : 'bg-slate-100 text-slate-700 ring-slate-500/20'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+        tone,
+      )}
+    >
+      {getStatusLabel(t, namespace, value)}
+    </span>
+  )
+}
+
 const getDocumentUploaderLabel = (
   document: DocumentRecord,
   fallback: string,
@@ -283,6 +312,18 @@ const getDocumentUploaderLabel = (
 
   return document.uploadedBy?.fullName ?? fallback
 }
+
+const getDownloadUnavailableLabel = (
+  document: DocumentRecord,
+  t: Parameters<typeof getStatusLabel>[0],
+): string =>
+  document.downloadUnavailableReason
+    ? getStatusLabel(
+        t,
+        'downloadUnavailableReason',
+        document.downloadUnavailableReason,
+      )
+    : t('admin.documents.downloadUnavailable')
 
 function UploadDocumentForm({
   error,
@@ -478,14 +519,31 @@ function DocumentDetailView({
             <FileText className="h-4 w-4 text-blue-600" aria-hidden="true" />
             <span className="truncate">{document.fileName}</span>
           </p>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap gap-2">
             <DocumentTypeBadge fileType={document.fileType} />
+            <SecurityStatusBadge
+              namespace="storageProvider"
+              value={document.storageProvider}
+            />
+            <SecurityStatusBadge
+              namespace="scanStatus"
+              value={document.scanStatus}
+            />
+            <SecurityStatusBadge
+              namespace="ocrStatus"
+              value={document.ocrStatus}
+            />
           </div>
         </div>
         <button
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={isDownloading}
+          disabled={isDownloading || !document.downloadAvailable}
           onClick={() => onDownload(document)}
+          title={
+            document.downloadAvailable
+              ? t('admin.documents.download')
+              : getDownloadUnavailableLabel(document, t)
+          }
           type="button"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
@@ -507,9 +565,39 @@ function DocumentDetailView({
           value={t(`admin.documents.visibility.${document.visibility}`)}
         />
         <DetailItem
+          label={t('admin.documents.fields.storageProvider')}
+          value={getStatusLabel(t, 'storageProvider', document.storageProvider)}
+        />
+        <DetailItem
+          label={t('admin.documents.fields.scanStatus')}
+          value={getStatusLabel(t, 'scanStatus', document.scanStatus)}
+        />
+        <DetailItem
+          label={t('admin.documents.fields.ocrStatus')}
+          value={getStatusLabel(t, 'ocrStatus', document.ocrStatus)}
+        />
+        <DetailItem
           label={t('admin.documents.fields.size')}
           value={formatFileSize(document.size)}
         />
+        <DetailItem
+          label={t('admin.documents.fields.downloadCount')}
+          value={String(document.downloadCount)}
+        />
+        <DetailItem
+          label={t('admin.documents.fields.lastDownloadedAt')}
+          value={
+            document.lastDownloadedAt
+              ? formatDateTime(document.lastDownloadedAt)
+              : t('common.notProvided')
+          }
+        />
+        {document.scanMessage ? (
+          <DetailItem
+            label={t('admin.documents.fields.scanMessage')}
+            value={document.scanMessage}
+          />
+        ) : null}
         <DetailItem
           label={t('navigation.customers')}
           value={document.customer?.fullName ?? t('admin.documents.noCustomer')}
@@ -551,6 +639,16 @@ function DocumentDetailView({
           />
         ) : null}
       </div>
+      {document.ocrTextPreview ? (
+        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {t('admin.documents.fields.ocrTextPreview')}
+          </p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+            {document.ocrTextPreview}
+          </p>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -750,6 +848,14 @@ export function AdminDocumentsPage() {
   }
 
   const handleDownload = async (document: DocumentRecord) => {
+    if (!document.downloadAvailable) {
+      setFeedback({
+        type: 'error',
+        message: getDownloadUnavailableLabel(document, t),
+      })
+      return
+    }
+
     setDownloadingId(document.id)
     setFeedback(null)
 
@@ -765,6 +871,7 @@ export function AdminDocumentsPage() {
       })
     } finally {
       setDownloadingId(null)
+      void refreshAfterMutation()
     }
   }
 
@@ -907,6 +1014,26 @@ export function AdminDocumentsPage() {
       ),
     },
     {
+      key: 'security',
+      header: t('admin.documents.fields.scanStatus'),
+      render: (document) => (
+        <div className="flex flex-wrap gap-1.5">
+          <SecurityStatusBadge
+            namespace="storageProvider"
+            value={document.storageProvider}
+          />
+          <SecurityStatusBadge
+            namespace="scanStatus"
+            value={document.scanStatus}
+          />
+          <SecurityStatusBadge
+            namespace="ocrStatus"
+            value={document.ocrStatus}
+          />
+        </div>
+      ),
+    },
+    {
       key: 'customer',
       header: t('navigation.customers'),
       render: (document) =>
@@ -945,6 +1072,22 @@ export function AdminDocumentsPage() {
       render: (document) => formatDateTime(document.createdAt),
     },
     {
+      key: 'downloads',
+      header: t('admin.documents.fields.downloadCount'),
+      render: (document) => (
+        <div>
+          <p className="font-semibold text-slate-800">
+            {document.downloadCount}
+          </p>
+          <p className="text-xs text-slate-400">
+            {document.lastDownloadedAt
+              ? formatDateTime(document.lastDownloadedAt)
+              : t('common.notProvided')}
+          </p>
+        </div>
+      ),
+    },
+    {
       key: 'actions',
       header: t('admin.customers.actions.label'),
       headerClassName: 'text-right',
@@ -967,9 +1110,15 @@ export function AdminDocumentsPage() {
               fileName: document.fileName,
             })}
             className="rounded-lg p-2 text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={downloadingId === document.id}
+            disabled={
+              downloadingId === document.id || !document.downloadAvailable
+            }
             onClick={() => void handleDownload(document)}
-            title={t('admin.documents.download')}
+            title={
+              document.downloadAvailable
+                ? t('admin.documents.download')
+                : getDownloadUnavailableLabel(document, t)
+            }
             type="button"
           >
             <Download className="h-4 w-4" aria-hidden="true" />

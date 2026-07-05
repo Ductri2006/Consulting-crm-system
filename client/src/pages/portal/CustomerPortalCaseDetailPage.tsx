@@ -19,6 +19,7 @@ import {
   downloadPortalDocument,
   getPortalCase,
   type PortalCaseDetail,
+  type PortalDocumentMetadata,
 } from '../../features/customerPortal'
 import {
   PortalPriorityBadge,
@@ -34,6 +35,18 @@ import { getStatusLabel } from '../../i18n/statusLabels'
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
+
+const getDownloadUnavailableLabel = (
+  document: PortalDocumentMetadata,
+  t: Parameters<typeof getStatusLabel>[0],
+): string =>
+  document.downloadUnavailableReason
+    ? getStatusLabel(
+        t,
+        'downloadUnavailableReason',
+        document.downloadUnavailableReason,
+      )
+    : t('portal.documents.downloadUnavailable')
 
 function DetailField({
   label,
@@ -111,15 +124,18 @@ export function CustomerPortalCaseDetailPage() {
     void loadCase()
   }, [loadCase])
 
-  const handleDownloadDocument = async (
-    documentId: string,
-    fileName: string,
-  ) => {
-    setDownloadingDocumentId(documentId)
+  const handleDownloadDocument = async (document: PortalDocumentMetadata) => {
+    if (!document.downloadAvailable) {
+      setLoadError(getDownloadUnavailableLabel(document, t))
+      return
+    }
+
+    setDownloadingDocumentId(document.id)
     setLoadError(null)
 
     try {
-      await downloadPortalDocument(documentId, fileName)
+      await downloadPortalDocument(document.id, document.fileName)
+      await loadCase()
     } catch (error) {
       setLoadError(
         getErrorMessage(
@@ -393,23 +409,33 @@ export function CustomerPortalCaseDetailPage() {
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-500">
                       {getStatusLabel(t, 'document', document.fileType)} -{' '}
-                      {document.mimeType ?? t('portal.caseDetail.unknownType')}{' '}
-                      - {formatPortalFileSize(document.size)}
+                      {formatPortalFileSize(document.size)}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      {getStatusLabel(t, 'scanStatus', document.scanStatus)}
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-400">
                       {t('portal.caseDetail.added', {
                         date: formatPortalDateTime(document.createdAt),
                       })}
                     </p>
+                    {!document.downloadAvailable ? (
+                      <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                        {getDownloadUnavailableLabel(document, t)}
+                      </p>
+                    ) : null}
                   </div>
                   <button
                     className="inline-flex min-h-9 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={downloadingDocumentId === document.id}
-                    onClick={() =>
-                      void handleDownloadDocument(
-                        document.id,
-                        document.fileName,
-                      )
+                    disabled={
+                      downloadingDocumentId === document.id ||
+                      !document.downloadAvailable
+                    }
+                    onClick={() => void handleDownloadDocument(document)}
+                    title={
+                      document.downloadAvailable
+                        ? t('portal.documents.download')
+                        : getDownloadUnavailableLabel(document, t)
                     }
                     type="button"
                   >

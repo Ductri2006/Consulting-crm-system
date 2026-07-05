@@ -110,10 +110,10 @@ export interface PortalDocumentMetadata {
   id: string
   fileName: string
   fileType: PortalDocumentType
-  mimeType: string | null
   size: number | null
   source: 'INTERNAL' | 'CUSTOMER_PORTAL'
   visibility: 'INTERNAL_ONLY' | 'CUSTOMER_VISIBLE'
+  scanStatus: 'PENDING' | 'CLEAN' | 'INFECTED' | 'FAILED' | 'SKIPPED'
   caseProfile: {
     id: string
     caseCode: string
@@ -123,6 +123,14 @@ export interface PortalDocumentMetadata {
   createdAt: string
   uploadedByLabel: string
   downloadAvailable: boolean
+  downloadUnavailableReason:
+    | 'SCAN_PENDING'
+    | 'SCAN_FAILED'
+    | 'SCAN_INFECTED'
+    | 'FILE_UNAVAILABLE'
+    | 'STORAGE_UNAVAILABLE'
+    | 'DOWNLOAD_BLOCKED'
+    | null
 }
 
 export interface PortalTaskSummary {

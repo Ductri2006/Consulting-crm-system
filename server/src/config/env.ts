@@ -22,6 +22,22 @@ const isClientUrlList = (value: string): boolean =>
     .map((origin) => origin.trim())
     .every((origin) => origin.length > 0 && isHttpOrigin(origin));
 
+const optionalTrimmedString = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => {
+    if (!value) {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  });
+
+const booleanString = (defaultValue: "true" | "false") =>
+  z.enum(["true", "false"]).default(defaultValue).transform((value) => value === "true");
+
 const envSchema = z.object({
   PORT: z.coerce
     .number()
@@ -70,6 +86,38 @@ const envSchema = z.object({
     .min(1, "MAX_FILE_SIZE_MB must be between 1 and 50.")
     .max(50, "MAX_FILE_SIZE_MB must be between 1 and 50.")
     .default(10),
+  DOCUMENT_STORAGE_PROVIDER: z.enum(["local", "s3"]).default("local"),
+  DOCUMENT_STORAGE_BUCKET: optionalTrimmedString,
+  DOCUMENT_STORAGE_REGION: optionalTrimmedString,
+  DOCUMENT_STORAGE_ENDPOINT: optionalTrimmedString,
+  DOCUMENT_STORAGE_ACCESS_KEY_ID: optionalTrimmedString,
+  DOCUMENT_STORAGE_SECRET_ACCESS_KEY: optionalTrimmedString,
+  DOCUMENT_STORAGE_FORCE_PATH_STYLE: booleanString("true"),
+  DOCUMENT_SIGNED_URL_EXPIRES_SECONDS: z.coerce
+    .number()
+    .int("DOCUMENT_SIGNED_URL_EXPIRES_SECONDS must be an integer.")
+    .min(60, "DOCUMENT_SIGNED_URL_EXPIRES_SECONDS must be at least 60 seconds.")
+    .max(3600, "DOCUMENT_SIGNED_URL_EXPIRES_SECONDS must be at most 3600 seconds.")
+    .default(300),
+  DOCUMENT_MALWARE_SCANNER: z
+    .enum(["disabled", "mock", "clamav"])
+    .default("disabled"),
+  DOCUMENT_ALLOW_DOWNLOAD_WHEN_SCAN_SKIPPED: booleanString("true"),
+  DOCUMENT_ALLOW_DOWNLOAD_WHEN_SCAN_FAILED: booleanString("false"),
+  CLAMAV_HOST: optionalTrimmedString,
+  CLAMAV_PORT: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().min(1).max(65535).optional(),
+  ),
+  DOCUMENT_OCR_PROVIDER: z
+    .enum(["disabled", "mock", "tesseract"])
+    .default("disabled"),
+  DOCUMENT_OCR_MAX_FILE_SIZE_MB: z.coerce
+    .number()
+    .min(1, "DOCUMENT_OCR_MAX_FILE_SIZE_MB must be between 1 and 50.")
+    .max(50, "DOCUMENT_OCR_MAX_FILE_SIZE_MB must be between 1 and 50.")
+    .default(10),
+  DOCUMENT_OCR_ENABLED_MIME_TYPES: optionalTrimmedString,
   DEFAULT_ORGANIZATION_SLUG: z
     .string()
     .trim()
@@ -87,30 +135,29 @@ const envSchema = z.object({
     .trim()
     .min(1, "EMAIL_FROM cannot be empty.")
     .default("Advisora CRM <no-reply@advisora.test>"),
-  EMAIL_REPLY_TO: z
-    .string()
-    .trim()
-    .optional()
-    .transform((value) => {
-      if (!value) {
-        return undefined;
-      }
+  EMAIL_REPLY_TO: optionalTrimmedString,
+  RESEND_API_KEY: optionalTrimmedString,
+}).superRefine((value, context) => {
+  if (value.DOCUMENT_STORAGE_PROVIDER !== "s3") {
+    return;
+  }
 
-      const trimmed = value.trim();
-      return trimmed || undefined;
-    }),
-  RESEND_API_KEY: z
-    .string()
-    .trim()
-    .optional()
-    .transform((value) => {
-      if (!value) {
-        return undefined;
-      }
+  const requiredS3Fields: Array<keyof typeof value> = [
+    "DOCUMENT_STORAGE_BUCKET",
+    "DOCUMENT_STORAGE_REGION",
+    "DOCUMENT_STORAGE_ACCESS_KEY_ID",
+    "DOCUMENT_STORAGE_SECRET_ACCESS_KEY",
+  ];
 
-      const trimmed = value.trim();
-      return trimmed || undefined;
-    }),
+  for (const field of requiredS3Fields) {
+    if (!value[field]) {
+      context.addIssue({
+        code: "custom",
+        path: [field],
+        message: `${field} is required when DOCUMENT_STORAGE_PROVIDER=s3.`,
+      });
+    }
+  }
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

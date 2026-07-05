@@ -10,10 +10,9 @@ protected internal CRM dashboard for managing customers, consultation requests,
 case profiles, appointments, tasks, documents, users, dashboards, and reports.
 The backend now includes an Organization model used as the internal Workspace
 tenant boundary; the current staging/demo path uses a single default workspace.
-Step 29 adds Customer Portal Documents: portal customers can list, upload, and
-download their allowed documents through portal-authenticated routes, while
-internal documents stay hidden until an Admin or Manager marks them customer
-visible.
+Step 29 adds Customer Portal Documents. Step 29.5 hardens document storage with
+a local/S3-compatible provider abstraction, protected streaming downloads,
+malware-scan and OCR provider abstractions, and per-download audit logging.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -105,8 +104,9 @@ This project addresses that need with a centralized platform that connects publi
 - Upload customer documents
 - Attach documents to customers and case profiles
 - Store digital record metadata
-- Manage document access permissions
-- Support OCR for identity documents in a future version
+- Manage document access permissions, scan/OCR status, and download audit data
+- Use local storage for development or private S3-compatible object storage
+  when configured
 
 ### Dashboard and Reports
 
@@ -240,7 +240,7 @@ Each case profile stores:
 - Frontend: static hosting for the Vite build output
 - Backend: Node-compatible runtime for the Express API
 - Database: Neon PostgreSQL or another managed PostgreSQL provider
-- File storage: private persistent object storage in a later production phase
+- File storage: local provider by default, with configurable private S3-compatible object storage
 
 ## Project Structure
 
@@ -543,9 +543,8 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 
 - Customer portal self-service profile flows
 - Email and SMS notifications
-- Private cloud object storage for documents
-- Production malware scanning for uploaded files
-- OCR-assisted document processing
+- Production operation of private S3-compatible storage, malware scanning, and
+  OCR services
 - Advanced analytics and configurable reports
 - Multi-branch support and deeper localization coverage
 - Backend API response and email template localization
@@ -553,7 +552,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 - Export to Excel and PDF
 - Automated testing and continuous delivery
 - Accessibility, security, and performance audits
-- Persistent object storage for documents
+- Production provisioning of private S3-compatible document storage
 - HttpOnly cookie authentication
 - Login and public-form rate limiting
 - Automated end-to-end tests
@@ -576,7 +575,7 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
 | Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
 | Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
 | Production deployment | Not deployed yet |
-| Document storage | Local development storage only with authenticated internal/portal downloads; persistent private object storage remains future work |
+| Document storage | Local provider remains the default; S3-compatible private object storage, protected streaming downloads, scan/OCR abstractions, and download audits are implemented/configurable |
 | Auth hardening | JWT Bearer flow implemented; HttpOnly cookie session strategy remains future work |
 
 ## Known Limitations
@@ -604,9 +603,9 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
   flows, status labels, and portal case tracking. Backend API response
   localization, email template localization, and translation of user-generated
   database content remain future work.
-- No customer self-registration, billing, OCR, production malware scanning,
-  cloud object storage, report exports, realtime updates, production-grade rate
-  limiting, or centralized observability yet.
+- No customer self-registration, billing, live OCR/scanner infrastructure,
+  configured production object-storage credentials, report exports, realtime
+  updates, production-grade rate limiting, or centralized observability yet.
 
 ## Learning Goals
 
@@ -656,11 +655,12 @@ This project is designed to practice:
 - [x] Customer portal case tracking
 - [x] Bilingual English/Vietnamese UI
 - [x] Customer portal documents
+- [x] Production document storage and security hardening
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Step 29 complete - Customer Portal Documents
+**Current phase:** Step 29.5 complete - Production Document Storage & Security Hardening
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -752,6 +752,11 @@ Existing internal documents default to `INTERNAL_ONLY`; Admins and Managers can
 toggle `CUSTOMER_VISIBLE` from admin document management. Portal document
 responses never expose `fileUrl`, raw storage paths, or internal-only documents,
 and every portal document query is scoped by `organizationId`, `customerId`, and
-case ownership when a document is case-linked. Files still use local portfolio
-storage; private object storage, OCR, and production malware scanning remain
-future hardening.
+case ownership when a document is case-linked.
+Step 29.5 adds a document storage provider layer with local default and
+S3-compatible private object storage support, protected API streaming for
+downloads, malware scanner and OCR abstractions with disabled/mock providers,
+scan-based download blocking, OCR previews for admin review, and
+`DocumentDownloadAudit` records plus `downloadCount`/`lastDownloadedAt`.
+Portal responses still never expose `fileUrl`, `storageKey`, bucket, object key,
+or local paths.

@@ -48,6 +48,21 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `JWT_EXPIRES_IN` | Yes | Access-token lifetime, for example `7d` |
 | `UPLOAD_DIR` | No | Local-development upload directory, defaults to `uploads` |
 | `MAX_FILE_SIZE_MB` | No | Per-file upload limit from 1 to 50 MB, defaults to `10` |
+| `DOCUMENT_STORAGE_PROVIDER` | No | `local` by default; set `s3` for private S3-compatible storage |
+| `DOCUMENT_STORAGE_BUCKET` | S3 only | Private S3 bucket name |
+| `DOCUMENT_STORAGE_REGION` | S3 only | S3 region |
+| `DOCUMENT_STORAGE_ENDPOINT` | No | Optional S3-compatible endpoint |
+| `DOCUMENT_STORAGE_ACCESS_KEY_ID` | S3 only | S3 access key id; never commit real values |
+| `DOCUMENT_STORAGE_SECRET_ACCESS_KEY` | S3 only | S3 secret access key; never commit real values |
+| `DOCUMENT_STORAGE_FORCE_PATH_STYLE` | No | `true` by default for S3-compatible providers |
+| `DOCUMENT_SIGNED_URL_EXPIRES_SECONDS` | No | Short-lived signed URL TTL, defaults to `300` |
+| `DOCUMENT_MALWARE_SCANNER` | No | `disabled`, `mock`, or `clamav`; defaults to `disabled` |
+| `DOCUMENT_ALLOW_DOWNLOAD_WHEN_SCAN_SKIPPED` | No | Defaults to `true` for local/demo compatibility |
+| `DOCUMENT_ALLOW_DOWNLOAD_WHEN_SCAN_FAILED` | No | Defaults to `false` |
+| `CLAMAV_HOST`, `CLAMAV_PORT` | ClamAV only | Optional ClamAV connection settings |
+| `DOCUMENT_OCR_PROVIDER` | No | `disabled`, `mock`, or `tesseract`; defaults to `disabled` |
+| `DOCUMENT_OCR_MAX_FILE_SIZE_MB` | No | OCR size limit, defaults to `10` |
+| `DOCUMENT_OCR_ENABLED_MIME_TYPES` | No | Optional comma-separated OCR MIME allowlist |
 | `DEFAULT_ORGANIZATION_SLUG` | No | Workspace slug used by public consultation requests, defaults to `advisora-demo` |
 | `WORKSPACE_SIGNUP_ENABLED` | No | Enables public `POST /api/workspaces/signup` only when set to `true`; defaults to `false` |
 | `APP_NAME` | No | Name used in invitation email templates; defaults to `Advisora CRM` |
@@ -67,6 +82,22 @@ JWT_SECRET="<strong-private-secret-at-least-32-characters>"
 JWT_EXPIRES_IN="7d"
 UPLOAD_DIR="uploads"
 MAX_FILE_SIZE_MB=10
+DOCUMENT_STORAGE_PROVIDER=local
+DOCUMENT_STORAGE_BUCKET=
+DOCUMENT_STORAGE_REGION=
+DOCUMENT_STORAGE_ENDPOINT=
+DOCUMENT_STORAGE_ACCESS_KEY_ID=
+DOCUMENT_STORAGE_SECRET_ACCESS_KEY=
+DOCUMENT_STORAGE_FORCE_PATH_STYLE=true
+DOCUMENT_SIGNED_URL_EXPIRES_SECONDS=300
+DOCUMENT_MALWARE_SCANNER=disabled
+DOCUMENT_ALLOW_DOWNLOAD_WHEN_SCAN_SKIPPED=true
+DOCUMENT_ALLOW_DOWNLOAD_WHEN_SCAN_FAILED=false
+CLAMAV_HOST=
+CLAMAV_PORT=
+DOCUMENT_OCR_PROVIDER=disabled
+DOCUMENT_OCR_MAX_FILE_SIZE_MB=10
+DOCUMENT_OCR_ENABLED_MIME_TYPES=
 DEFAULT_ORGANIZATION_SLUG="advisora-demo"
 WORKSPACE_SIGNUP_ENABLED=false
 APP_NAME="Advisora CRM"
@@ -820,26 +851,45 @@ scope and visibility predicates before resolving the local file. Unauthorized,
 cross-customer, cross-workspace, hidden, or missing files return a generic
 `404`; the response streams the file without exposing the storage path.
 
-#### Local file storage and security
+#### Document storage and security
 
-Development uploads are stored under `server/uploads` by default. The upload
-directory and maximum file size are configured with `UPLOAD_DIR` and
-`MAX_FILE_SIZE_MB`. Relative `UPLOAD_DIR` values are resolved from the server
-process working directory. Uploaded files are ignored by Git and must not be
-committed.
+`DOCUMENT_STORAGE_PROVIDER=local` is the default. Local objects are stored under
+`UPLOAD_DIR`, which keeps development and portfolio demos working without cloud
+credentials. `DOCUMENT_STORAGE_PROVIDER=s3` enables private S3-compatible object
+storage using `DOCUMENT_STORAGE_BUCKET`, `DOCUMENT_STORAGE_REGION`, optional
+`DOCUMENT_STORAGE_ENDPOINT`, and access keys supplied only through environment
+variables. Buckets must remain private; the API does not create public document
+links.
 
-The upload pipeline checks the extension, declared MIME type, size, and basic
-magic bytes for supported PDFs, images, Word, and Excel files. It rejects
-executable and script formats, generates a randomized physical filename, and
-does not log file contents or expose local absolute paths. If metadata
-validation or database persistence fails, the already-written local file is
-removed.
+All new object keys are server-generated in the form
+`documents/{organizationId}/{documentId}/{uuid}-{safeFilename}`. Legacy
+`fileUrl` remains in the database for backward compatibility, but admin and
+portal JSON responses do not expose raw storage keys, bucket names, object
+paths, or local filesystem paths.
 
-Local disk is intended for development only. Production deployments should use
-private persistent object storage, together with authenticated or short-lived
-signed access. Local upload folders are not safe for ephemeral or multi-instance
-hosting. OCR, cloud storage integration, and production-grade malware scanning
-are future hardening.
+The upload pipeline checks extension, declared MIME type, size, and basic magic
+bytes for supported PDFs, images, Word, and Excel files. It rejects executable
+and script formats, stores the object through the configured provider, records a
+SHA-256 checksum, and persists scan/OCR metadata.
+
+`DOCUMENT_MALWARE_SCANNER` supports `disabled`, `mock`, and `clamav`. Disabled
+mode records `SKIPPED` and is allowed by default for local/demo compatibility.
+Mock mode marks files clean unless their names include test markers such as
+`infected` or `scan-failed`. The ClamAV provider is a fail-safe interface unless
+external ClamAV infrastructure is configured. Portal and internal downloads are
+blocked for `INFECTED` and, by default, `FAILED` scan results.
+
+`DOCUMENT_OCR_PROVIDER` supports `disabled`, `mock`, and `tesseract`. OCR is
+optional and does not block upload success. The current build includes disabled
+and mock behavior; real OCR requires infrastructure configuration. Admin
+responses include OCR status and preview text when available; portal responses
+include safe status/preview only and never expose full storage metadata.
+
+Internal and portal downloads remain protected API routes. The backend checks
+auth, tenant/customer/case scope, visibility, scan policy, and object existence
+before streaming the object. Each successful stream writes a
+`DocumentDownloadAudit` row and updates `downloadCount` plus
+`lastDownloadedAt`.
 
 ### Dashboard and reporting
 
@@ -1045,17 +1095,21 @@ activity logs. Step 27 adds separate customer portal accounts, portal-purpose
 JWTs, portal login/session/profile endpoints, and admin/manager portal access
 controls for existing customers. Step 28 adds portal case tracking, Step 28.5
 adds bilingual UI support, and Step 29 adds customer portal document listing,
-upload, protected download, and admin-controlled customer visibility. The
+upload, protected download, and admin-controlled customer visibility. Step 29.5
+adds local/S3-compatible storage providers, malware/OCR abstractions,
+scan-based download blocking, protected streaming downloads, and download audit
+logging. The
 repository also includes production readiness, deployment, and final QA
-documentation. It does not include request-to-customer conversion, OCR, cloud
-object storage, report exports, realtime updates, or real production deployment.
+documentation. It does not include request-to-customer conversion, configured
+live scanner/OCR infrastructure, report exports, realtime updates, or real
+production deployment.
 
 ## Future phases
 
 - Refresh tokens, token revocation, password recovery, and account management
 - Customer self-service profile updates
 - Consultation-request conversion
-- Cloud object storage, signed file delivery, malware scanning, and OCR
+- Live OCR/scanner infrastructure and production object-storage operations
 - Extended activity auditing and case-history retention policies
 - Public news and project content APIs
 - Rate limiting, abuse protection, private file storage, and production observability

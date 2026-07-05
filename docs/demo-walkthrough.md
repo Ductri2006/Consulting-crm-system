@@ -65,7 +65,9 @@ internal CRM users. Customer portal accounts are separate and are created for
 existing customers by an internal Admin or Manager.
 
 Step 28.5 adds bilingual English/Vietnamese UI support. Step 29 adds customer
-portal documents with portal-authenticated list, upload, and download. The
+portal documents with portal-authenticated list, upload, and download. Step
+29.5 adds configurable local/S3 storage, scan/OCR status, and download audit
+logging. The
 selected language is stored in local storage as `advisora_locale`. The language
 switcher appears in the public layout, admin surfaces, and customer portal
 surfaces. Database content and user-generated values such as customer names,
@@ -486,8 +488,10 @@ Talk track:
   internal admin download route.
 - Internal documents are hidden by default; customers see them only after an
   Admin or Manager sets `CUSTOMER_VISIBLE`.
-- Uploaded files still use local portfolio storage. Private object storage,
-  OCR, and production malware scanning remain future hardening.
+- Local storage remains the default for the demo. S3-compatible storage,
+  scanner, and OCR providers are configurable through backend environment
+  variables; real provider infrastructure is not committed.
+- Each successful internal or portal download updates audit/counter metadata.
 
 ## Workspace Settings Demo
 
@@ -621,7 +625,8 @@ Talk track:
   status labels, and portal case tracking. Backend API response localization,
   email template localization, and user-generated content translation remain
   future work.
-- No OCR, production malware scanning, or private object storage yet.
+- No live OCR/scanner infrastructure or production object-storage credentials
+  are committed.
 - No public CMS APIs for news/projects yet.
 - No report exports yet.
 - No realtime updates yet.

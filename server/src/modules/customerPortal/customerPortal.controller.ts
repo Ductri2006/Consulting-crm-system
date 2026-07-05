@@ -286,36 +286,43 @@ export const downloadPortalDocumentController = async (
   const download = await getPortalDocumentDownload(
     getDocumentId(request.params),
     getPortalSession(request),
-  );
-
-  response.download(
-    download.localPath,
-    download.fileName,
-    (error?: Error) => {
-      if (!error) {
-        return;
-      }
-
-      if (response.headersSent) {
-        response.destroy();
-        return;
-      }
-
-      const isMissingFile =
-        "code" in error && error.code === "ENOENT";
-
-      next(
-        new AppError(
-          isMissingFile
-            ? "Document not found."
-            : "The document file could not be downloaded.",
-          isMissingFile
-            ? HTTP_STATUS.NOT_FOUND
-            : HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ),
-      );
+    {
+      ipAddress: request.ip,
+      userAgent: request.get("user-agent") ?? null,
     },
   );
+
+  response.attachment(download.fileName);
+
+  if (download.contentType) {
+    response.type(download.contentType);
+  } else {
+    response.type("application/octet-stream");
+  }
+
+  if (download.contentLength !== null) {
+    response.setHeader("Content-Length", String(download.contentLength));
+  }
+
+  response.once("finish", () => {
+    void download.finalizeSuccess().catch(() => undefined);
+  });
+
+  download.stream.once("error", () => {
+    if (response.headersSent) {
+      response.destroy();
+      return;
+    }
+
+    next(
+      new AppError(
+        "The document file could not be downloaded.",
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      ),
+    );
+  });
+
+  download.stream.pipe(response);
 };
 
 export const portalLogoutController: RequestHandler = (_request, response): void => {

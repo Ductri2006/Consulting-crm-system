@@ -35,7 +35,7 @@ The schema covers:
 - Foreign keys use the `<relationName>Id` convention.
 - All mutable business records include `createdAt` and `updatedAt` where appropriate.
 - Date and time values are stored in UTC. The frontend is responsible for rendering them in the user's local time zone.
-- Uploaded file binaries are stored in object storage; the database stores only file metadata and a storage URL.
+- Uploaded file binaries are stored by the configured private document storage provider; the database stores metadata and backend-only storage locators.
 - Passwords are never stored directly. `passwordHash` contains a strong one-way hash created by the backend.
 
 ## 2. Main Entities
@@ -421,9 +421,10 @@ Stores internal work items assigned to staff.
 
 ### 5.9 Document
 
-Stores metadata for files held in local portfolio storage. Production should
-move customer files to private persistent object storage with authenticated or
-short-lived signed access.
+Stores metadata for files held by the configured document storage provider.
+Local storage remains the default for development; S3-compatible private object
+storage can be configured for deployed environments. `fileUrl` remains as a
+legacy internal reference and is not returned to portal clients.
 
 | Field | Type | Required | Rules / Default |
 | --- | --- | --- | --- |
@@ -438,6 +439,20 @@ short-lived signed access.
 | `fileType` | `DocumentType` | Yes | Defaults to `OTHER` |
 | `source` | `DocumentSource` | Yes | Defaults to `INTERNAL` |
 | `visibility` | `DocumentVisibility` | Yes | Defaults to `INTERNAL_ONLY` |
+| `storageProvider` | `DocumentStorageProvider` | Yes | Defaults to `LOCAL` |
+| `storageKey` | String | No | Server-generated object key |
+| `storageBucket` | String | No | Private bucket name for object storage |
+| `storageRegion` | String | No | Storage region |
+| `checksumSha256` | String | No | Uploaded content checksum |
+| `scanStatus` | `DocumentScanStatus` | Yes | Defaults to `SKIPPED` |
+| `scanMessage` | String | No | Safe scan result detail |
+| `scannedAt` | DateTime | No | Malware scan timestamp |
+| `ocrStatus` | `DocumentOcrStatus` | Yes | Defaults to `NOT_REQUESTED` |
+| `ocrText` | Text | No | Extracted OCR text for internal use |
+| `ocrTextPreview` | String | No | Safe short OCR preview |
+| `ocrProcessedAt` | DateTime | No | OCR processing timestamp |
+| `lastDownloadedAt` | DateTime | No | Last successful download time |
+| `downloadCount` | Integer | Yes | Defaults to `0` |
 | `mimeType` | String | No | Validated media type |
 | `size` | Integer | No | File size in bytes |
 | `portalVisibilityUpdatedAt` | DateTime | No | Last portal visibility change time |
@@ -463,6 +478,27 @@ short-lived signed access.
 - `INTERNAL_ONLY`
 - `CUSTOMER_VISIBLE`
 
+`DocumentStorageProvider` values:
+
+- `LOCAL`
+- `S3`
+
+`DocumentScanStatus` values:
+
+- `PENDING`
+- `CLEAN`
+- `INFECTED`
+- `FAILED`
+- `SKIPPED`
+
+`DocumentOcrStatus` values:
+
+- `NOT_REQUESTED`
+- `PENDING`
+- `COMPLETED`
+- `FAILED`
+- `SKIPPED`
+
 Existing and internal admin uploads default to `source=INTERNAL` and
 `visibility=INTERNAL_ONLY`. Customer portal uploads default to
 `source=CUSTOMER_PORTAL` and `visibility=CUSTOMER_VISIBLE`. The customer portal
@@ -471,6 +507,24 @@ may list or download only `CUSTOMER_VISIBLE` documents scoped to its
 `caseProfileId` or `customerId` must be present. Prisma cannot express that
 cross-column check directly, so it should be enforced in service validation and,
 preferably, in a custom SQL migration constraint.
+
+### 5.9.1 DocumentDownloadAudit
+
+Records successful internal and portal downloads.
+
+| Field | Type | Required | Rules / Default |
+| --- | --- | --- | --- |
+| `id` | UUID | Yes | Primary key |
+| `organizationId` | UUID | Yes | Tenant scope |
+| `documentId` | UUID | Yes | Downloaded document |
+| `actorUserId` | UUID | No | Internal user actor |
+| `actorPortalAccountId` | UUID | No | Portal account actor |
+| `actorType` | `DocumentDownloadActorType` | Yes | Internal user or customer portal |
+| `customerId` | UUID | No | Related customer at download time |
+| `caseProfileId` | UUID | No | Related case at download time |
+| `ipAddress` | String | No | Request IP when available |
+| `userAgent` | String | No | Request user agent when available |
+| `createdAt` | DateTime | Yes | Defaults to the current time |
 
 ### 5.10 News
 
@@ -589,7 +643,7 @@ The Prisma draft includes indexes for common access patterns:
 - Case-history timelines
 - Appointment calendars by date, staff, customer, and status
 - Task queues by assignee, status, case, and deadline
-- Document lookup by customer, case, and request
+- Document lookup by customer, case, visibility, source, storage provider, scan status, OCR status, and download time
 - Public content filtering by publication status and creation time
 - Activity-log filtering by actor, action, entity, and creation time
 
@@ -608,8 +662,9 @@ PostgreSQL full-text search or trigram indexes can be added later for customer n
   case-linked documents, require `visibility=CUSTOMER_VISIBLE`, and return
   generic `404` for hidden or out-of-scope documents.
 - Customer identity numbers and private documents should be encrypted or protected with provider-level encryption at rest.
-- File URLs/storage paths must not be returned to portal responses. They should
-  be private or signed when they contain customer information.
+- File URLs, raw storage keys, bucket names, and local paths must not be returned
+  to portal responses. Downloads must go through authenticated backend routes or
+  short-lived protected storage access.
 - Role-based authorization must be enforced in backend services, not only in the frontend.
 - Public form endpoints require rate limiting, validation, malware scanning where available, and abuse protection.
 - Activity logs must avoid storing secrets, raw passwords, JWTs, or entire uploaded documents.
@@ -617,7 +672,8 @@ PostgreSQL full-text search or trigram indexes can be added later for customer n
 
 ## 9. Initial Prisma Schema Draft
 
-The following draft is internally consistent with the entity specifications and targets PostgreSQL.
+The following draft highlights the document-related production storage and
+security shape. The authoritative schema lives in `server/prisma/schema.prisma`.
 
 ```prisma
 generator client {
@@ -698,6 +754,32 @@ enum DocumentVisibility {
   CUSTOMER_VISIBLE
 }
 
+enum DocumentStorageProvider {
+  LOCAL
+  S3
+}
+
+enum DocumentScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  FAILED
+  SKIPPED
+}
+
+enum DocumentOcrStatus {
+  NOT_REQUESTED
+  PENDING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum DocumentDownloadActorType {
+  INTERNAL_USER
+  CUSTOMER_PORTAL
+}
+
 enum PublishStatus {
   DRAFT
   PUBLISHED
@@ -722,6 +804,7 @@ model User {
   createdTasks        Task[]        @relation("CreatedTasks")
   assignedTasks       Task[]        @relation("AssignedTasks")
   uploadedDocuments   Document[]
+  documentDownloadAudits DocumentDownloadAudit[] @relation("UserDocumentDownloadAudits")
   news                 News[]
   activityLogs         ActivityLog[]
 
@@ -764,6 +847,8 @@ model CustomerPortalAccount {
   updatedAt      DateTime  @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  uploadedDocuments Document[] @relation("PortalUploadedDocuments")
+  documentDownloadAudits DocumentDownloadAudit[] @relation("PortalDocumentDownloadAudits")
 
   @@unique([organizationId, email])
   @@index([organizationId, isActive])
@@ -910,7 +995,7 @@ model Task {
 }
 
 model Document {
-  id                          String             @id @default(uuid())
+  id                          String                  @id @default(uuid())
   organizationId              String
   caseProfileId               String?
   customerId                  String?
@@ -919,31 +1004,84 @@ model Document {
   portalVisibilityUpdatedById String?
   fileName                    String
   fileUrl                     String
-  fileType                    DocumentType       @default(OTHER)
-  source                      DocumentSource     @default(INTERNAL)
-  visibility                  DocumentVisibility @default(INTERNAL_ONLY)
+  fileType                    DocumentType            @default(OTHER)
+  source                      DocumentSource          @default(INTERNAL)
+  visibility                  DocumentVisibility      @default(INTERNAL_ONLY)
+  storageProvider             DocumentStorageProvider @default(LOCAL)
+  storageKey                  String?
+  storageBucket               String?
+  storageRegion               String?
+  checksumSha256              String?
+  scanStatus                  DocumentScanStatus      @default(SKIPPED)
+  scanMessage                 String?
+  scannedAt                   DateTime?
+  ocrStatus                   DocumentOcrStatus       @default(NOT_REQUESTED)
+  ocrText                     String?                 @db.Text
+  ocrTextPreview              String?
+  ocrProcessedAt              DateTime?
+  lastDownloadedAt            DateTime?
+  downloadCount               Int                     @default(0)
   mimeType                    String?
   size                        Int?
   portalVisibilityUpdatedAt   DateTime?
-  createdAt                   DateTime           @default(now())
-  updatedAt                   DateTime           @updatedAt
+  createdAt                   DateTime                @default(now())
+  updatedAt                   DateTime                @updatedAt
 
-  organization              Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  caseProfile               CaseProfile?           @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
-  customer                  Customer?              @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  uploadedBy                User?                  @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-  uploadedByPortalAccount   CustomerPortalAccount? @relation("PortalUploadedDocuments", fields: [uploadedByPortalAccountId], references: [id], onDelete: SetNull)
-  portalVisibilityUpdatedBy User?                  @relation("DocumentPortalVisibilityUpdatedBy", fields: [portalVisibilityUpdatedById], references: [id], onDelete: SetNull)
+  organization              Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  caseProfile               CaseProfile?            @relation(fields: [caseProfileId], references: [id], onDelete: SetNull)
+  customer                  Customer?               @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  uploadedBy                User?                   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedByPortalAccount   CustomerPortalAccount?  @relation("PortalUploadedDocuments", fields: [uploadedByPortalAccountId], references: [id], onDelete: SetNull)
+  portalVisibilityUpdatedBy User?                   @relation("DocumentPortalVisibilityUpdatedBy", fields: [portalVisibilityUpdatedById], references: [id], onDelete: SetNull)
+  downloadAudits            DocumentDownloadAudit[]
 
   @@index([caseProfileId, createdAt])
   @@index([customerId, createdAt])
   @@index([uploadedById])
   @@index([uploadedByPortalAccountId])
+  @@index([portalVisibilityUpdatedById])
   @@index([fileType])
   @@index([source])
   @@index([visibility])
+  @@index([storageProvider])
+  @@index([scanStatus])
+  @@index([ocrStatus])
+  @@index([lastDownloadedAt])
+  @@index([organizationId, caseProfileId, createdAt])
+  @@index([organizationId, customerId, createdAt])
   @@index([organizationId, customerId, visibility, createdAt])
   @@index([organizationId, caseProfileId, visibility, createdAt])
+  @@index([organizationId, uploadedById])
+  @@index([organizationId, fileType])
+  @@index([organizationId, source, createdAt])
+  @@index([organizationId, scanStatus, createdAt])
+}
+
+model DocumentDownloadAudit {
+  id                   String                    @id @default(uuid())
+  organizationId       String
+  documentId           String
+  actorUserId          String?
+  actorPortalAccountId String?
+  actorType            DocumentDownloadActorType
+  customerId           String?
+  caseProfileId        String?
+  ipAddress            String?
+  userAgent            String?
+  createdAt            DateTime                  @default(now())
+
+  organization       Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  document           Document               @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  actorUser          User?                  @relation("UserDocumentDownloadAudits", fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorPortalAccount CustomerPortalAccount? @relation("PortalDocumentDownloadAudits", fields: [actorPortalAccountId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([documentId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([actorPortalAccountId, createdAt])
+  @@index([actorType, createdAt])
+  @@index([customerId, createdAt])
+  @@index([caseProfileId, createdAt])
 }
 
 model News {

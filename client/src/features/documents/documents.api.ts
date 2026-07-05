@@ -96,6 +96,9 @@ const buildDocumentListQuery = (params: DocumentListParams): string => {
 
   setOptionalParam(query, 'search', params.search)
   setOptionalParam(query, 'fileType', params.fileType)
+  setOptionalParam(query, 'storageProvider', params.storageProvider)
+  setOptionalParam(query, 'scanStatus', params.scanStatus)
+  setOptionalParam(query, 'ocrStatus', params.ocrStatus)
   setOptionalParam(query, 'customerId', params.customerId)
   setOptionalParam(query, 'caseProfileId', params.caseProfileId)
   setOptionalParam(query, 'uploadedById', params.uploadedById)
