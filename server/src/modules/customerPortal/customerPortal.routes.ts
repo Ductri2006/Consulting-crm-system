@@ -8,6 +8,8 @@ import {
   getPortalCaseController,
   getPortalCaseSummaryController,
   getPortalProfileController,
+  getPortalUpdatesSummaryController,
+  listPortalUpdatesController,
   listPortalDocumentsController,
   listPortalCasesController,
   portalLoginController,
@@ -23,6 +25,7 @@ import {
   portalDocumentIdParamsSchema,
   portalDocumentListQuerySchema,
   portalDocumentUploadSchema,
+  portalUpdatesQuerySchema,
   portalLoginSchema,
 } from "./customerPortal.validation";
 
@@ -49,6 +52,16 @@ customerPortalRouter.get(
   "/documents/:id/download",
   validate({ params: portalDocumentIdParamsSchema }),
   asyncHandler(downloadPortalDocumentController),
+);
+customerPortalRouter.get(
+  "/updates/summary",
+  validate({ query: portalCaseSummaryQuerySchema }),
+  getPortalUpdatesSummaryController,
+);
+customerPortalRouter.get(
+  "/updates",
+  validate({ query: portalUpdatesQuerySchema }),
+  listPortalUpdatesController,
 );
 customerPortalRouter.get(
   "/cases/summary",

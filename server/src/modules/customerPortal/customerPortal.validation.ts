@@ -89,3 +89,10 @@ export const portalDocumentUploadSchema = z
     fileType: z.enum(DocumentType).default(DocumentType.OTHER),
   })
   .strict();
+
+export const portalUpdatesQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  type: z.enum(["CASE", "APPOINTMENT", "DOCUMENT", "ACCOUNT"]).optional(),
+  caseId: uuidSchema("Case id").optional(),
+}).strict();

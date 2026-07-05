@@ -95,6 +95,11 @@ const CustomerPortalDocumentsPage = lazy(() =>
     default: module.CustomerPortalDocumentsPage,
   })),
 )
+const CustomerPortalUpdatesPage = lazy(() =>
+  import('../pages/portal/CustomerPortalUpdatesPage').then((module) => ({
+    default: module.CustomerPortalUpdatesPage,
+  })),
+)
 const CustomerPortalLoginPage = lazy(() =>
   import('../pages/portal/CustomerPortalLoginPage').then((module) => ({
     default: module.CustomerPortalLoginPage,
@@ -104,6 +109,11 @@ const CustomerPortalLoginPage = lazy(() =>
 const AdminAppointmentsPage = lazy(() =>
   import('../pages/admin/AdminAppointmentsPage').then((module) => ({
     default: module.AdminAppointmentsPage,
+  })),
+)
+const AdminActivityPage = lazy(() =>
+  import('../pages/admin/AdminActivityPage').then((module) => ({
+    default: module.AdminActivityPage,
   })),
 )
 const AdminCasesPage = lazy(() =>
@@ -225,6 +235,14 @@ export function AppRoutes() {
             element={routeElement(<AdminDashboardPage />)}
           />
           <Route
+            path="activity"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
+                {routeElement(<AdminActivityPage />)}
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="customers"
             element={routeElement(<AdminCustomersPage />)}
           />
@@ -302,6 +320,10 @@ export function AppRoutes() {
           <Route
             path="documents"
             element={routeElement(<CustomerPortalDocumentsPage />)}
+          />
+          <Route
+            path="updates"
+            element={routeElement(<CustomerPortalUpdatesPage />)}
           />
         </Route>
       </Route>

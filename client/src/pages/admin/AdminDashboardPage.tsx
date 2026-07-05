@@ -1,4 +1,5 @@
 import {
+  Activity,
   AlertTriangle,
   CalendarCheck2,
   CheckCircle2,
@@ -12,7 +13,9 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { LoadingState, StatCard, StatusBadge } from '../../components/admin'
+import { useAuth } from '../../features/auth'
 import {
   getDashboardData,
   type DashboardData,
@@ -127,6 +130,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
 export function AdminDashboardPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -169,6 +173,9 @@ export function AdminDashboardPage() {
   if (!data) {
     return null
   }
+
+  const canViewActivityCenter =
+    user?.role === 'ADMIN' || user?.role === 'MANAGER'
 
   return (
     <div className="mx-auto max-w-[1600px]">
@@ -341,12 +348,25 @@ export function AdminDashboardPage() {
       <section className="mt-6">
         <article className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
           <div className="border-b border-slate-100 p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-950">
-              {t('admin.dashboard.recentActivities')}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {t('admin.dashboard.recentActivitiesDescription')}
-            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">
+                  {t('admin.dashboard.recentActivities')}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t('admin.dashboard.recentActivitiesDescription')}
+                </p>
+              </div>
+              {canViewActivityCenter ? (
+                <Link
+                  className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 sm:self-auto"
+                  to="/admin/activity"
+                >
+                  <Activity className="h-4 w-4" aria-hidden="true" />
+                  {t('admin.activityCenter.viewAllActivity')}
+                </Link>
+              ) : null}
+            </div>
           </div>
           {data.recentActivities.length === 0 ? (
             <div className="grid min-h-56 place-items-center p-8 text-center">

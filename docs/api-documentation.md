@@ -4,7 +4,8 @@ This document defines the REST API contract for the Consulting CRM System. It
 started as a design reference and now tracks the implemented portfolio API for
 auth, workspace signup, workspace settings, workspace invitations, CRM workflows,
 internal users, documents, dashboard, reports, and the Organization / Workspace tenant
-foundation.
+foundation. Step 30 adds the Admin/Manager Activity Center and customer-safe
+Portal Updates feed.
 
 ## Base URL and Conventions
 
@@ -563,7 +564,8 @@ Authorization: Bearer <portal-token>
 
 Returns the safe portal session plus an `overview` object. Step 28 sets
 `caseTrackingAvailable=true`; Step 29 adds customer portal document
-upload/download through separate portal routes. Messages, billing, and customer
+upload/download through separate portal routes, and Step 30 adds a safe portal
+updates feed. Messages, billing, realtime/push notifications, and customer
 self-registration remain outside this step.
 
 ### Portal Case Summary
@@ -737,6 +739,67 @@ downloaded. Unauthorized, hidden, cross-customer, cross-workspace, or missing
 documents return a generic `404`. Successful streams write a
 `DocumentDownloadAudit` row and update backend/admin `downloadCount` plus
 `lastDownloadedAt`.
+
+### Portal Updates
+
+All portal update endpoints require a customer portal token. Internal CRM tokens
+are rejected by portal auth, and portal tokens are rejected by internal activity
+routes.
+
+```http
+GET /api/portal/updates?page=1&limit=20&type=DOCUMENT&caseId=<case-uuid>
+Authorization: Bearer <portal-token>
+```
+
+Allowed query fields:
+
+- `page`
+- `limit` from 1 to 50
+- `type`: `CASE`, `APPOINTMENT`, `DOCUMENT`, or `ACCOUNT`
+- `caseId` (optional; must belong to the portal customer's workspace and
+  customer record)
+
+The backend always scopes by the portal account's `organizationId` and
+`customerId`. The optional `caseId` is validated before any update sources are
+queried. The feed is normalized from safe `CaseHistory` action/status fields,
+appointments, customer-visible documents, document-download audits for the
+current portal account, and account readiness. It does not return raw internal
+`ActivityLog` rows.
+
+Safe response items include:
+
+```json
+{
+  "id": "document:document_id",
+  "type": "DOCUMENT",
+  "title": "A document is now available",
+  "description": "A document was shared with you.",
+  "occurredAt": "2026-07-05T00:00:00.000Z",
+  "entityType": "Document",
+  "entityId": "document_id",
+  "caseProfile": {
+    "id": "case_id",
+    "caseCode": "CASE-2026-001",
+    "title": "Property transfer"
+  },
+  "action": "DOCUMENT_AVAILABLE"
+}
+```
+
+Portal update responses do not include internal notes, raw activity
+descriptions, `fileUrl`, file paths, storage keys, object keys, bucket names,
+signed URLs, `passwordHash`, `tokenHash`, IP addresses, or user-agent data.
+Documents appear only when `visibility=CUSTOMER_VISIBLE` and scoped to the
+portal account.
+
+```http
+GET /api/portal/updates/summary
+Authorization: Bearer <portal-token>
+```
+
+The summary returns `totalUpdates`, `latestUpdateAt`, and the latest five safe
+updates. Portal Updates are read-only and are not realtime websocket or push
+notifications.
 
 ## 3. Customer API
 
@@ -1472,23 +1535,81 @@ DELETE /api/projects/:id
 
 Admin list and mutation endpoints support the `DRAFT`, `PUBLISHED`, and `ARCHIVED` publication statuses.
 
-## 13. Activity Log API
+## 13. Activity Center API
 
-### Get Activity Logs
+The Activity Center is an internal Admin/Manager workspace audit view. It uses
+the authenticated user's workspace as the tenant boundary; clients cannot send
+`organizationId` in query or body payloads.
+
+### Get Activity
 
 ```http
-GET /api/activity-logs
+GET /api/activity?page=1&limit=20&sort=newest
+Authorization: Bearer <internal-token>
 ```
 
 Query parameters:
 
-- `userId`
-- `action`
-- `entityType`
-- `page`
-- `limit`
+- `page` default `1`
+- `limit` default `20`, maximum `100`
+- `action` optional, maximum 100 characters
+- `entityType` optional, maximum 100 characters
+- `actorUserId` optional UUID
+- `search` optional, maximum 100 characters
+- `fromDate` optional ISO/date value
+- `toDate` optional ISO/date value
+- `sort`: `newest` or `oldest`
 
-Activity logs are read-only through the API and should be visible only to authorized managers and administrators. Log records are created by backend services when auditable operations succeed.
+Access:
+
+- `ADMIN` and `MANAGER`: allowed for their current workspace.
+- `STAFF`: blocked with `403`.
+
+The backend normalizes safe activity items from `ActivityLog`, `CaseHistory`,
+`Appointment`, `Task`, `Document`, and `DocumentDownloadAudit`. Every source
+query includes `organizationId=request.user.organizationId`, and filters/search
+are applied inside that scoped predicate.
+
+Response item shape:
+
+```json
+{
+  "id": "activity:activity_log_id",
+  "action": "WORKSPACE_UPDATED",
+  "entityType": "Organization",
+  "entityId": "organization_id",
+  "description": "Workspace profile updated.",
+  "createdAt": "2026-07-05T00:00:00.000Z",
+  "actor": {
+    "id": "user_id",
+    "fullName": "Admin User",
+    "role": "ADMIN"
+  }
+}
+```
+
+Descriptions are sanitized before returning. Activity responses must not expose
+raw passwords, invite tokens, JWTs, token hashes, storage keys, object keys,
+signed URLs, local file paths, bucket names, or environment values.
+
+### Get Activity Summary
+
+```http
+GET /api/activity/summary
+Authorization: Bearer <internal-token>
+```
+
+Returns:
+
+- `totalToday`
+- `documentEventsToday`
+- `portalEventsToday`
+- `caseEventsToday`
+- `recentActivities` latest 5
+
+Activity Center endpoints are read-only. Step 30 does not add realtime
+websocket, push notification, email notification automation, or complex
+notification preferences.
 
 ## 14. API Response Format
 

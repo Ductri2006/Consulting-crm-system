@@ -20,9 +20,10 @@ current demo/staging workspace is `Advisora Demo Workspace`.
 
 ## Bilingual UI
 
-Step 28.5 adds bilingual English/Vietnamese UI support, and Step 29 keeps the
+Step 28.5 adds bilingual English/Vietnamese UI support, Step 29 keeps the
 Customer Portal Documents screens covered by the same English/Vietnamese
-translation resources.
+translation resources, and Step 30 adds bilingual Activity Center and Portal
+Updates screens.
 
 - Supported locales: `en`, `vi`.
 - Locale preference is stored in local storage as `advisora_locale`.
@@ -31,7 +32,8 @@ translation resources.
 - Language switchers appear in the public layout, admin topbar, admin login,
   portal layout, and portal login.
 - Core navigation, buttons, login forms, status labels, role labels, invitation
-  labels, and portal case-tracking labels use translation resources.
+  labels, activity labels, portal update labels, and portal case-tracking labels
+  use translation resources.
 - User-generated database content such as customer names, case titles, notes,
   service names, and file names is displayed as entered.
 - Backend API response localization and invitation email localization remain
@@ -85,12 +87,14 @@ configured with `DEFAULT_ORGANIZATION_SLUG`; the frontend never sends an
 - Tasks: `/admin/tasks`
 - Team members: `/admin/users`
 - Invitations: `/admin/invitations`
+- Activity: `/admin/activity`
 - Settings: `/admin/settings`
 - Documents: `/admin/documents`
 - Reports: `/admin/reports`
 - Public invite accept: `/invite/:token`
 - Customer portal login: `/portal/login`
 - Customer portal dashboard: `/portal/dashboard`
+- Customer portal updates: `/portal/updates`
 - Customer portal documents: `/portal/documents`
 - Demo accounts: see `../docs/demo-walkthrough.md`
 - Legacy local account: `admin@advisora.demo` / `password123`
@@ -137,6 +141,10 @@ Document management adds search, filters, multipart upload, protected download,
 detail review, role-aware deletion, source/visibility badges, storage/scan/OCR
 status badges, download counts, OCR previews, and an Admin/Manager
 customer-visible toggle for portal access.
+Activity Center adds `/admin/activity` for Admin and Manager users, with
+workspace-scoped summary cards, search, action/entity/date filters, reset, and
+pagination. The dashboard recent activity card links to the Activity Center for
+allowed roles. Staff users do not see the Activity navigation item.
 Reports use the dashboard/reporting APIs for operational insight, with staff
 performance available to administrators and managers only. Admin and public page
 routes are lazy-loaded to keep the initial bundle smaller.
@@ -151,20 +159,25 @@ the admin token key or `AdminLayout`.
 - Case list route: `/portal/cases`
 - Case detail route: `/portal/cases/:id`
 - Documents route: `/portal/documents`
+- Updates route: `/portal/updates`
 - Backend auth: `/api/portal/auth/login`, `/api/portal/auth/me`
 - Backend profile: `/api/portal/me`
 - Backend cases: `/api/portal/cases/summary`, `/api/portal/cases`,
   `/api/portal/cases/:id`
 - Backend documents: `/api/portal/documents`,
   `/api/portal/documents/:id/download`
+- Backend updates: `/api/portal/updates`, `/api/portal/updates/summary`
 - Token key: `advisora_portal_access_token`
 
 The dashboard shows workspace, customer profile, portal account status, case
-summary, recent cases, and next appointment data. Portal cases are read-only and
-use the portal API client only. Portal documents also use the portal API client
-only, including FormData upload and blob download helpers that attach the
-portal token rather than the internal admin token. Portal document responses do
-not expose `fileUrl`, storage keys, bucket names, file paths, or internal-only
-documents. The portal UI shows safe scan status and disables downloads when
-the backend marks a document unsafe or unavailable. Billing, messages, and
-customer self-registration are not part of this step.
+summary, recent cases, recent safe updates, and next appointment data. Portal
+cases are read-only and use the portal API client only. Portal documents also
+use the portal API client only, including FormData upload and blob download
+helpers that attach the portal token rather than the internal admin token.
+Portal document and update responses do not expose `fileUrl`, storage keys,
+bucket names, object keys, signed URLs, file paths, internal notes, raw
+ActivityLog descriptions, token hashes, password hashes, IP addresses, or
+user-agent data. The portal UI shows safe scan status and disables downloads
+when the backend marks a document unsafe or unavailable. Portal Updates are a
+read-only feed, not realtime websocket or push notifications. Billing, messages,
+and customer self-registration are not part of this step.

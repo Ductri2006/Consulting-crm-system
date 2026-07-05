@@ -1,8 +1,8 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System through Phase 22. It documents staging demo hardening, the workspace
-tenant foundation, and production
+System through Step 30. It documents staging demo hardening, the workspace
+tenant foundation, customer portal document security, activity feeds, and production
 gaps while keeping real provider URLs, credentials, and secrets out of the
 repository.
 
@@ -35,6 +35,10 @@ accepted.
   blocking, and malware/OCR provider abstractions. Real S3, ClamAV, or OCR
   operation requires provider infrastructure and secrets configured outside the
   repository.
+- Step 30 Activity Center and Portal Updates are implemented. Internal activity
+  is organization-scoped and Admin/Manager-only; portal updates are
+  customer-scoped and omit internal notes, raw storage metadata, token/password
+  hashes, IP addresses, and user-agent data.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -67,13 +71,14 @@ Admin CRM modules:
 - Team Members.
 - Documents.
 - Reports.
+- Activity Center for Admin and Manager users.
 
 Bilingual UI:
 
 - English/Vietnamese resources live in the client application.
 - Language switchers are available on public, admin, and portal surfaces.
-- Core navigation, login flows, common actions, status labels, and portal
-  case-tracking labels are localized.
+- Core navigation, login flows, common actions, status labels, activity labels,
+  portal update labels, and portal case-tracking labels are localized.
 - Database values and user-generated content are intentionally not translated.
 
 ## Required Environment Variables
@@ -163,6 +168,13 @@ Production rules:
 - Portal case endpoints are read-only, must scope by portal-account
   `organizationId + customerId`, and must not return internal notes, document
   file URLs, staff contact details, password hashes, or token hashes.
+- Portal update endpoints must scope by portal-account
+  `organizationId + customerId`, validate optional case ownership, and must not
+  return raw internal activity descriptions, internal notes, document storage
+  metadata, token hashes, password hashes, IP addresses, or user-agent data.
+- Internal Activity Center endpoints must require Admin/Manager internal auth,
+  scope by `request.user.organizationId`, and sanitize descriptions before
+  returning them.
 - The demo admin password must be changed or replaced before any real
   production use.
 - Do not publish high-privilege admin demo credentials for long-lived public
@@ -239,6 +251,10 @@ Production document requirements:
 - [ ] User management and assignable-user endpoints return same-workspace users
   only.
 - [ ] Dashboard and report totals are scoped to the current workspace.
+- [ ] `/api/activity` is Admin/Manager-only and scoped to the current workspace.
+- [ ] `/api/portal/updates` returns only the authenticated portal customer's
+  safe updates and no internal notes, storage metadata, tokens, password hashes,
+  IP addresses, or user-agent data.
 - [ ] Optional second workspace QA seed has passed
   `npm run verify:tenant-isolation` when staging tenant-isolation evidence is
   required.
@@ -296,8 +312,9 @@ Production document requirements:
   pipeline yet.
 - Customer portal supports login/dashboard/profile, read-only case tracking, and
   customer document upload/download with safe scan status and download
-  availability. Messages,
-  billing, and self-registration remain future work.
+  availability plus safe recent updates. Messages, billing, realtime/push
+  notifications, notification preferences, and self-registration remain future
+  work.
 - No billing, workspace switcher, or workspace-specific public intake URL yet.
 - Second workspace creation is manual QA seed data only; it is not a production
   tenant onboarding flow.

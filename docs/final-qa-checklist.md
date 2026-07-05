@@ -66,6 +66,19 @@ Dashboard:
 - [ ] Overview metrics load.
 - [ ] Upcoming deadlines load.
 - [ ] Recent activity loads.
+- [ ] Recent activity card links to `/admin/activity` for Admin/Manager.
+
+Activity Center:
+
+- [ ] `/admin/activity` loads for `ADMIN` and `MANAGER`.
+- [ ] `/admin/activity` is hidden or forbidden for `STAFF`.
+- [ ] `GET /api/activity` returns only the current workspace's activity.
+- [ ] Search, action filter, entity filter, date range, sort, reset, and
+  pagination work without bypassing workspace scope.
+- [ ] `GET /api/activity/summary` returns today's totals and latest activity.
+- [ ] Activity responses do not include raw passwords, invite tokens, JWTs,
+  token hashes, storage keys, object keys, signed URLs, local file paths, bucket
+  names, or environment values.
 
 Customers:
 
@@ -87,11 +100,16 @@ Customer Portal:
 - [ ] `/portal/login` accepts workspace slug, email, and password.
 - [ ] `/portal/dashboard` loads outside `AdminLayout`.
 - [ ] Dashboard shows workspace, customer profile, portal account info, case
-  summary, recent cases, and next appointment if available.
+  summary, recent cases, recent updates, and next appointment if available.
 - [ ] `/portal/cases` lists only the authenticated portal customer's cases.
 - [ ] `/portal/cases/:id` shows safe case overview, timeline, appointments,
   portal-visible document metadata/download actions, and task summary for the
   portal customer's own case.
+- [ ] `/portal/updates` lists only the authenticated portal customer's updates.
+- [ ] `/api/portal/updates` supports type and case filters without bypassing
+  `organizationId + customerId` scope.
+- [ ] `/api/portal/updates/summary` returns latest safe updates for the portal
+  dashboard.
 - [ ] `/portal/documents` lists only `CUSTOMER_VISIBLE` documents scoped to the
   portal account's organization and customer.
 - [ ] Portal uploads create `CUSTOMER_PORTAL` + `CUSTOMER_VISIBLE` documents
@@ -113,6 +131,10 @@ Customer Portal:
   download.
 - [ ] Portal case responses do not include internal notes, `fileUrl`,
   `passwordHash`, `tokenHash`, or raw upload paths.
+- [ ] Portal update responses do not include internal notes, raw ActivityLog
+  descriptions, `fileUrl`, `filePath`, raw upload paths, `storageKey`,
+  object keys, signed URLs, bucket names, `passwordHash`, `tokenHash`,
+  IP addresses, or user-agent data.
 - [ ] Portal document responses do not include `fileUrl`, `filePath`, raw
   upload paths, `storageKey`, bucket names, `passwordHash`, `tokenHash`, or
   internal-only documents.
@@ -274,6 +296,8 @@ testing.
 - [ ] Dashboard API returns data.
 - [ ] Document upload and download work.
 - [ ] Customer portal document list/upload/download works with portal auth only.
+- [ ] Customer portal updates list and dashboard recent updates work with portal
+  auth only.
 - [ ] Internal-only documents remain hidden until Admin/Manager toggles
   `CUSTOMER_VISIBLE`.
 - [ ] Admin document list/detail shows storage provider, scan status, OCR
@@ -316,6 +340,7 @@ testing.
 | Admin CRM modules |  |  |
 | Documents |  |  |
 | Reports |  |  |
+| Activity Center / Portal Updates |  |  |
 | Security |  |  |
 | Production smoke |  |  |
 

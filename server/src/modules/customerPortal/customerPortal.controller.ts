@@ -13,8 +13,10 @@ import {
   getPortalCaseSummary,
   getCustomerPortalAccount,
   getPortalDocumentDownload,
+  getPortalUpdatesSummary,
   listPortalCases,
   listPortalDocuments,
+  listPortalUpdates,
   loginCustomerPortal,
   resetCustomerPortalPassword,
   toPortalProfile,
@@ -26,6 +28,7 @@ import type {
   PortalDocumentListQuery,
   PortalDocumentUploadInput,
   PortalLoginInput,
+  PortalUpdatesQuery,
   ResetPortalPasswordInput,
 } from "./customerPortal.types";
 
@@ -247,6 +250,31 @@ export const listPortalDocumentsController = asyncHandler(
     response
       .status(HTTP_STATUS.OK)
       .json(successResponse("Portal documents retrieved successfully.", result));
+  },
+);
+
+export const listPortalUpdatesController = asyncHandler(
+  async (request, response): Promise<void> => {
+    const session = getPortalSession(request);
+    const result = await listPortalUpdates(
+      request.query as unknown as PortalUpdatesQuery,
+      session,
+    );
+
+    response
+      .status(HTTP_STATUS.OK)
+      .json(successResponse("Portal updates retrieved successfully.", result));
+  },
+);
+
+export const getPortalUpdatesSummaryController = asyncHandler(
+  async (request, response): Promise<void> => {
+    const session = getPortalSession(request);
+    const result = await getPortalUpdatesSummary(session);
+
+    response
+      .status(HTTP_STATUS.OK)
+      .json(successResponse("Portal updates summary retrieved successfully.", result));
   },
 );
 

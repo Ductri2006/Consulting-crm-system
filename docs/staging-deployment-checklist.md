@@ -382,6 +382,11 @@ Before real customer documents:
 - [ ] Login response includes `organizationId` and
   `organization: { id, name, slug }` for the current workspace.
 - [ ] `GET /api/auth/me` returns a sanitized user with workspace info.
+- [ ] `GET /api/activity` succeeds for an Admin/Manager staging account.
+- [ ] `GET /api/activity` returns only the authenticated workspace's activity.
+- [ ] Activity filters/search/date range/pagination do not bypass workspace
+  scope.
+- [ ] A Staff staging account receives `403` for `/api/activity`.
 - [ ] `GET /api/dashboard/overview` returns data.
 - [ ] Dashboard overview reflects current-workspace data only.
 - [ ] `npm run verify:tenant-isolation` prints
@@ -422,6 +427,13 @@ Before real customer documents:
 - [ ] Portal document responses do not include `fileUrl`, `filePath`, raw upload
   paths, `storageKey`, bucket names, `passwordHash`, `tokenHash`, or
   internal-only documents.
+- [ ] `GET /api/portal/updates` returns only safe updates for the portal
+  account's `organizationId + customerId`.
+- [ ] Portal update `type` and `caseId` filters do not expose another customer
+  or workspace.
+- [ ] Portal update responses do not include internal notes, raw ActivityLog
+  descriptions, `fileUrl`, `filePath`, storage keys, object keys, signed URLs,
+  bucket names, `passwordHash`, `tokenHash`, IP addresses, or user-agent data.
 - [ ] Downloads create `DocumentDownloadAudit` records.
 - [ ] `downloadCount` increments and `lastDownloadedAt` updates after a
   successful internal and portal download.
@@ -451,6 +463,8 @@ Before real customer documents:
 - [ ] Admin login succeeds with a staging-safe account.
 - [ ] Refreshing a protected deep link preserves or restores the session.
 - [ ] Dashboard loads.
+- [ ] `/admin/activity` loads for Admin/Manager and is hidden or forbidden for
+  Staff.
 - [ ] Customers page loads.
 - [ ] Admin or Manager can open customer Portal access controls.
 - [ ] Create portal access shows a generated temporary password once when
@@ -461,9 +475,11 @@ Before real customer documents:
 - [ ] Staff users cannot manage portal access controls.
 - [ ] `/portal/login` loads outside `AdminLayout`.
 - [ ] `/portal/dashboard` loads after portal login and shows workspace,
-  customer profile, portal account info, case summary, and recent cases.
+  customer profile, portal account info, case summary, recent cases, and recent
+  updates.
 - [ ] `/portal/cases` loads after portal login.
 - [ ] `/portal/cases/:id` loads for the portal customer's own case.
+- [ ] `/portal/updates` loads after portal login and supports type filtering.
 - [ ] `/portal/documents` loads after portal login.
 - [ ] Portal document upload/download UI works with portal auth only.
 - [ ] Portal case pages have no edit, delete, assign, or status-update controls.

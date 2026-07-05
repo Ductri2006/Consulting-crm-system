@@ -228,6 +228,53 @@ export interface PortalDocumentDownload {
   finalizeSuccess: () => Promise<void>;
 }
 
+export type PortalUpdateType =
+  | "CASE"
+  | "APPOINTMENT"
+  | "DOCUMENT"
+  | "ACCOUNT";
+
+export interface PortalUpdateCaseSummary {
+  id: string;
+  caseCode: string;
+  title: string;
+}
+
+export interface PortalUpdateItem {
+  id: string;
+  type: PortalUpdateType;
+  title: string;
+  description: string;
+  occurredAt: Date;
+  entityType: string;
+  entityId: string;
+  caseProfile: PortalUpdateCaseSummary | null;
+  action?: string;
+}
+
+export interface PortalUpdatesQuery {
+  page: number;
+  limit: number;
+  type?: PortalUpdateType;
+  caseId?: string;
+}
+
+export interface PortalUpdatesResult {
+  items: PortalUpdateItem[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface PortalUpdatesSummaryResult {
+  totalUpdates: number;
+  latestUpdateAt: Date | null;
+  recentUpdates: PortalUpdateItem[];
+}
+
 export interface PortalDocumentUploadFile {
   originalName: string;
   mimeType: string;

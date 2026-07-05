@@ -15,6 +15,11 @@ export {
   uploadPortalDocument,
 } from './portalDocuments.api'
 export {
+  getPortalUpdatesSummary,
+  listPortalUpdates,
+} from './portalUpdates.api'
+export { getPortalUpdateDescription } from './portalUpdates.format'
+export {
   PortalAuthProvider,
   usePortalAuth,
 } from './portalAuth.context'
@@ -61,6 +66,15 @@ export {
   portalDocumentSources,
   portalDocumentVisibilities,
 } from './portalDocuments.types'
+export type {
+  PortalUpdateCaseSummary,
+  PortalUpdatesListParams,
+  PortalUpdatesListResponse,
+  PortalUpdatesSummaryResponse,
+  PortalUpdateItem,
+  PortalUpdateType,
+} from './portalUpdates.types'
+export { portalUpdateTypes } from './portalUpdates.types'
 export {
   portalLoginFormSchema,
   type PortalLoginFormValues,
@@ -78,3 +92,7 @@ export {
   portalDocumentUploadFormSchema,
   toPortalDocumentUploadInput,
 } from './portalDocuments.validation'
+export {
+  portalUpdateTypeFilterSchema,
+  type PortalUpdateTypeFilterValues,
+} from './portalUpdates.validation'

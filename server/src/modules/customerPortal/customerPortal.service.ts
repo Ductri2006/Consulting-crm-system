@@ -44,6 +44,10 @@ import {
   type PortalDocumentListResult,
   type PortalDocumentUploadFile,
   type PortalDocumentUploadInput,
+  type PortalUpdateItem,
+  type PortalUpdatesQuery,
+  type PortalUpdatesResult,
+  type PortalUpdatesSummaryResult,
   type PortalAccountMutationResult,
   type PortalLoginInput,
   type PortalLoginResult,
@@ -158,6 +162,12 @@ const safePortalTaskSelect = {
   deadline: true,
   updatedAt: true,
 } satisfies Prisma.TaskSelect;
+
+const portalUpdateCaseSelect = {
+  id: true,
+  caseCode: true,
+  title: true,
+} satisfies Prisma.CaseProfileSelect;
 
 const safePortalCaseBaseSelect = {
   id: true,
@@ -721,6 +731,370 @@ export const getPortalCaseById = async (
       deadline: task.deadline,
       updatedAt: task.updatedAt,
     })),
+  };
+};
+
+type PortalUpdateSourceResult = {
+  items: PortalUpdateItem[];
+  total: number;
+};
+
+const getPortalUpdateFetchLimit = (query: PortalUpdatesQuery): number => {
+  const pagination = getPagination(query.page, query.limit);
+
+  return Math.min(pagination.skip + pagination.take, 1_000);
+};
+
+const sortPortalUpdates = (
+  items: PortalUpdateItem[],
+): PortalUpdateItem[] =>
+  items.sort((first, second) => {
+    const dateDelta =
+      second.occurredAt.getTime() - first.occurredAt.getTime();
+
+    return dateDelta === 0
+      ? second.id.localeCompare(first.id)
+      : dateDelta;
+  });
+
+const slicePortalUpdates = (
+  items: PortalUpdateItem[],
+  query: PortalUpdatesQuery,
+): PortalUpdateItem[] => {
+  const pagination = getPagination(query.page, query.limit);
+
+  return items.slice(pagination.skip, pagination.skip + pagination.take);
+};
+
+const isPortalUpdateTypeEnabled = (
+  query: PortalUpdatesQuery,
+  type: PortalUpdateItem["type"],
+): boolean => !query.type || query.type === type;
+
+const getPortalUpdateCaseWhere = (
+  session: PortalSession,
+  caseId?: string,
+): Prisma.CaseProfileWhereInput => ({
+  ...getPortalCaseScope(session),
+  ...(caseId && { id: caseId }),
+});
+
+const assertPortalUpdateCaseScope = async (
+  session: PortalSession,
+  caseId?: string,
+): Promise<void> => {
+  if (!caseId) {
+    return;
+  }
+
+  const caseProfile = await prisma.caseProfile.findFirst({
+    where: getPortalUpdateCaseWhere(session, caseId),
+    select: { id: true },
+  });
+
+  if (!caseProfile) {
+    throw new AppError("Case profile not found.", HTTP_STATUS.NOT_FOUND);
+  }
+};
+
+const listPortalCaseUpdates = async (
+  query: PortalUpdatesQuery,
+  session: PortalSession,
+): Promise<PortalUpdateSourceResult> => {
+  if (!isPortalUpdateTypeEnabled(query, "CASE")) {
+    return { items: [], total: 0 };
+  }
+
+  const where: Prisma.CaseHistoryWhereInput = {
+    organizationId: session.portalAccount.organizationId,
+    caseProfile: {
+      is: getPortalUpdateCaseWhere(session, query.caseId),
+    },
+  };
+  const [histories, total] = await prisma.$transaction([
+    prisma.caseHistory.findMany({
+      where,
+      select: {
+        id: true,
+        action: true,
+        oldStatus: true,
+        newStatus: true,
+        createdAt: true,
+        caseProfile: {
+          select: portalUpdateCaseSelect,
+        },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: getPortalUpdateFetchLimit(query),
+    }),
+    prisma.caseHistory.count({ where }),
+  ]);
+
+  return {
+    total,
+    items: histories.map((history) => {
+      const action =
+        history.oldStatus && history.newStatus
+          ? "CASE_STATUS_UPDATED"
+          : history.action;
+
+      return {
+        id: `case:${history.id}`,
+        type: "CASE",
+        title:
+          action === "CASE_STATUS_UPDATED"
+            ? "Case status updated"
+            : "Case timeline updated",
+        description: formatPortalTimelineDescription(
+          history.action,
+          history.oldStatus,
+          history.newStatus,
+        ),
+        occurredAt: history.createdAt,
+        entityType: "CaseProfile",
+        entityId: history.caseProfile.id,
+        caseProfile: history.caseProfile,
+        action,
+      };
+    }),
+  };
+};
+
+const listPortalAppointmentUpdates = async (
+  query: PortalUpdatesQuery,
+  session: PortalSession,
+): Promise<PortalUpdateSourceResult> => {
+  if (!isPortalUpdateTypeEnabled(query, "APPOINTMENT")) {
+    return { items: [], total: 0 };
+  }
+
+  const where: Prisma.AppointmentWhereInput = {
+    organizationId: session.portalAccount.organizationId,
+    customerId: session.portalAccount.customerId,
+    ...(query.caseId && { caseProfileId: query.caseId }),
+  };
+  const [appointments, total] = await prisma.$transaction([
+    prisma.appointment.findMany({
+      where,
+      select: {
+        id: true,
+        appointmentDate: true,
+        startTime: true,
+        createdAt: true,
+        caseProfile: {
+          select: portalUpdateCaseSelect,
+        },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: getPortalUpdateFetchLimit(query),
+    }),
+    prisma.appointment.count({ where }),
+  ]);
+
+  return {
+    total,
+    items: appointments.map((appointment) => ({
+      id: `appointment:${appointment.id}`,
+      type: "APPOINTMENT",
+      title: "Appointment scheduled",
+      description: `Appointment scheduled for ${appointment.appointmentDate.toISOString().slice(0, 10)} at ${appointment.startTime}.`,
+      occurredAt: appointment.createdAt,
+      entityType: "Appointment",
+      entityId: appointment.id,
+      caseProfile: appointment.caseProfile,
+      action: "APPOINTMENT_CREATED",
+    })),
+  };
+};
+
+const listPortalDocumentUpdates = async (
+  query: PortalUpdatesQuery,
+  session: PortalSession,
+): Promise<PortalUpdateSourceResult> => {
+  if (!isPortalUpdateTypeEnabled(query, "DOCUMENT")) {
+    return { items: [], total: 0 };
+  }
+
+  const where: Prisma.DocumentWhereInput = {
+    organizationId: session.portalAccount.organizationId,
+    customerId: session.portalAccount.customerId,
+    visibility: DocumentVisibility.CUSTOMER_VISIBLE,
+    ...(query.caseId && { caseProfileId: query.caseId }),
+  };
+  const [documents, total] = await prisma.$transaction([
+    prisma.document.findMany({
+      where,
+      select: {
+        id: true,
+        fileName: true,
+        source: true,
+        createdAt: true,
+        caseProfile: {
+          select: portalUpdateCaseSelect,
+        },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: getPortalUpdateFetchLimit(query),
+    }),
+    prisma.document.count({ where }),
+  ]);
+
+  return {
+    total,
+    items: documents.map((document) => {
+      const customerUploaded =
+        document.source === DocumentSource.CUSTOMER_PORTAL;
+
+      return {
+        id: `document:${document.id}`,
+        type: "DOCUMENT",
+        title: customerUploaded
+          ? "Your document was received"
+          : "A document is now available",
+        description: customerUploaded
+          ? "Your workspace team received your document."
+          : "A document was shared with you.",
+        occurredAt: document.createdAt,
+        entityType: "Document",
+        entityId: document.id,
+        caseProfile: document.caseProfile,
+        action: customerUploaded
+          ? "CUSTOMER_PORTAL_DOCUMENT_UPLOADED"
+          : "DOCUMENT_AVAILABLE",
+      };
+    }),
+  };
+};
+
+const listPortalDocumentDownloadUpdates = async (
+  query: PortalUpdatesQuery,
+  session: PortalSession,
+): Promise<PortalUpdateSourceResult> => {
+  if (!isPortalUpdateTypeEnabled(query, "DOCUMENT")) {
+    return { items: [], total: 0 };
+  }
+
+  const where: Prisma.DocumentDownloadAuditWhereInput = {
+    organizationId: session.portalAccount.organizationId,
+    customerId: session.portalAccount.customerId,
+    actorPortalAccountId: session.portalAccount.id,
+    document: {
+      is: {
+        organizationId: session.portalAccount.organizationId,
+        customerId: session.portalAccount.customerId,
+        visibility: DocumentVisibility.CUSTOMER_VISIBLE,
+        ...(query.caseId && { caseProfileId: query.caseId }),
+      },
+    },
+  };
+  const [downloads, total] = await prisma.$transaction([
+    prisma.documentDownloadAudit.findMany({
+      where,
+      select: {
+        id: true,
+        documentId: true,
+        createdAt: true,
+        document: {
+          select: {
+            caseProfile: {
+              select: portalUpdateCaseSelect,
+            },
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: getPortalUpdateFetchLimit(query),
+    }),
+    prisma.documentDownloadAudit.count({ where }),
+  ]);
+
+  return {
+    total,
+    items: downloads.map((download) => ({
+      id: `document-download:${download.id}`,
+      type: "DOCUMENT",
+      title: "Document downloaded",
+      description: "A portal document download was completed.",
+      occurredAt: download.createdAt,
+      entityType: "Document",
+      entityId: download.documentId,
+      caseProfile: download.document.caseProfile,
+      action: "DOCUMENT_DOWNLOADED",
+    })),
+  };
+};
+
+const listPortalAccountUpdates = (
+  query: PortalUpdatesQuery,
+  session: PortalSession,
+): PortalUpdateSourceResult => {
+  if (query.caseId || !isPortalUpdateTypeEnabled(query, "ACCOUNT")) {
+    return { items: [], total: 0 };
+  }
+
+  return {
+    total: 1,
+    items: [
+      {
+        id: `account:${session.portalAccount.id}`,
+        type: "ACCOUNT",
+        title: "Portal account ready",
+        description: "Your customer portal account is active.",
+        occurredAt: session.portalAccount.createdAt,
+        entityType: "CustomerPortalAccount",
+        entityId: session.portalAccount.id,
+        caseProfile: null,
+        action: "PORTAL_ACCOUNT_CREATED",
+      },
+    ],
+  };
+};
+
+const listPortalUpdateSources = async (
+  query: PortalUpdatesQuery,
+  session: PortalSession,
+) => {
+  await assertPortalUpdateCaseScope(session, query.caseId);
+
+  const sources = await Promise.all([
+    listPortalCaseUpdates(query, session),
+    listPortalAppointmentUpdates(query, session),
+    listPortalDocumentUpdates(query, session),
+    listPortalDocumentDownloadUpdates(query, session),
+  ]);
+  const accountUpdates = listPortalAccountUpdates(query, session);
+  const allSources = [...sources, accountUpdates];
+
+  return {
+    items: allSources.flatMap((source) => source.items),
+    total: allSources.reduce((sum, source) => sum + source.total, 0),
+  };
+};
+
+export const listPortalUpdates = async (
+  query: PortalUpdatesQuery,
+  session: PortalSession,
+): Promise<PortalUpdatesResult> => {
+  const { items, total } = await listPortalUpdateSources(query, session);
+
+  return {
+    items: slicePortalUpdates(sortPortalUpdates(items), query),
+    meta: createPaginationMeta(query.page, query.limit, total),
+  };
+};
+
+export const getPortalUpdatesSummary = async (
+  session: PortalSession,
+): Promise<PortalUpdatesSummaryResult> => {
+  const updates = await listPortalUpdates(
+    { page: 1, limit: 5 },
+    session,
+  );
+
+  return {
+    totalUpdates: updates.meta.total,
+    latestUpdateAt: updates.items[0]?.occurredAt ?? null,
+    recentUpdates: updates.items,
   };
 };
 

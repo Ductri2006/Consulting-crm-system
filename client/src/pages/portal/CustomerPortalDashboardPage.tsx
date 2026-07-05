@@ -1,4 +1,5 @@
 import {
+  Bell,
   BriefcaseBusiness,
   CalendarClock,
   CheckCircle2,
@@ -17,9 +18,13 @@ import { Link } from 'react-router-dom'
 import {
   getPortalCaseSummary,
   getPortalProfile,
+  getPortalUpdateDescription,
+  getPortalUpdatesSummary,
   type PortalCaseSummary,
   type PortalCaseSummaryResponse,
   type PortalProfileData,
+  type PortalUpdateItem,
+  type PortalUpdatesSummaryResponse,
   usePortalAuth,
 } from '../../features/customerPortal'
 import {
@@ -30,6 +35,7 @@ import {
   formatPortalDate,
   formatPortalDateTime,
 } from '../../features/customerPortal/portalCases.format'
+import { getStatusLabel } from '../../i18n/statusLabels'
 
 function InfoRow({
   icon,
@@ -134,12 +140,54 @@ function RecentCaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
   )
 }
 
+function RecentUpdateCard({ update }: { update: PortalUpdateItem }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="flex gap-3">
+        <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
+          <Bell className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            <p className="text-sm font-bold text-slate-950">
+              {update.action
+                ? getStatusLabel(t, 'portalUpdateAction', update.action)
+                : update.title}
+            </p>
+            <time
+              className="shrink-0 text-xs font-semibold text-slate-400"
+              dateTime={update.occurredAt}
+            >
+              {formatPortalDateTime(update.occurredAt)}
+            </time>
+          </div>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            {getPortalUpdateDescription(t, update)}
+          </p>
+          {update.caseProfile ? (
+            <Link
+              className="mt-2 inline-flex text-xs font-bold text-emerald-700 hover:text-emerald-800"
+              to={`/portal/cases/${update.caseProfile.id}`}
+            >
+              {update.caseProfile.caseCode} - {update.caseProfile.title}
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function CustomerPortalDashboardPage() {
   const { t } = useTranslation()
   const { session } = usePortalAuth()
   const [profile, setProfile] = useState<PortalProfileData | null>(null)
   const [caseSummary, setCaseSummary] =
     useState<PortalCaseSummaryResponse | null>(null)
+  const [updatesSummary, setUpdatesSummary] =
+    useState<PortalUpdatesSummaryResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
@@ -148,12 +196,14 @@ export function CustomerPortalDashboardPage() {
     setLoadError(null)
 
     try {
-      const [nextProfile, nextCaseSummary] = await Promise.all([
+      const [nextProfile, nextCaseSummary, nextUpdatesSummary] = await Promise.all([
         getPortalProfile(),
         getPortalCaseSummary(),
+        getPortalUpdatesSummary(),
       ])
       setProfile(nextProfile)
       setCaseSummary(nextCaseSummary)
+      setUpdatesSummary(nextUpdatesSummary)
     } catch (error) {
       setLoadError(
         error instanceof Error
@@ -246,6 +296,37 @@ export function CustomerPortalDashboardPage() {
           label={t('portal.dashboard.upcomingAppointments')}
           value={caseSummary?.upcomingAppointments ?? 0}
         />
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-950">
+              {t('portal.updates.recentUpdates')}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {t('portal.updates.recentDescription')}
+            </p>
+          </div>
+          <Link
+            className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg bg-emerald-600 px-3 text-sm font-bold text-white transition hover:bg-emerald-700 sm:self-auto"
+            to="/portal/updates"
+          >
+            <Bell className="h-4 w-4" aria-hidden="true" />
+            {t('portal.updates.viewAll')}
+          </Link>
+        </div>
+        {updatesSummary?.recentUpdates.length ? (
+          <div className="mt-5 grid gap-3">
+            {updatesSummary.recentUpdates.map((update) => (
+              <RecentUpdateCard key={update.id} update={update} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
+            {t('portal.updates.emptyTitle')}
+          </p>
+        )}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">

@@ -18,6 +18,7 @@ import { Link, useParams } from 'react-router-dom'
 import {
   downloadPortalDocument,
   getPortalCase,
+  getPortalUpdateDescription,
   type PortalCaseDetail,
   type PortalDocumentMetadata,
 } from '../../features/customerPortal'
@@ -29,7 +30,6 @@ import {
   formatPortalDate,
   formatPortalDateTime,
   formatPortalFileSize,
-  formatPortalLabel,
 } from '../../features/customerPortal/portalCases.format'
 import { getStatusLabel } from '../../i18n/statusLabels'
 
@@ -311,21 +311,48 @@ export function CustomerPortalCaseDetailPage() {
           ) : (
             <ol className="mt-5 space-y-4">
               {caseDetail.timeline.map((item) => (
-                <li className="flex gap-3" key={item.id}>
-                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900">
-                      {item.description ?? formatPortalLabel(item.action)}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">
-                      {formatPortalDateTime(item.createdAt)}
-                      {item.user
-                        ? t('portal.caseDetail.byUser', {
-                            defaultValue: ' by {{name}}',
-                            name: item.user.fullName,
-                          })
-                        : ''}
-                    </p>
+                <li className="flex gap-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4" key={item.id}>
+                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
+                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          {getStatusLabel(t, 'portalUpdateAction', item.action)}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                          {getPortalUpdateDescription(t, item)}
+                        </p>
+                      </div>
+                      <time
+                        className="shrink-0 text-xs font-semibold text-slate-400"
+                        dateTime={item.createdAt}
+                      >
+                        {formatPortalDateTime(item.createdAt)}
+                      </time>
+                    </div>
+                    {item.newStatus ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {item.oldStatus ? (
+                          <PortalStatusBadge status={item.oldStatus} />
+                        ) : null}
+                        {item.oldStatus ? (
+                          <span className="text-xs font-bold text-slate-300">
+                            -&gt;
+                          </span>
+                        ) : null}
+                        <PortalStatusBadge status={item.newStatus} />
+                      </div>
+                    ) : null}
+                    {item.user ? (
+                      <p className="mt-3 text-xs font-semibold text-slate-400">
+                        {t('portal.caseDetail.byUser', {
+                          defaultValue: 'By {{name}}',
+                          name: item.user.fullName,
+                        })}
+                      </p>
+                    ) : null}
                   </div>
                 </li>
               ))}

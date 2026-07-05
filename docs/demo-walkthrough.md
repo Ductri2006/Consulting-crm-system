@@ -67,7 +67,8 @@ existing customers by an internal Admin or Manager.
 Step 28.5 adds bilingual English/Vietnamese UI support. Step 29 adds customer
 portal documents with portal-authenticated list, upload, and download. Step
 29.5 adds configurable local/S3 storage, scan/OCR status, and download audit
-logging. The
+logging. Step 30 adds an Admin/Manager Activity Center and customer-safe Portal
+Updates. The
 selected language is stored in local storage as `advisora_locale`. The language
 switcher appears in the public layout, admin surfaces, and customer portal
 surfaces. Database content and user-generated values such as customer names,
@@ -301,7 +302,7 @@ Show:
 Admin demo flow:
 
 1. Login with the demo admin only when admin access is appropriate.
-2. View dashboard metrics and recent activity.
+2. View dashboard metrics, recent activity, and the Activity Center entry point.
 3. Check consultation requests.
 4. Open cases and inspect status coverage.
 5. Manage internal team members.
@@ -454,6 +455,8 @@ Show:
 - Confirm the portal case detail shows safe overview, timeline, appointments,
   portal-visible document metadata/download actions, and task summary without
   edit, delete, assign, or status-update actions.
+- Open `/portal/updates` and confirm the feed shows only this customer's case,
+  appointment, document, download, and account updates.
 - In admin `/admin/documents`, upload an internal document for the same
   customer/case and confirm it starts as Internal only.
 - Confirm the document is not visible from `/portal/documents` until an Admin or
@@ -622,14 +625,15 @@ Talk track:
   customer document upload/download; messages, billing, and self-registration
   remain future work.
 - Bilingual UI focuses on core UI, navigation, login flows, common actions,
-  status labels, and portal case tracking. Backend API response localization,
-  email template localization, and user-generated content translation remain
-  future work.
+  status labels, activity labels, portal updates, and portal case tracking.
+  Backend API response localization, email template localization, and
+  user-generated content translation remain future work.
 - No live OCR/scanner infrastructure or production object-storage credentials
   are committed.
 - No public CMS APIs for news/projects yet.
 - No report exports yet.
-- No realtime updates yet.
+- No realtime websocket, push notification, or notification preference system
+  yet.
 - No production rate limiting, captcha, centralized monitoring, or alerting yet.
 - No automated end-to-end test suite yet.
 

@@ -1,4 +1,5 @@
 import {
+  Bell,
   BriefcaseBusiness,
   FileText,
   LayoutDashboard,
@@ -26,6 +27,11 @@ const portalNavItems = [
     href: '/portal/documents',
     labelKey: 'documents',
     icon: FileText,
+  },
+  {
+    href: '/portal/updates',
+    labelKey: 'updates',
+    icon: Bell,
   },
 ]
 

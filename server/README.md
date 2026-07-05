@@ -288,9 +288,9 @@ create, password reset, deactivate, and activate actions without storing raw
 passwords.
 
 Step 28 adds read-only portal case tracking. Step 29 adds customer portal
-documents. These endpoints require a portal token and scope every query by the
-portal account's `organizationId` and `customerId`; the client cannot override
-either value.
+documents, and Step 30 adds customer-safe portal updates. These endpoints
+require a portal token and scope every query by the portal account's
+`organizationId` and `customerId`; the client cannot override either value.
 
 ```http
 GET /api/portal/cases/summary
@@ -315,6 +315,13 @@ them. Customer portal uploads are stored as `source=CUSTOMER_PORTAL` and
 organization and customer. Portal download checks database ownership and
 visibility before streaming the local file and returns a generic `404` for
 out-of-scope documents.
+
+Portal updates use `/api/portal/updates` and `/api/portal/updates/summary`.
+They are normalized from safe case-history status/action fields, appointments,
+customer-visible documents, current portal-account download audits, and account
+readiness. They do not expose raw internal `ActivityLog` rows, internal notes,
+staff contact details, storage metadata, token hashes, password hashes, IP
+addresses, or user-agent data.
 
 ## Workspace signup
 
@@ -891,6 +898,31 @@ before streaming the object. Each successful stream writes a
 `DocumentDownloadAudit` row and updates `downloadCount` plus
 `lastDownloadedAt`.
 
+### Activity Center
+
+Step 30 adds `/api/activity` for the internal Admin/Manager Activity Center.
+The route uses internal JWT auth and `ADMIN`/`MANAGER` authorization; `STAFF`
+users are blocked from this audit surface. Clients cannot pass an
+`organizationId`; every source query is scoped to `request.user.organizationId`.
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/activity` | `ADMIN`, `MANAGER` |
+| `GET` | `/api/activity/summary` | `ADMIN`, `MANAGER` |
+
+`GET /api/activity` supports `page`, `limit` up to 100, `action`,
+`entityType`, `actorUserId`, `search`, `fromDate`, `toDate`, and `sort`
+(`newest` or `oldest`). It normalizes safe activity items from `ActivityLog`,
+`CaseHistory`, `Appointment`, `Task`, `Document`, and `DocumentDownloadAudit`.
+Responses include safe actor summary, action, entity type/id, description, and
+timestamp. Descriptions are sanitized to avoid returning tokens, passwords,
+secrets, storage keys, signed URLs, raw upload paths, or local file paths.
+
+`GET /api/activity/summary` returns today's total, case/document/portal event
+counts, and the latest five normalized activity items. The Activity Center is
+read-only; Step 30 does not add realtime websocket, push notifications, email
+notification automation, or notification preferences.
+
 ### Dashboard and reporting
 
 All dashboard routes require an access token:
@@ -935,11 +967,10 @@ provided. It reports assigned and completed cases, completed tasks, and
 completed appointments for active CRM users, ordered by completion metrics.
 This endpoint is restricted to administrators and managers.
 
-`recent-activities` accepts `limit` up to 50 (default 10). Recent activity is
-currently based on case-history records because general activity logging is
-not yet populated consistently. Administrators and managers receive all case
-history; staff receive history only for cases assigned to them. Each item
-contains safe actor and basic case-profile information.
+`recent-activities` accepts `limit` up to 50 (default 10). The dashboard helper
+remains scoped by role and case assignment. Step 30's broader Admin/Manager
+Activity Center is available separately through `/api/activity` and the
+`/admin/activity` frontend page.
 
 ## Prisma commands
 
@@ -1098,11 +1129,14 @@ adds bilingual UI support, and Step 29 adds customer portal document listing,
 upload, protected download, and admin-controlled customer visibility. Step 29.5
 adds local/S3-compatible storage providers, malware/OCR abstractions,
 scan-based download blocking, protected streaming downloads, and download audit
-logging. The
+logging. Step 30 adds an Admin/Manager Activity Center and customer-safe Portal
+Updates built from existing audit, case, appointment, document, download, and
+portal account data without exposing internal notes or storage/secret fields.
+The
 repository also includes production readiness, deployment, and final QA
 documentation. It does not include request-to-customer conversion, configured
-live scanner/OCR infrastructure, report exports, realtime updates, or real
-production deployment.
+live scanner/OCR infrastructure, report exports, realtime/push notifications,
+or real production deployment.
 
 ## Future phases
 
@@ -1110,7 +1144,8 @@ production deployment.
 - Customer self-service profile updates
 - Consultation-request conversion
 - Live OCR/scanner infrastructure and production object-storage operations
-- Extended activity auditing and case-history retention policies
+- Realtime notifications, notification preferences, and activity retention
+  policies
 - Public news and project content APIs
 - Rate limiting, abuse protection, private file storage, and production observability
 - Custom database checks for document ownership and other cross-field rules documented in `../docs/database-design.md`

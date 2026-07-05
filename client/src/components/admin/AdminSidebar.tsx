@@ -1,4 +1,5 @@
 import {
+  Activity,
   BarChart3,
   CalendarDays,
   ClipboardCheck,
@@ -28,6 +29,13 @@ interface NavigationItem {
 
 const navigation: readonly NavigationItem[] = [
   { labelKey: 'dashboard', icon: LayoutDashboard, to: '/admin/dashboard', active: true },
+  {
+    labelKey: 'activity',
+    icon: Activity,
+    to: '/admin/activity',
+    active: true,
+    allowedRoles: ['ADMIN', 'MANAGER'],
+  },
   { labelKey: 'customers', icon: UsersRound, to: '/admin/customers', active: true },
   {
     labelKey: 'consultationRequests',

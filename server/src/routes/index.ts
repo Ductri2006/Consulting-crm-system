@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { activityRouter } from "../modules/activity/activity.routes";
 import { appointmentRouter } from "../modules/appointments/appointment.routes";
 import { authRouter } from "../modules/auth/auth.routes";
 import { caseRouter } from "../modules/cases/case.routes";
@@ -46,5 +47,6 @@ apiRouter.use("/appointments", appointmentRouter);
 apiRouter.use("/tasks", taskRouter);
 apiRouter.use("/documents", documentRouter);
 apiRouter.use("/dashboard", dashboardRouter);
+apiRouter.use("/activity", activityRouter);
 
 export { apiRouter };

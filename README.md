@@ -13,6 +13,7 @@ tenant boundary; the current staging/demo path uses a single default workspace.
 Step 29 adds Customer Portal Documents. Step 29.5 hardens document storage with
 a local/S3-compatible provider abstraction, protected streaming downloads,
 malware-scan and OCR provider abstractions, and per-download audit logging.
+Step 30 adds an internal Activity Center plus customer-safe Portal Updates.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -69,6 +70,8 @@ This project addresses that need with a centralized platform that connects publi
 - Confirmation after a successful submission
 - Customer portal login, dashboard, case tracking, and document upload/download
 - Portal document metadata and protected download for allowed customer files
+- Customer-safe recent updates for their own cases, appointments, documents,
+  and portal account
 
 ### CRM Management
 
@@ -96,7 +99,7 @@ This project addresses that need with a centralized platform that connects publi
 - Task creation and assignment
 - Daily, weekly, and monthly reports
 - Staff performance tracking
-- User activity logs
+- Organization-scoped Activity Center for Admin and Manager review
 - Customer portal account access controls for existing customers
 
 ### Document Management
@@ -117,6 +120,7 @@ This project addresses that need with a centralized platform that connects publi
 - Monthly operational reports
 - Staff performance reports
 - Recent system activity
+- Activity Center entry point for workspace audit review
 
 ## User Roles
 
@@ -162,6 +166,7 @@ Customer portal accounts are separate from internal CRM users. They can:
 - View related appointment details and allowed document metadata
 - Upload supporting documents for their own customer record or cases
 - Download customer-visible documents through the portal download route
+- View recent portal updates scoped to their own customer record
 
 Self-service profile updates remain future work.
 
@@ -181,11 +186,11 @@ The platform is divided into the following functional modules:
 | Document Management | Stores metadata and links files to customers and cases |
 | User Management | Maintains staff accounts, roles, and active status |
 | Organization Workspace | Scopes internal users and CRM business data by workspace |
-| Customer Portal | Lets existing customers view their own read-only case status, appointments, and document metadata |
+| Customer Portal | Lets existing customers view their own read-only case status, appointments, document metadata, downloads, and safe updates |
 | Bilingual UI | Provides English/Vietnamese resources, language switching, locale storage, and localized status/date helpers for core UI surfaces |
 | Public Content Catalog | Uses typed local content for services, news, and project gallery pages |
 | Dashboard and Reporting | Summarizes workload, performance, appointments, and deadlines |
-| Activity Logging | Records important user actions for traceability |
+| Activity Logging | Records important user actions and powers the Admin/Manager Activity Center |
 
 For a detailed breakdown, see [System Module Breakdown](docs/module-breakdown.md).
 
@@ -598,14 +603,16 @@ See the [Development Roadmap](docs/development-roadmap.md) for the complete phas
   sending requires provider secrets configured outside the repository.
 - The customer portal currently supports login, session restore, dashboard,
   profile/account summary, internal access controls, read-only case tracking,
-  and customer document upload/download for the authenticated customer.
+  customer document upload/download, and customer-safe recent updates for the
+  authenticated customer.
 - Bilingual UI currently focuses on core navigation, layout chrome, login
   flows, status labels, and portal case tracking. Backend API response
   localization, email template localization, and translation of user-generated
   database content remain future work.
 - No customer self-registration, billing, live OCR/scanner infrastructure,
-  configured production object-storage credentials, report exports, realtime
-  updates, production-grade rate limiting, or centralized observability yet.
+  configured production object-storage credentials, report exports, realtime or
+  push notifications, production-grade rate limiting, or centralized
+  observability yet.
 
 ## Learning Goals
 
@@ -656,11 +663,12 @@ This project is designed to practice:
 - [x] Bilingual English/Vietnamese UI
 - [x] Customer portal documents
 - [x] Production document storage and security hardening
+- [x] Activity Center and Portal Updates
 - [ ] Production deployment
 
 ## Repository Status
 
-**Current phase:** Step 29.5 complete - Production Document Storage & Security Hardening
+**Current phase:** Step 30 complete - Activity Center and Portal Updates
 
 The public website and core CRM backend now cover authentication, customers,
 services, consultation requests, case workflows, appointments, tasks, and
@@ -754,9 +762,20 @@ responses never expose `fileUrl`, raw storage paths, or internal-only documents,
 and every portal document query is scoped by `organizationId`, `customerId`, and
 case ownership when a document is case-linked.
 Step 29.5 adds a document storage provider layer with local default and
-S3-compatible private object storage support, protected API streaming for
-downloads, malware scanner and OCR abstractions with disabled/mock providers,
-scan-based download blocking, OCR previews for admin review, and
-`DocumentDownloadAudit` records plus `downloadCount`/`lastDownloadedAt`.
-Portal responses still never expose `fileUrl`, `storageKey`, bucket, object key,
-or local paths.
+  S3-compatible private object storage support, protected API streaming for
+  downloads, malware scanner and OCR abstractions with disabled/mock providers,
+  scan-based download blocking, OCR previews for admin review, and
+  `DocumentDownloadAudit` records plus `downloadCount`/`lastDownloadedAt`.
+  Portal responses still never expose `fileUrl`, `storageKey`, bucket, object key,
+  or local paths.
+Step 30 adds Activity Center and Portal Updates. Admins and Managers can open
+`/admin/activity` and call `/api/activity` for an organization-scoped activity
+feed with filters, summary metrics, search, date range, sort, and pagination.
+Staff are blocked from this internal audit surface. Portal customers can open
+`/portal/updates` and call `/api/portal/updates` for a customer-scoped feed
+built from safe case history, appointment, document, download, and account
+events. Portal update responses do not expose internal notes, raw ActivityLog
+descriptions, `fileUrl`, storage keys, object keys, bucket names, signed URLs,
+password hashes, token hashes, IP addresses, or user-agent data. Step 30 does
+not add realtime websocket, push notification, email automation, or notification
+preference features.
