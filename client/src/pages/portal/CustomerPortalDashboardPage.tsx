@@ -15,6 +15,7 @@ import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { ErrorState, LoadingState } from '../../components/admin'
 import {
   getPortalCaseSummary,
   getPortalProfile,
@@ -124,7 +125,7 @@ function RecentCaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
           <p className="font-mono text-sm font-bold text-emerald-700">
             {caseProfile.caseCode}
           </p>
-          <h3 className="mt-2 text-sm font-bold text-slate-950">
+          <h3 className="mt-2 break-words text-sm font-bold text-slate-950">
             {caseProfile.title}
           </h3>
           <p className="mt-1 text-xs font-semibold text-slate-500">
@@ -168,7 +169,7 @@ function RecentUpdateCard({ update }: { update: PortalUpdateItem }) {
           </p>
           {update.caseProfile ? (
             <Link
-              className="mt-2 inline-flex text-xs font-bold text-emerald-700 hover:text-emerald-800"
+              className="mt-2 inline-flex break-words text-xs font-bold text-emerald-700 hover:text-emerald-800"
               to={`/portal/cases/${update.caseProfile.id}`}
             >
               {update.caseProfile.caseCode} - {update.caseProfile.title}
@@ -206,11 +207,7 @@ export function CustomerPortalDashboardPage() {
       setUpdatesSummary(nextUpdatesSummary)
     } catch (error) {
       setLoadError(
-        error instanceof Error
-          ? error.message
-          : t('portal.dashboard.loadError', {
-              defaultValue: 'Customer portal data could not be loaded.',
-            }),
+        error instanceof Error ? error.message : t('portal.dashboard.loadError'),
       )
     } finally {
       setIsLoading(false)
@@ -221,15 +218,29 @@ export function CustomerPortalDashboardPage() {
     void loadPortalData()
   }, [loadPortalData])
 
+  const hasLoadedPortalData = Boolean(profile && caseSummary && updatesSummary)
+
+  if (isLoading && !hasLoadedPortalData) {
+    return <LoadingState hint={null} label={t('portal.dashboard.loading')} />
+  }
+
+  if (loadError && !hasLoadedPortalData) {
+    return (
+      <ErrorState
+        description={loadError}
+        onRetry={() => void loadPortalData()}
+        title={t('portal.dashboard.loadErrorTitle')}
+      />
+    )
+  }
+
   const data = profile ?? session
 
   if (!data) {
     return (
       <div className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
         <p className="text-sm font-semibold text-slate-600">
-          {t('portal.dashboard.portalSessionUnavailable', {
-            defaultValue: 'Portal session is not available.',
-          })}
+          {t('portal.dashboard.portalSessionUnavailable')}
         </p>
       </div>
     )
@@ -243,7 +254,7 @@ export function CustomerPortalDashboardPage() {
             <p className="text-sm font-bold text-emerald-700">
               {data.organization.name}
             </p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">
+            <h1 className="mt-2 break-words text-2xl font-bold text-slate-950 sm:text-3xl">
               {t('portal.dashboard.title', { name: data.customer.fullName })}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
@@ -476,9 +487,7 @@ export function CustomerPortalDashboardPage() {
         />
         <ComingSoonItem
           icon={<MessageSquareText className="h-5 w-5" aria-hidden="true" />}
-          title={t('portal.dashboard.messages', {
-            defaultValue: 'Messages',
-          })}
+          title={t('portal.dashboard.messages')}
           description={t('portal.dashboard.messagesFuture')}
         />
       </section>

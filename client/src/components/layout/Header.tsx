@@ -58,7 +58,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
-      <Container className="flex h-18 items-center justify-between gap-6 py-3">
+      <Container className="flex h-[4.5rem] items-center justify-between gap-6 py-3">
         <Link
           aria-label={t('navigation.home')}
           className="flex shrink-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"

@@ -1,6 +1,4 @@
 import {
-  AlertCircle,
-  BriefcaseBusiness,
   CalendarClock,
   ChevronLeft,
   ChevronRight,
@@ -14,7 +12,9 @@ import type { FormEvent } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { ErrorState, LoadingState } from '../../components/admin'
 import {
+  getPortalUpdateDescription,
   listPortalCases,
   portalCaseListFilterSchema,
   portalCaseStatuses,
@@ -31,6 +31,7 @@ import {
   formatPortalLabel,
 } from '../../features/customerPortal/portalCases.format'
 import { getStatusLabel } from '../../i18n/statusLabels'
+import { translateValidationMessage } from '../../i18n/validationMessages'
 
 const PAGE_SIZE = 10
 
@@ -58,7 +59,7 @@ function CaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
             <PortalStatusBadge status={caseProfile.status} />
             <PortalPriorityBadge priority={caseProfile.priority} />
           </div>
-          <h2 className="mt-3 text-lg font-bold text-slate-950">
+          <h2 className="mt-3 break-words text-lg font-bold text-slate-950">
             {caseProfile.title}
           </h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -110,7 +111,7 @@ function CaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
           <span className="font-bold text-slate-700">
             {t('portal.cases.latestActivity')}
           </span>{' '}
-          {caseProfile.latestActivity.description ??
+          {getPortalUpdateDescription(t, caseProfile.latestActivity) ||
             formatPortalLabel(caseProfile.latestActivity.action)}
         </div>
       ) : null}
@@ -147,9 +148,7 @@ export function CustomerPortalCasesPage() {
       setLoadError(
         getErrorMessage(
           error,
-          t('portal.cases.loadErrorFallback', {
-            defaultValue: 'Portal cases could not be loaded.',
-          }),
+          t('portal.cases.loadErrorFallback'),
         ),
       )
     } finally {
@@ -171,9 +170,7 @@ export function CustomerPortalCasesPage() {
     if (!parsed.success) {
       setFilterError(
         parsed.error.issues[0]?.message ??
-          t('portal.cases.invalidFilters', {
-            defaultValue: 'Invalid filters.',
-          }),
+          t('portal.cases.invalidFilters'),
       )
       return
     }
@@ -277,43 +274,20 @@ export function CustomerPortalCasesPage() {
           </button>
         </form>
         {filterError ? (
-          <p className="mt-3 text-sm font-semibold text-rose-700">
-            {filterError}
+          <p className="mt-3 text-sm font-semibold text-rose-700" role="alert">
+            {translateValidationMessage(t, filterError)}
           </p>
         ) : null}
       </section>
 
       {loadError && cases.length === 0 ? (
-        <section
-          className="grid min-h-72 place-items-center rounded-lg border border-rose-200 bg-rose-50 p-8 text-center"
-          role="alert"
-        >
-          <div>
-            <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
-            <h2 className="mt-4 font-bold text-slate-950">
-              {t('portal.cases.loadErrorTitle')}
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-rose-700">
-              {loadError}
-            </p>
-            <button
-              className="mt-5 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-bold text-white"
-              onClick={() => void loadCases()}
-              type="button"
-            >
-              {t('common.tryAgain')}
-            </button>
-          </div>
-        </section>
+        <ErrorState
+          description={loadError}
+          onRetry={() => void loadCases()}
+          title={t('portal.cases.loadErrorTitle')}
+        />
       ) : isLoading && cases.length === 0 ? (
-        <section className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
-          <div>
-            <BriefcaseBusiness className="mx-auto h-8 w-8 animate-pulse text-emerald-600" />
-            <p className="mt-4 text-sm font-bold text-slate-600">
-              {t('portal.cases.loading')}
-            </p>
-          </div>
-        </section>
+        <LoadingState hint={null} label={t('portal.cases.loading')} />
       ) : cases.length === 0 ? (
         <section className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
           <div>

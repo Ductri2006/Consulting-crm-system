@@ -62,8 +62,12 @@ export function PortalLayout() {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <nav className="flex flex-wrap items-center gap-1" aria-label="Portal">
+          <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center">
+            <nav
+              aria-label={t('navigation.portal')}
+              className="-mx-1 max-w-full overflow-x-auto px-1 pb-1"
+            >
+              <div className="flex min-w-max items-center gap-1">
               {portalNavItems.map((item) => {
                 const Icon = item.icon
 
@@ -85,16 +89,19 @@ export function PortalLayout() {
                   </NavLink>
                 )
               })}
+              </div>
             </nav>
-            <LanguageSwitcher compact />
-            <button
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
-              onClick={() => void handleLogout()}
-              type="button"
-            >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              {t('common.logout')}
-            </button>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <LanguageSwitcher compact />
+              <button
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                onClick={() => void handleLogout()}
+                type="button"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                {t('common.logout')}
+              </button>
+            </div>
           </div>
         </div>
       </header>

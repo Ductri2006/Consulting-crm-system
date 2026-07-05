@@ -1,5 +1,4 @@
 import {
-  Bell,
   BriefcaseBusiness,
   CalendarClock,
   FileText,
@@ -11,6 +10,7 @@ import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { ErrorState, LoadingState } from '../../components/admin'
 import {
   listPortalUpdates,
   getPortalUpdateDescription,
@@ -150,7 +150,7 @@ export function CustomerPortalUpdatesPage() {
         </div>
       </header>
 
-      {loadError ? (
+      {loadError && updates.items.length > 0 ? (
         <div
           className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
           role="alert"
@@ -182,15 +182,14 @@ export function CustomerPortalUpdatesPage() {
       </section>
 
       <section className="space-y-3">
-        {isLoading ? (
-          <div className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
-            <div>
-              <Bell className="mx-auto h-8 w-8 animate-pulse text-emerald-600" />
-              <p className="mt-4 text-sm font-bold text-slate-600">
-                {t('portal.updates.loading')}
-              </p>
-            </div>
-          </div>
+        {loadError && updates.items.length === 0 ? (
+          <ErrorState
+            description={loadError}
+            onRetry={() => void loadUpdates()}
+            title={t('portal.updates.loadErrorTitle')}
+          />
+        ) : isLoading ? (
+          <LoadingState hint={null} label={t('portal.updates.loading')} />
         ) : updates.items.length === 0 ? (
           <div className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
             <div>

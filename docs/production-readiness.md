@@ -1,10 +1,10 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System through Step 31. It documents staging demo hardening, the workspace
-tenant foundation, customer portal document security, activity feeds, and production
-gaps while keeping real provider URLs, credentials, and secrets out of the
-repository.
+System through Step 32. It documents staging demo hardening, the workspace
+tenant foundation, customer portal document security, activity feeds, and UI
+polish status while keeping real provider URLs, credentials, and secrets out of
+the repository.
 
 ## Current Production Readiness Status
 
@@ -44,6 +44,9 @@ accepted.
   configurable in-memory rate limiting, logging/error redaction, expanded audit
   coverage, tenant verification updates, and a read-only production smoke
   script.
+- Step 32 final UI/UX polish standardizes loading, empty, and error states,
+  responsive table/card behavior, accessible labels, and bilingual microcopy for
+  the demo path without changing backend API contracts or resetting data.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -85,6 +88,17 @@ Bilingual UI:
 - Core navigation, login flows, common actions, status labels, activity labels,
   portal update labels, and portal case-tracking labels are localized.
 - Database values and user-generated content are intentionally not translated.
+
+UI/UX polish:
+
+- Shared loading and page-level error states cover admin and portal initial
+  fetches.
+- Admin tables keep horizontal containment while allowing long customer-facing
+  values to wrap.
+- Portal dashboard, cases, documents, updates, and case detail views avoid
+  misleading zero-data flashes during initial loading.
+- Mobile navigation, retry actions, filter validation messages, and portal
+  document metadata labels are covered by bilingual resources.
 
 ## Required Environment Variables
 

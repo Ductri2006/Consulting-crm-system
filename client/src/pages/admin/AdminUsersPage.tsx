@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 import {
   DataTable,
   EmptyState,
+  ErrorState,
   LoadingState,
   Modal,
   Pagination,
@@ -1176,24 +1177,12 @@ export function AdminUsersPage() {
         </div>
 
         {loadError && members.length === 0 ? (
-          <div className="grid min-h-80 place-items-center p-8 text-center">
-            <div>
-              <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
-              <h2 className="mt-4 font-bold text-slate-900">
-                {t('admin.users.loadErrorTitle')}
-              </h2>
-              <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-                {loadError}
-              </p>
-              <button
-                className="mt-5 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white"
-                onClick={() => void loadMembers()}
-                type="button"
-              >
-                {t('common.tryAgain')}
-              </button>
-            </div>
-          </div>
+          <ErrorState
+            className="min-h-80 rounded-none border-0 shadow-none"
+            description={loadError}
+            onRetry={() => void loadMembers()}
+            title={t('admin.users.loadErrorTitle')}
+          />
         ) : isLoading && members.length === 0 ? (
           <LoadingState label={t('admin.users.loading')} />
         ) : members.length === 0 ? (

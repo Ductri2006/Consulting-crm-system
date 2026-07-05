@@ -16,6 +16,9 @@ malware-scan and OCR provider abstractions, and per-download audit logging.
 Step 30 adds an internal Activity Center plus customer-safe Portal Updates.
 Step 31 adds HTTP hardening, rate limiting, token-boundary review, audit
 coverage, security documentation, and production QA smoke preparation.
+Step 32 polishes loading, empty, and error states, responsive table/card
+behavior, accessibility labels, and bilingual admin/portal microcopy for the
+final demo pass.
 
 The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
 
@@ -62,6 +65,7 @@ This project addresses that need with a centralized platform that connects publi
 - Responsive layouts for desktop, tablet, and mobile
 - Basic SEO-friendly structure
 - English/Vietnamese language switcher in the public layout
+- Demo-ready responsive polish and consistent loading/empty/error states
 
 ### Customer Reception
 
@@ -190,6 +194,7 @@ The platform is divided into the following functional modules:
 | Organization Workspace | Scopes internal users and CRM business data by workspace |
 | Customer Portal | Lets existing customers view their own read-only case status, appointments, document metadata, downloads, and safe updates |
 | Bilingual UI | Provides English/Vietnamese resources, language switching, locale storage, and localized status/date helpers for core UI surfaces |
+| UI State Polish | Standardizes loading, empty, error, responsive, and accessibility behavior across public, admin, and portal surfaces |
 | Public Content Catalog | Uses typed local content for services, news, and project gallery pages |
 | Dashboard and Reporting | Summarizes workload, performance, appointments, and deadlines |
 | Activity Logging | Records important user actions and powers the Admin/Manager Activity Center |

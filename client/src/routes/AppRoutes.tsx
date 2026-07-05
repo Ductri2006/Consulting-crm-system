@@ -209,12 +209,14 @@ function PortalIndexRoute() {
   )
 }
 
+function RouteFallback() {
+  const { t } = useTranslation()
+
+  return <LoadingState hint={null} label={t('common.loadingPage')} />
+}
+
 function routeElement(element: ReactNode) {
-  return (
-    <Suspense fallback={<LoadingState label="Loading page..." />}>
-      {element}
-    </Suspense>
-  )
+  return <Suspense fallback={<RouteFallback />}>{element}</Suspense>
 }
 
 export function AppRoutes() {

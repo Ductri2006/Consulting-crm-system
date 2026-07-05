@@ -259,6 +259,7 @@ export function AdminActivityPage() {
             />
           </label>
           <select
+            aria-label={t('admin.activityCenter.allActions')}
             className="h-10 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             onChange={(event) => {
               setPage(1)
@@ -274,6 +275,7 @@ export function AdminActivityPage() {
             ))}
           </select>
           <select
+            aria-label={t('admin.activityCenter.allEntities')}
             className="h-10 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             onChange={(event) => {
               setPage(1)
@@ -289,6 +291,7 @@ export function AdminActivityPage() {
             ))}
           </select>
           <input
+            aria-label={t('admin.activityCenter.fromDate')}
             className="h-10 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             onChange={(event) => {
               setPage(1)
@@ -298,6 +301,7 @@ export function AdminActivityPage() {
             value={fromDate}
           />
           <input
+            aria-label={t('admin.activityCenter.toDate')}
             className="h-10 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             onChange={(event) => {
               setPage(1)

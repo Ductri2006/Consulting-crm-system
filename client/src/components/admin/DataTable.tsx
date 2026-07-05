@@ -23,8 +23,8 @@ export function DataTable<T>({
   caption,
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-slate-200">
+    <div className="max-w-full overflow-x-auto overscroll-x-contain">
+      <table className="min-w-full table-auto divide-y divide-slate-200">
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-slate-50/80">
           <tr>
@@ -51,7 +51,7 @@ export function DataTable<T>({
               {columns.map((column) => (
                 <td
                   className={cn(
-                    'whitespace-nowrap px-5 py-4 text-sm text-slate-600',
+                    'px-5 py-4 align-top text-sm text-slate-600 [overflow-wrap:anywhere]',
                     column.className,
                   )}
                   key={column.key}

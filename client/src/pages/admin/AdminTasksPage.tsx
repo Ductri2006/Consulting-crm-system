@@ -1045,7 +1045,7 @@ export function AdminTasksPage() {
           <EmptyState
             description={
               hasFilters
-                ? t('admin.appointments.emptyFiltered')
+                ? t('admin.tasks.emptyFiltered')
                 : t('admin.tasks.emptyDefault')
             }
             icon={<SearchX className="h-6 w-6" aria-hidden="true" />}
@@ -1061,7 +1061,7 @@ export function AdminTasksPage() {
                 role="alert"
               >
                 <span>
-                  {t('admin.appointments.refreshFailed', {
+                  {t('admin.tasks.refreshFailed', {
                     message: loadError,
                   })}
                 </span>
@@ -1070,7 +1070,7 @@ export function AdminTasksPage() {
                   onClick={() => void loadTasks()}
                   type="button"
                 >
-                  {t('admin.appointments.retry')}
+                  {t('common.tryAgain')}
                 </button>
               </div>
             ) : null}

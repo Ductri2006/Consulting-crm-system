@@ -338,6 +338,22 @@ testing.
 - [ ] Public contact and appointment forms validate locally as documented demo flows.
 - [ ] Refreshing a protected admin deep link keeps or restores session correctly.
 
+## Step 32 UI Polish Smoke
+
+- [ ] Shared page loading states render without CRM-specific copy on public or
+  portal lazy routes.
+- [ ] Empty states for filtered admin and portal lists stay bilingual and do not
+  mention the wrong module.
+- [ ] Initial portal dashboard, cases, documents, updates, and case detail load
+  states do not show misleading zero data.
+- [ ] Initial portal fetch failures show a clear error state with retry.
+- [ ] Admin priority tables wrap long values or scroll without breaking mobile
+  layout.
+- [ ] Admin topbar and portal navigation remain accessible at mobile width.
+- [ ] Vietnamese labels do not overflow primary portal cards or filter controls.
+- [ ] Portal document uploaded-by labels localize and download-unavailable
+  reasons remain safe.
+
 ## Step 18A Local QA Record
 
 - [x] Backend health check passed locally.
@@ -368,6 +384,7 @@ testing.
 | Reports |  |  |
 | Activity Center / Portal Updates |  |  |
 | Step 31 security hardening |  |  |
+| Step 32 UI polish |  |  |
 | Security |  |  |
 | Production smoke |  |  |
 

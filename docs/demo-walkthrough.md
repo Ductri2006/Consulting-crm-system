@@ -68,7 +68,8 @@ Step 28.5 adds bilingual English/Vietnamese UI support. Step 29 adds customer
 portal documents with portal-authenticated list, upload, and download. Step
 29.5 adds configurable local/S3 storage, scan/OCR status, and download audit
 logging. Step 30 adds an Admin/Manager Activity Center and customer-safe Portal
-Updates. The
+Updates. Step 32 polishes demo-ready loading, empty, error, responsive, and
+bilingual states across public, admin, and portal surfaces. The
 selected language is stored in local storage as `advisora_locale`. The language
 switcher appears in the public layout, admin surfaces, and customer portal
 surfaces. Database content and user-generated values such as customer names,
@@ -244,7 +245,9 @@ workspace.
 12. Team Members.
 13. Documents.
 14. Reports.
-15. Production readiness docs.
+15. Customer portal dashboard, cases, documents, and updates.
+16. Mobile-width responsive and EN/VI switch smoke.
+17. Production readiness docs.
 
 ## Public Website Demo
 

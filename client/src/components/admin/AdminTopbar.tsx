@@ -65,6 +65,7 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
           {user?.role ? getStatusLabel(t, 'role', user.role) : t('admin.crmUser')}
         </span>
         <button
+          aria-label={t('common.logout')}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
           onClick={() => void logout()}
           type="button"

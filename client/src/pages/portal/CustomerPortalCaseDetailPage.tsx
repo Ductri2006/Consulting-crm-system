@@ -1,5 +1,4 @@
 import {
-  AlertCircle,
   ArrowLeft,
   BriefcaseBusiness,
   CalendarClock,
@@ -15,6 +14,7 @@ import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
+import { ErrorState, LoadingState } from '../../components/admin'
 import {
   downloadPortalDocument,
   getPortalCase,
@@ -94,9 +94,7 @@ export function CustomerPortalCaseDetailPage() {
 
   const loadCase = useCallback(async () => {
     if (!id) {
-      setLoadError(t('portal.caseDetail.missingCaseId', {
-        defaultValue: 'Case id is missing.',
-      }))
+      setLoadError(t('portal.caseDetail.missingCaseId'))
       setIsLoading(false)
       return
     }
@@ -110,9 +108,7 @@ export function CustomerPortalCaseDetailPage() {
       setLoadError(
         getErrorMessage(
           error,
-          t('portal.caseDetail.loadErrorFallback', {
-            defaultValue: 'Case details could not be loaded.',
-          }),
+          t('portal.caseDetail.loadErrorFallback'),
         ),
       )
     } finally {
@@ -149,51 +145,25 @@ export function CustomerPortalCaseDetailPage() {
   }
 
   if (isLoading && !caseDetail) {
-    return (
-      <section className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
-        <div>
-          <BriefcaseBusiness className="mx-auto h-8 w-8 animate-pulse text-emerald-600" />
-          <p className="mt-4 text-sm font-bold text-slate-600">
-            {t('portal.caseDetail.loading')}
-          </p>
-        </div>
-      </section>
-    )
+    return <LoadingState hint={null} label={t('portal.caseDetail.loading')} />
   }
 
   if (loadError && !caseDetail) {
     return (
-      <section
-        className="grid min-h-72 place-items-center rounded-lg border border-rose-200 bg-rose-50 p-8 text-center"
-        role="alert"
-      >
-        <div>
-          <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
-          <h1 className="mt-4 font-bold text-slate-950">
-            {t('portal.caseDetail.loadErrorTitle')}
-          </h1>
-          <p className="mx-auto mt-2 max-w-md text-sm text-rose-700">
-            {loadError}
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <Link
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600"
-              to="/portal/cases"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              {t('portal.caseDetail.backToCases')}
-            </Link>
-            <button
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-slate-950 px-3 text-sm font-bold text-white"
-              onClick={() => void loadCase()}
-              type="button"
-            >
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              {t('common.tryAgain')}
-            </button>
-          </div>
-        </div>
-      </section>
+      <ErrorState
+        action={
+          <Link
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600"
+            to="/portal/cases"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            {t('portal.caseDetail.backToCases')}
+          </Link>
+        }
+        description={loadError}
+        onRetry={() => void loadCase()}
+        title={t('portal.caseDetail.loadErrorTitle')}
+      />
     )
   }
 
@@ -220,7 +190,7 @@ export function CustomerPortalCaseDetailPage() {
               <PortalStatusBadge status={caseDetail.status} />
               <PortalPriorityBadge priority={caseDetail.priority} />
             </div>
-            <h1 className="mt-3 text-2xl font-bold text-slate-950">
+            <h1 className="mt-3 break-words text-2xl font-bold text-slate-950">
               {caseDetail.title}
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
@@ -291,8 +261,6 @@ export function CustomerPortalCaseDetailPage() {
               appointments: caseDetail.counts.appointments,
               documents: caseDetail.counts.documents,
               tasks: caseDetail.counts.tasks,
-              defaultValue:
-                '{{documents}} documents, {{tasks}} tasks, {{appointments}} appointments',
             })}
           />
         </dl>
@@ -348,7 +316,6 @@ export function CustomerPortalCaseDetailPage() {
                     {item.user ? (
                       <p className="mt-3 text-xs font-semibold text-slate-400">
                         {t('portal.caseDetail.byUser', {
-                          defaultValue: 'By {{name}}',
                           name: item.user.fullName,
                         })}
                       </p>

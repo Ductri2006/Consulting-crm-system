@@ -14,7 +14,12 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { LoadingState, StatCard, StatusBadge } from '../../components/admin'
+import {
+  ErrorState,
+  LoadingState,
+  StatCard,
+  StatusBadge,
+} from '../../components/admin'
 import { useAuth } from '../../features/auth'
 import {
   getDashboardData,
@@ -102,32 +107,6 @@ const getDeadlineStatusNamespace = (
   return 'case'
 }
 
-function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
-  const { t } = useTranslation()
-
-  return (
-    <div className="rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
-      <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-rose-50 text-rose-600">
-        <AlertTriangle className="h-6 w-6" />
-      </span>
-      <h2 className="mt-4 text-lg font-bold text-slate-900">
-        {t('admin.dashboard.loadErrorTitle')}
-      </h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-        {message}
-      </p>
-      <button
-        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
-        onClick={onRetry}
-        type="button"
-      >
-        <RefreshCw className="h-4 w-4" />
-        {t('common.tryAgain')}
-      </button>
-    </div>
-  )
-}
-
 export function AdminDashboardPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
@@ -167,7 +146,13 @@ export function AdminDashboardPage() {
   }
 
   if (error && !data) {
-    return <ErrorState message={error} onRetry={() => void loadDashboard()} />
+    return (
+      <ErrorState
+        description={error}
+        onRetry={() => void loadDashboard()}
+        title={t('admin.dashboard.loadErrorTitle')}
+      />
+    )
   }
 
   if (!data) {
@@ -208,7 +193,11 @@ export function AdminDashboardPage() {
           role="alert"
         >
           <span>{t('admin.dashboard.refreshFailed', { message: error })}</span>
-          <button className="font-bold underline" onClick={() => void loadDashboard()}>
+          <button
+            className="font-bold underline"
+            onClick={() => void loadDashboard()}
+            type="button"
+          >
             {t('common.tryAgain')}
           </button>
         </div>

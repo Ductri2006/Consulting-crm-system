@@ -23,7 +23,8 @@ current demo/staging workspace is `Advisora Demo Workspace`.
 Step 28.5 adds bilingual English/Vietnamese UI support, Step 29 keeps the
 Customer Portal Documents screens covered by the same English/Vietnamese
 translation resources, Step 30 adds bilingual Activity Center and Portal
-Updates screens, and Step 31 reviews the admin/portal route guard separation.
+Updates screens, Step 31 reviews the admin/portal route guard separation, and
+Step 32 polishes bilingual loading, empty, error, and responsive states.
 
 - Supported locales: `en`, `vi`.
 - Locale preference is stored in local storage as `advisora_locale`.
@@ -148,6 +149,9 @@ allowed roles. Staff users do not see the Activity navigation item.
 Step 31 confirms that `/admin/activity` remains Admin/Manager-only and that
 `/admin/users`, `/admin/invitations`, and `/admin/settings` remain Admin-only
 at the route-guard layer. Backend authorization remains the source of truth.
+Step 32 standardizes shared loading and page-level error states, improves
+mobile table wrapping, and keeps search/filter empty states bilingual without
+changing backend API contracts.
 Reports use the dashboard/reporting APIs for operational insight, with staff
 performance available to administrators and managers only. Admin and public page
 routes are lazy-loaded to keep the initial bundle smaller.
@@ -184,6 +188,9 @@ user-agent data. The portal UI shows safe scan status and disables downloads
 when the backend marks a document unsafe or unavailable. Portal Updates are a
 read-only feed, not realtime websocket or push notifications. Billing, messages,
 and customer self-registration are not part of this step.
+Step 32 adds initial loading/error polish for portal dashboard, cases,
+documents, updates, and case detail views, including localized metadata labels
+and mobile overflow protection for long customer-facing values.
 Step 31 confirms that portal routes continue to use `PortalProtectedRoute`,
 `PortalLayout`, the portal API client, and `advisora_portal_access_token`.
 Internal admin API calls continue to use the separate admin token key

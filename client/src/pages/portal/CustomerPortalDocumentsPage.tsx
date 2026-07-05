@@ -1,10 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
   Download,
-  FileText,
   RefreshCw,
   Search,
   SearchX,
@@ -12,9 +10,10 @@ import {
   X,
 } from 'lucide-react'
 import type { FormEvent } from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
+import { ErrorState, LoadingState } from '../../components/admin'
 import {
   downloadPortalDocument,
   listPortalCases,
@@ -146,6 +145,7 @@ function UploadDialog({
   onSubmit: (values: PortalDocumentUploadFormValues) => Promise<void>
 }) {
   const { t } = useTranslation()
+  const titleId = useId()
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -174,6 +174,7 @@ function UploadDialog({
       role="presentation"
     >
       <div
+        aria-labelledby={titleId}
         aria-modal="true"
         className="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-2xl"
         role="dialog"
@@ -183,7 +184,7 @@ function UploadDialog({
             <p className="text-sm font-bold text-emerald-700">
               {t('portal.documents.uploadEyebrow')}
             </p>
-            <h2 className="text-lg font-bold text-slate-950">
+            <h2 className="text-lg font-bold text-slate-950" id={titleId}>
               {t('portal.documents.uploadDocument')}
             </h2>
           </div>
@@ -326,6 +327,10 @@ function DocumentCard({
   onDownload: (document: PortalDocumentRecord) => void
 }) {
   const { t } = useTranslation()
+  const uploadedByLabel =
+    document.source === 'CUSTOMER_PORTAL'
+      ? t('portal.documents.uploadedByCustomer')
+      : t('portal.documents.uploadedByWorkspaceTeam')
 
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
@@ -387,7 +392,7 @@ function DocumentCard({
             {t('portal.documents.fields.uploadedBy')}
           </dt>
           <dd className="mt-1 font-semibold text-slate-800">
-            {document.uploadedByLabel}
+            {uploadedByLabel}
           </dd>
         </div>
         <div>
@@ -666,43 +671,20 @@ export function CustomerPortalDocumentsPage() {
           </button>
         </form>
         {filterError ? (
-          <p className="mt-3 text-sm font-semibold text-rose-700">
+          <p className="mt-3 text-sm font-semibold text-rose-700" role="alert">
             {filterError}
           </p>
         ) : null}
       </section>
 
       {loadError && documents.length === 0 ? (
-        <section
-          className="grid min-h-72 place-items-center rounded-lg border border-rose-200 bg-rose-50 p-8 text-center"
-          role="alert"
-        >
-          <div>
-            <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
-            <h2 className="mt-4 font-bold text-slate-950">
-              {t('portal.documents.loadErrorTitle')}
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-rose-700">
-              {loadError}
-            </p>
-            <button
-              className="mt-5 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-bold text-white"
-              onClick={() => void loadDocuments()}
-              type="button"
-            >
-              {t('common.tryAgain')}
-            </button>
-          </div>
-        </section>
+        <ErrorState
+          description={loadError}
+          onRetry={() => void loadDocuments()}
+          title={t('portal.documents.loadErrorTitle')}
+        />
       ) : isLoading && documents.length === 0 ? (
-        <section className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
-          <div>
-            <FileText className="mx-auto h-8 w-8 animate-pulse text-emerald-600" />
-            <p className="mt-4 text-sm font-bold text-slate-600">
-              {t('portal.documents.loading')}
-            </p>
-          </div>
-        </section>
+        <LoadingState hint={null} label={t('portal.documents.loading')} />
       ) : documents.length === 0 ? (
         <section className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
           <div>
