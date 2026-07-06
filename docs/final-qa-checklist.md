@@ -414,6 +414,24 @@ Step 33 results:
 - [ ] Browser screenshot pass remains required before staging because the
   in-app browser connector was unavailable in the Step 18A environment.
 
+## Final Portfolio Release Checklist
+
+- [x] README has live demo and backend health links.
+- [x] Demo accounts are documented and demo API logins were spot-checked for
+  internal Advisora/Northstar accounts and Northstar portal accounts.
+- [x] Demo walkthrough has a concise 3-5 minute flow and talk track.
+- [x] Screenshot checklist is added in `docs/screenshots/README.md`.
+- [ ] Actual screenshot files are pending and must be captured from real
+  local/staging screens before adding README image links.
+- [x] No secrets, `.env` files, tokens, provider credentials, real upload files,
+  or generated `dist` output should be staged.
+- [x] Production smoke script is ready and documented.
+- [x] Step 33 final QA passed.
+- [x] Release notes are updated in `docs/release-notes.md`.
+- [x] Architecture diagrams are documented in `README.md` and
+  `docs/architecture.md`.
+- [ ] Repository description and topics can be added manually on GitHub.
+
 ## Final Sign-Off
 
 | Area | Result | Notes |

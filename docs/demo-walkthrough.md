@@ -4,6 +4,11 @@ This walkthrough is the recommended local and staging portfolio demo script for
 the Consulting CRM System. It is designed for fictional portfolio review, not
 for real production use or real customer data.
 
+## Demo Goal
+
+Show how a consulting firm can manage public leads, internal case operations,
+secure documents, and customer-facing updates in one multi-tenant CRM.
+
 ## Project Overview
 
 Consulting CRM System is a fullstack portfolio project for a fictional
@@ -250,6 +255,74 @@ workspace.
 15. Customer portal dashboard, cases, documents, and updates.
 16. Mobile-width responsive and EN/VI switch smoke.
 17. Production readiness docs.
+
+## 3-5 Minute Demo Flow
+
+### 1. Public Website
+
+- Open the live frontend or local homepage.
+- Show the homepage, services, and consultation form.
+- Explain that public consultation requests are assigned to the configured
+  default workspace by the backend.
+- Mention that contact and appointment pages are currently validation/demo
+  flows, while consultation requests use the backend public intake API.
+
+Suggested talk track:
+
+> "This starts as a public consulting website, but the important part is that
+> lead capture is connected to an internal CRM. A visitor can browse services
+> and submit a consultation request, which is scoped to the configured demo
+> workspace instead of trusting a client-supplied organization id."
+
+### 2. Internal Admin CRM
+
+- Login as an Admin or Manager demo user.
+- Show dashboard metrics and recent activity.
+- Open customers, cases, and documents.
+- Show case workflow, assignment, document visibility, and Activity Center.
+- Briefly mention users, invitations, reports, and workspace settings.
+
+Suggested talk track:
+
+> "The admin workspace is role-based. Admins and managers can manage the full
+> workspace, while staff routes and backend services are scoped. Cases carry
+> status, priority, assignment, history, appointments, tasks, and documents, so
+> the demo behaves like an operational SaaS workflow rather than a static CRUD
+> sample."
+
+### 3. Customer Portal
+
+- Login with a verified portal account or create/reset portal access from an
+  Admin/Manager customer record and copy the generated temporary password once.
+- Show portal dashboard, cases, case detail, documents, and updates.
+- Confirm that portal documents use `/api/portal/documents` and that customers
+  only see customer-visible documents scoped to their own account.
+
+Suggested talk track:
+
+> "The customer portal is not an admin route with hidden buttons. It uses a
+> separate portal token, portal API client, portal layout, and backend portal
+> middleware. Customers can track their own cases, upload supporting documents,
+> download allowed files, and read safe updates without seeing internal notes or
+> storage metadata."
+
+### 4. Security Highlights
+
+- Explain organization/workspace tenant isolation.
+- Explain internal vs portal JWT purpose separation.
+- Explain RBAC and Staff scoping.
+- Explain document visibility, scan policy, protected downloads, and download
+  audit logging.
+- Mention Helmet headers, rate limits, and redacted logs.
+
+Suggested talk track:
+
+> "The project is intentionally security-aware for a portfolio app: internal
+> and portal tokens cannot cross API boundaries, queries are organization
+> scoped, portal queries are customer scoped, and document downloads are checked
+> before streaming. The production-readiness docs also call out honest
+> limitations like in-memory rate limiting, local storage defaults, and the need
+> for real scanner/OCR infrastructure before real production use."
 
 ## Public Website Demo
 

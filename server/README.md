@@ -2,6 +2,23 @@
 
 Backend API for the Consulting CRM System. It provides a secure, typed Express application, environment validation, a standard API response format, centralized error handling, a health endpoint, the Prisma data model, JWT-based authentication and role authorization, and the core CRM, scheduling, document, dashboard, and reporting APIs.
 
+## Portfolio Release Summary
+
+The backend is a modular Express API for the portfolio/staging demo path:
+
+- Public routes: health, public services, public consultation intake, workspace
+  signup, and invitation preview/accept.
+- Internal CRM routes: auth, workspace, users, customers, services,
+  consultation requests, cases, appointments, tasks, documents, dashboard,
+  reports, and Activity Center.
+- Customer portal routes: portal auth, profile, cases, documents, and updates.
+- Infrastructure services: Prisma ORM, document storage abstraction,
+  scanner/OCR provider abstraction, email provider abstraction, security
+  headers, rate limits, and redaction helpers.
+
+For diagrams and release context, see [Architecture](../docs/architecture.md)
+and [Release Notes](../docs/release-notes.md).
+
 ## Tech stack
 
 - Node.js 20 or later

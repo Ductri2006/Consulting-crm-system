@@ -1,376 +1,28 @@
-# Consulting CRM System
+# Advisora CRM / Consulting CRM System
 
-> A portfolio fullstack project that combines a public consulting website with an internal customer relationship management platform.
+Advisora CRM is a portfolio-ready, multi-tenant consulting CRM with public lead
+capture, an internal admin workspace, and a customer portal for case tracking,
+documents, and customer-safe updates.
 
-## Introduction
+It demonstrates a production-oriented fullstack SaaS path: React/Vite frontend,
+Express/Prisma backend, PostgreSQL/Neon data model, role-based internal CRM,
+separate customer portal auth, secure document handling, bilingual EN/VI UI,
+and final QA documentation.
 
-Consulting CRM System is a fullstack portfolio application for consulting
-business operations. It combines a public-facing consulting website with a
-protected internal CRM dashboard for managing customers, consultation requests,
-case profiles, appointments, tasks, documents, users, dashboards, and reports.
-The backend now includes an Organization model used as the internal Workspace
-tenant boundary; the current staging/demo path uses a single default workspace.
-Step 29 adds Customer Portal Documents. Step 29.5 hardens document storage with
-a local/S3-compatible provider abstraction, protected streaming downloads,
-malware-scan and OCR provider abstractions, and per-download audit logging.
-Step 30 adds an internal Activity Center plus customer-safe Portal Updates.
-Step 31 adds HTTP hardening, rate limiting, token-boundary review, audit
-coverage, security documentation, and production QA smoke preparation.
-Step 32 polishes loading, empty, and error states, responsive table/card
-behavior, accessibility labels, and bilingual admin/portal microcopy for the
-final demo pass.
-Step 33 runs the final QA smoke and fixes a small document-security regression
-so staff users can no longer read unrelated portal-uploaded documents in the
-same workspace.
+## Live Demo
 
-The project models the day-to-day operations of a consulting organization working across real estate, legal, investment, and construction consulting. This repository is also a portfolio project for practicing fullstack development, business requirement analysis, database design, backend API planning, frontend UI architecture, and system documentation.
+- Frontend: <https://consulting-crm-system.vercel.app>
+- Backend health: <https://consulting-crm-backend.onrender.com/api/health>
 
-## Project Purpose
+The backend is hosted on Render. If the service is sleeping, the first API
+request can take 30-60 seconds while it wakes up.
 
-The purpose of this project is to simulate a real-world business management system rather than only a landing page or a basic CRUD application. It focuses on a complete operational workflow:
+## Demo Accounts
 
-1. A customer visits the public website.
-2. The customer submits a consultation request or reviews contact and
-   appointment request flows.
-3. Internal staff receive and review the request.
-4. A customer record and consulting case profile are created.
-5. The case follows a defined business workflow.
-6. Staff update the case status, upload documents, create tasks, and track progress.
-7. Managers and administrators monitor operations through dashboards and reports.
+These are fictional demo-only accounts for the seeded portfolio environment.
+Do not use them for real users or real customer data.
 
-## Problem Statement
-
-Consulting businesses often need more than a company website. They also require an internal system to coordinate:
-
-- Customer information
-- Consultation requests
-- Case documents
-- Appointment schedules
-- Staff tasks
-- Case progress
-- Business reports
-- Internal workflows
-
-This project addresses that need with a centralized platform that connects public customer engagement to internal case management.
-
-## Main Features
-
-### Public Website
-
-- Homepage
-- Business introduction
-- Service introduction
-- Project gallery
-- News section
-- Contact page
-- Consultation request form
-- Appointment request form
-- Responsive layouts for desktop, tablet, and mobile
-- Basic SEO-friendly structure
-- English/Vietnamese language switcher in the public layout
-- Demo-ready responsive polish and consistent loading/empty/error states
-
-### Customer Reception
-
-- Online consultation request submission
-- Contact form validation flow
-- Appointment request validation flow
-- Admin document upload after a customer or case exists
-- Confirmation after a successful submission
-- Customer portal login, dashboard, case tracking, and document upload/download
-- Portal document metadata and protected download for allowed customer files
-- Customer-safe recent updates for their own cases, appointments, documents,
-  and portal account
-
-### CRM Management
-
-- Customer and customer profile management
-- Customer working-history tracking
-- Appointment management
-- Case progress tracking
-- Search and filtering
-- Detailed customer views
-
-### Case Profile Management
-
-- Create consulting case profiles
-- Assign staff to cases
-- Update case status and priority
-- Track a defined case workflow
-- Store case history
-- Manage case documents
-- Detect upcoming and overdue deadlines
-
-### Internal Management
-
-- Internal user management for Admin, Manager, and Staff accounts
-- Role-based access control
-- Task creation and assignment
-- Daily, weekly, and monthly reports
-- Staff performance tracking
-- Organization-scoped Activity Center for Admin and Manager review
-- Customer portal account access controls for existing customers
-
-### Document Management
-
-- Upload customer documents
-- Attach documents to customers and case profiles
-- Store digital record metadata
-- Manage document access permissions, scan/OCR status, and download audit data
-- Use local storage for development or private S3-compatible object storage
-  when configured
-
-### Dashboard and Reports
-
-- Total customer and case counts
-- Cases grouped by status
-- Upcoming and overdue cases
-- Today's appointments
-- Monthly operational reports
-- Staff performance reports
-- Recent system activity
-- Activity Center entry point for workspace audit review
-
-## User Roles
-
-### Admin
-
-Administrators have full system access. They can:
-
-- Manage internal team members, roles, activation status, and password resets
-- Manage customers and all case profiles
-- Manage services, appointments, tasks, and documents
-- View reports and activity logs
-- Configure system settings
-
-### Manager
-
-Managers monitor operations and coordinate staff. They can:
-
-- View the operational dashboard
-- Monitor assigned staff
-- Assign and review tasks
-- View case progress
-- View reports
-- Track staff performance
-
-### Staff
-
-Staff members work with assigned customers and case profiles. They can:
-
-- View assigned customers and cases
-- Update case statuses
-- Upload documents
-- Add working notes
-- Manage assigned appointments
-- Complete assigned tasks
-
-### Customer
-
-Customer portal accounts are separate from internal CRM users. They can:
-
-- Log in through `/portal/login`
-- View their safe profile and workspace summary
-- Track their own case progress in read-only mode
-- View related appointment details and allowed document metadata
-- Upload supporting documents for their own customer record or cases
-- Download customer-visible documents through the portal download route
-- View recent portal updates scoped to their own customer record
-
-Self-service profile updates remain future work.
-
-## System Modules
-
-The platform is divided into the following functional modules:
-
-| Module | Responsibility |
-| --- | --- |
-| Public Website | Presents the business, services, projects, news, and contact information |
-| Customer Reception | Captures consultation, contact, and appointment requests |
-| Authentication and Authorization | Secures internal access and enforces role-based permissions |
-| Customer Management | Maintains customer profiles, sources, notes, and working history |
-| Case Profile Management | Coordinates consulting cases, assignments, status, priority, and deadlines |
-| Appointment Management | Schedules, confirms, reschedules, and tracks consultations |
-| Task Management | Assigns operational work and tracks progress and deadlines |
-| Document Management | Stores metadata and links files to customers and cases |
-| User Management | Maintains staff accounts, roles, and active status |
-| Organization Workspace | Scopes internal users and CRM business data by workspace |
-| Customer Portal | Lets existing customers view their own read-only case status, appointments, document metadata, downloads, and safe updates |
-| Bilingual UI | Provides English/Vietnamese resources, language switching, locale storage, and localized status/date helpers for core UI surfaces |
-| UI State Polish | Standardizes loading, empty, error, responsive, and accessibility behavior across public, admin, and portal surfaces |
-| Public Content Catalog | Uses typed local content for services, news, and project gallery pages |
-| Dashboard and Reporting | Summarizes workload, performance, appointments, and deadlines |
-| Activity Logging | Records important user actions and powers the Admin/Manager Activity Center |
-
-For a detailed breakdown, see [System Module Breakdown](docs/module-breakdown.md).
-
-## Case Workflow
-
-A consulting case profile follows this workflow:
-
-```text
-Received -> Verifying -> Proposing Solution -> Processing -> Completed
-     \--------------------------------------------------------------> Cancelled
-```
-
-Each case profile stores:
-
-- Case code
-- Customer information
-- Service type
-- Assigned staff member
-- Current status
-- Priority
-- Deadline and completion date
-- Notes
-- Attached documents
-- Case history
-
-## Tech Stack
-
-### Frontend
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Router
-- React Hook Form
-- Zod
-- i18next, react-i18next, and browser language detection
-
-### Backend
-
-- Node.js
-- Express.js
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- JWT authentication
-- bcrypt password hashing
-- Multer file uploads
-
-### Deployment
-
-- Frontend: static hosting for the Vite build output
-- Backend: Node-compatible runtime for the Express API
-- Database: Neon PostgreSQL or another managed PostgreSQL provider
-- File storage: local provider by default, with configurable private S3-compatible object storage
-
-## Project Structure
-
-```text
-consulting-crm-system/
-|-- client/
-|   |-- src/
-|   |-- vercel.json
-|   `-- README.md
-|-- server/
-|   |-- prisma/
-|   |-- src/
-|   `-- README.md
-|-- docs/
-|   |-- requirement-analysis.md
-|   |-- module-breakdown.md
-|   |-- database-design.md
-|   |-- api-documentation.md
-|   |-- security-hardening.md
-|   |-- security-rbac-matrix.md
-|   |-- development-roadmap.md
-|   |-- production-readiness.md
-|   |-- deployment-guide.md
-|   |-- staging-deployment-checklist.md
-|   |-- vercel-render-staging-guide.md
-|   |-- final-qa-checklist.md
-|   `-- demo-walkthrough.md
-|-- .gitignore
-`-- README.md
-```
-
-## Documentation
-
-| Document | Description |
-| --- | --- |
-| [Requirement Analysis](docs/requirement-analysis.md) | Business context, actors, functional requirements, workflows, and constraints |
-| [System Module Breakdown](docs/module-breakdown.md) | Scope and responsibilities of each public and internal module |
-| [Database Design](docs/database-design.md) | Planned entities, relationships, enums, indexes, and initial Prisma schema |
-| [API Documentation](docs/api-documentation.md) | Planned REST resources, endpoints, payloads, and response conventions |
-| [Security Hardening](docs/security-hardening.md) | Step 31 security headers, rate limiting, redaction, audit, tenant isolation, document security, and smoke-script notes |
-| [Security RBAC Matrix](docs/security-rbac-matrix.md) | Role-by-role access matrix for internal CRM, customer portal, and public routes |
-| [Development Roadmap](docs/development-roadmap.md) | Phased delivery plan from project foundation to advanced features |
-| [Production Readiness](docs/production-readiness.md) | Production readiness status, environment guidance, security checklist, and known limitations |
-| [Deployment Guide](docs/deployment-guide.md) | Provider-neutral deployment architecture, commands, environment variables, and smoke checks |
-| [Staging Deployment Checklist](docs/staging-deployment-checklist.md) | Provider-neutral staging environment matrix, deployment checklist, smoke tests, rollback, and go/no-go criteria |
-| [Vercel + Render Staging Guide](docs/vercel-render-staging-guide.md) | Provider-specific staging runbook for Vercel frontend, Render backend, and Neon database |
-| [Final QA Checklist](docs/final-qa-checklist.md) | Manual QA checklist for public pages, admin CRM modules, security, and production smoke testing |
-| [Demo Walkthrough](docs/demo-walkthrough.md) | Suggested portfolio demo flow, local QA notes, and honest limitations |
-
-## Production And QA Preparation
-
-Phase 20 adds staging demo data, safer portfolio demo accounts, and staging
-hardening notes for the Vercel + Render + Neon path. Real provider URLs and
-credentials stay outside the repository. Before demoing, staging, or deploying,
-review:
-
-- [Production Readiness](docs/production-readiness.md)
-- [Security Hardening](docs/security-hardening.md)
-- [Security RBAC Matrix](docs/security-rbac-matrix.md)
-- [Deployment Guide](docs/deployment-guide.md)
-- [Staging Deployment Checklist](docs/staging-deployment-checklist.md)
-- [Vercel + Render Staging Guide](docs/vercel-render-staging-guide.md)
-- [Final QA Checklist](docs/final-qa-checklist.md)
-- [Demo Walkthrough](docs/demo-walkthrough.md)
-
-Use the staging checklist to record a deployment run and go/no-go decision. Use
-the final QA checklist for full functional verification after staging is
-reachable.
-
-## Portfolio Demo
-
-Staging URL placeholders:
-
-- Public staging website: `https://<project-name>.vercel.app`
-- Staging backend API: `https://<render-service-name>.onrender.com/api`
-- Health check: `https://<render-service-name>.onrender.com/api/health`
-
-Local URLs:
-
-- Public website: `http://localhost:5173`
-- Backend API: `http://localhost:5000/api`
-- Health check: `http://localhost:5000/api/health`
-
-Public visitors do not need an account. Admin, manager, and staff accounts are
-internal CRM users for the protected workspace. Customer portal accounts are
-separate from internal staff users and sign in through `/portal/login`.
-The UI supports English (`en`) and Vietnamese (`vi`). The selected language is
-stored in browser local storage as `advisora_locale`, with browser-language
-detection as a fallback. Database content and user-generated values such as
-customer names, case titles, file names, and notes are displayed as entered.
-
-Current staging/demo workspace:
-
-```text
-Name: Advisora Demo Workspace
-Slug: advisora-demo
-```
-
-Second tenant-isolation QA workspace:
-
-```text
-Name: Northstar Legal Workspace
-Slug: northstar-legal
-```
-
-The public consultation form maps new requests to the workspace configured by
-`DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. Workspace signup
-creates a new internal CRM workspace only when `WORKSPACE_SIGNUP_ENABLED=true`.
-Workspace invitations can add later internal users by email. Billing,
-workspace switching, workspace-specific public portals, and customer
-self-registration remain future roadmap scope.
-Administrators can edit the current workspace profile from `/admin/settings`;
-logo management is URL-based in this step.
-
-Intentional portfolio demo accounts created by `npm run seed:demo`:
+Advisora workspace:
 
 | Role | Email | Password |
 | --- | --- | --- |
@@ -378,443 +30,312 @@ Intentional portfolio demo accounts created by `npm run seed:demo`:
 | Manager | `manager.demo@advisora.test` | `Advisora-Demo-Manager-2026!` |
 | Staff | `staff.demo@advisora.test` | `Advisora-Demo-Staff-2026!` |
 
-These are fictional portfolio credentials, not real secrets. Do not use them
-with real customer information. For long-lived public staging, prefer sharing
-manager or staff access with reviewers and share admin access privately only.
+Northstar workspace:
 
-Legacy local seed account:
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin.demo@northstar.test` | `Northstar-Demo-Admin-2026!` |
+| Manager | `manager.demo@northstar.test` | `Northstar-Demo-Manager-2026!` |
+| Staff | `staff.demo@northstar.test` | `Northstar-Demo-Staff-2026!` |
 
-```text
-Email: admin@advisora.demo
-Password: password123
-Role: ADMIN
+Customer portal demo accounts verified from the Northstar QA seed:
+
+| Workspace slug | Email | Password |
+| --- | --- | --- |
+| `northstar-legal` | `portal.aurora@northstar.test` | `Northstar-Portal-Demo-2026!` |
+| `northstar-legal` | `portal.pacific@northstar.test` | `Northstar-Portal-Demo-2026!` |
+
+The Advisora seed does not define a fixed public portal password. To demo an
+Advisora customer portal account, sign in as Admin or Manager, open
+`/admin/customers`, create or reset portal access for a fictional customer, and
+use the generated temporary password immediately.
+
+## What This Project Demonstrates
+
+- Multi-tenant SaaS architecture with organization/workspace scope.
+- Role-based internal CRM for Admin, Manager, and Staff users.
+- Separate customer portal with token-purpose isolation.
+- Secure document management with internal visibility controls and portal-safe
+  upload/download flows.
+- Activity/audit timeline and customer-safe portal updates.
+- Production-oriented hardening: rate limits, security headers, redacted logs,
+  tenant verification, and smoke scripts.
+- Bilingual English/Vietnamese UI across public, admin, and portal surfaces.
+- Deployment-ready fullstack application structure for Vercel, Render, and
+  Neon PostgreSQL.
+
+## Core Features
+
+Public Website:
+
+- Marketing pages for services, projects, news, about, contact, consultation,
+  and appointment flows.
+- Public consultation request API mapped to `DEFAULT_ORGANIZATION_SLUG`.
+- Workspace signup page gated by `WORKSPACE_SIGNUP_ENABLED`.
+- EN/VI language switcher persisted through `advisora_locale`.
+
+Internal Admin CRM:
+
+- Dashboard and operational reports.
+- Customers, consultation requests, case workflow, appointments, and tasks.
+- Document management with source/visibility badges, scan/OCR metadata, and
+  protected downloads.
+- Activity Center for Admin and Manager users.
+- Internal user management, invitations, and workspace settings.
+- Role-aware navigation backed by backend authorization.
+
+Customer Portal:
+
+- Separate portal login, dashboard, profile summary, case list/detail, document
+  upload/download, and updates feed.
+- Portal token stored separately from the internal CRM token.
+- Portal responses exclude internal notes, storage paths, signed URLs, token
+  hashes, password hashes, IP addresses, and user-agent values.
+
+Security/Production:
+
+- JWT purpose separation for internal and customer portal sessions.
+- Organization-scoped queries and tenant-isolation verification.
+- RBAC for Admin, Manager, Staff, customer portal, and public routes.
+- Customer-visible document policy and download audit logging.
+- Helmet security headers, `x-powered-by` removal, body limits, rate limits,
+  and logging/error redaction.
+- Local storage for dev/demo and S3-compatible private storage support for
+  production-like deployments.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Public["Public Website"]
+  Admin["Admin CRM"]
+  Portal["Customer Portal"]
+
+  Frontend["React/Vite Frontend\nVercel"]
+  API["Express API\nRender"]
+  Security["Security Layer\nRate limits + Helmet + redaction"]
+  Auth["Internal Auth/RBAC\nCustomer Portal Auth"]
+  Tenant["Multi-tenant\nOrganization scope"]
+  Prisma["Prisma ORM"]
+  DB["PostgreSQL / Neon"]
+  Docs["Document Storage\nLocal dev/demo or private S3-compatible"]
+  Email["Email Provider\nConsole or Resend"]
+  Audit["Activity + Audit Logs\nActivityLog + CaseHistory + DownloadAudit"]
+
+  Public --> Frontend
+  Admin --> Frontend
+  Portal --> Frontend
+
+  Frontend --> API
+  API --> Security
+  API --> Auth
+  API --> Tenant
+  API --> Prisma
+  Prisma --> DB
+  API --> Docs
+  API --> Email
+  API --> Audit
+  Audit --> DB
 ```
 
-The legacy local account is created by `npm run seed` for local development.
-The staging demo seed disables it when present to reduce dependence on the
-known `password123` credential.
+For deeper request-flow diagrams, see [Architecture](docs/architecture.md).
 
-Populate staging demo data only after migrations are applied:
+## Tech Stack
 
-```bash
-cd server
-npm run prisma:deploy
-DEMO_SEED_ENABLED=true npm run seed:demo
-```
+| Layer | Stack |
+| --- | --- |
+| Frontend | React, Vite, TypeScript, Tailwind CSS, React Router, React Hook Form, Zod, i18next |
+| Backend | Node.js, Express, TypeScript, Prisma, PostgreSQL, JWT, multer, Zod |
+| Database | PostgreSQL on Neon for staging/demo; local PostgreSQL supported |
+| Auth/Security | JWT purpose checks, bcryptjs, RBAC, Helmet, CORS, in-memory rate limits, redaction helpers |
+| Documents | Local storage provider by default; S3-compatible private storage ready; scan/OCR abstractions |
+| Email | Console provider for local/staging previews; Resend-ready provider |
+| Deployment | Vercel frontend, Render backend, Neon database |
 
-For local PowerShell runs, use:
+## Security Highlights
 
-```powershell
-cd server
-$env:DEMO_SEED_ENABLED = "true"
-npm run seed:demo
-```
+- Internal and portal auth are separate token families.
+- Portal tokens cannot call internal admin APIs.
+- Internal admin tokens cannot call portal APIs.
+- Internal CRM data is scoped by `organizationId`.
+- Portal data is scoped by portal account `organizationId + customerId`.
+- Staff document access is limited to uploaded documents or assigned cases.
+- Internal documents are hidden from customers by default and require an
+  Admin/Manager `CUSTOMER_VISIBLE` toggle.
+- Downloads are permission-checked before streaming and write audit metadata.
+- API responses avoid exposing raw storage paths, signed URLs, password hashes,
+  token hashes, and internal-only notes.
+- Security headers, rate limits, body limits, and redacted logs are documented
+  and covered by final QA.
 
-The demo seed is idempotent and upserts fictional customers, consultation
-requests, cases, appointments, tasks, case history, and activity records. It
-also upserts the `Advisora Demo Workspace` and assigns all demo CRM data to
-that workspace. It does not reset the database and does not seed physical
-document files.
-
-Step 22.5 adds an optional second workspace seed for tenant-isolation QA. It
-does not add public workspace signup or a workspace switcher. Run it only
-against a local or dedicated staging database after the main demo seed:
-
-```bash
-cd server
-SECOND_WORKSPACE_SEED_ENABLED=true npm run seed:second-workspace
-npm run verify:tenant-isolation
-```
-
-For local PowerShell runs, use:
-
-```powershell
-cd server
-$env:SECOND_WORKSPACE_SEED_ENABLED = "true"
-npm run seed:second-workspace
-Remove-Item Env:SECOND_WORKSPACE_SEED_ENABLED
-npm run verify:tenant-isolation
-```
-
-The second workspace seed creates fictional Northstar users, customers, cases,
-consultation requests, appointments, tasks, case history, activity logs,
-document metadata, download audit metadata, and portal accounts. It is
-idempotent, does not reset the database, does not delete Advisora demo data,
-and does not seed physical document files. Public consultation requests still
-map to `DEFAULT_ORGANIZATION_SLUG`.
-
-Step 23 adds public workspace onboarding at `/workspace-signup`, backed by:
-
-```http
-POST /api/workspaces/signup
-```
-
-The backend enforces `WORKSPACE_SIGNUP_ENABLED=false` by default. Set
-`WORKSPACE_SIGNUP_ENABLED=true` only for a local or controlled staging test.
-Successful signup creates a new `Organization`, creates the first active
-`ADMIN` owner user, signs a JWT with `organizationId`, auto-logs the frontend
-in, and redirects to `/admin/dashboard`. The owner email remains globally
-unique across all workspaces in this step.
-
-Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`; signup
-does not create a custom public intake URL for the new workspace.
-
-Use only fictional demo data. Do not paste real customer data, real database
-URLs, access tokens, or production credentials into the app, docs, commits, or
-screenshots.
-
-Recommended public demo flow:
-
-1. Open the homepage.
-2. View services.
-3. Submit a fictional consultation request.
-
-Recommended admin demo flow:
-
-1. Login with a demo internal account.
-2. View the dashboard.
-3. Check consultation requests.
-4. Open cases.
-5. Manage internal team members from Team Members.
-6. Review Workspace Settings as an administrator.
-7. Create and revoke a fictional workspace invitation.
-8. Check tasks, appointments, documents, and reports.
-
-Recommended customer portal demo flow:
-
-1. Create portal access for an existing fictional customer.
-2. Login at `/portal/login`.
-3. Review `/portal/dashboard`.
-4. Open `/portal/cases` and a case detail page.
-5. Confirm case data is read-only and document data is metadata-only.
-
-See [Demo Walkthrough](docs/demo-walkthrough.md) for the full script.
+Read more in [Security Hardening](docs/security-hardening.md) and the
+[Security RBAC Matrix](docs/security-rbac-matrix.md).
 
 ## Screenshots
 
-Screenshots are not committed yet. Suggested portfolio captures:
+No screenshot images are committed yet, and this README intentionally does not
+show fake or broken image links.
 
-- Public homepage.
-- Admin dashboard.
-- Case workflow.
-- Document management.
-- Reports page.
+Use the [screenshots checklist](docs/screenshots/README.md) before final
+portfolio publishing. Recommended captures include:
 
-## Run the Public Website Locally
+- Public home and consultation flow.
+- Admin dashboard, cases, documents, and activity center.
+- Customer portal dashboard, case detail, documents, and updates.
+- EN/VI language switcher states.
+
+## Demo Walkthrough
+
+Use the polished 3-5 minute script in [Demo Walkthrough](docs/demo-walkthrough.md).
+
+Suggested order:
+
+1. Public website and consultation request.
+2. Admin CRM dashboard, customers, cases, documents, and activity.
+3. Customer portal dashboard, case tracking, documents, and updates.
+4. Security highlights: tenant scope, RBAC, token separation, document policy,
+   audit/download logging, rate limits, and security headers.
+
+## Documentation Index
+
+- [Architecture](docs/architecture.md)
+- [Demo Walkthrough](docs/demo-walkthrough.md)
+- [Screenshots Checklist](docs/screenshots/README.md)
+- [Release Notes](docs/release-notes.md)
+- [Final QA Checklist](docs/final-qa-checklist.md)
+- [Production Readiness](docs/production-readiness.md)
+- [Security Hardening](docs/security-hardening.md)
+- [Security RBAC Matrix](docs/security-rbac-matrix.md)
+- [API Documentation](docs/api-documentation.md)
+- [Database Design](docs/database-design.md)
+- [Module Breakdown](docs/module-breakdown.md)
+
+## Local Development
+
+Prerequisites:
+
+- Node.js 20 or later.
+- npm.
+- PostgreSQL connection string for `server/.env`.
+
+Clone and install:
 
 ```bash
-cd client
-npm install
-cp .env.example .env
-npm run dev
+git clone https://github.com/Ductri2006/Consulting-crm-system.git
+cd Consulting-crm-system
+cd server && npm install
+cd ../client && npm install
 ```
 
-Create a production build with:
-
-```bash
-npm run build
-```
-
-The public pages use typed local content. The admin dashboard and public
-consultation form require the backend API. The client reads its API base URL
-from `VITE_API_BASE_URL`, which should be `http://localhost:5000/api` for local
-development.
-
-## Admin Pages
-
-- `/admin/login`
-- `/admin/dashboard`
-- `/admin/customers`
-- `/admin/consultation-requests`
-- `/admin/cases`
-- `/admin/appointments`
-- `/admin/tasks`
-- `/admin/users`
-- `/admin/invitations`
-- `/admin/settings`
-- `/admin/documents`
-- `/admin/reports`
-- `/invite/:token`
-
-## Run the Backend Foundation Locally
+Backend setup:
 
 ```bash
 cd server
-npm install
 cp .env.example .env
+# Edit .env and set DATABASE_URL, CLIENT_URL, JWT_SECRET, and optional provider envs.
 npm run prisma:generate
+npm run prisma:deploy
+DEMO_SEED_ENABLED=true npm run seed:demo
+SECOND_WORKSPACE_SEED_ENABLED=true npm run seed:second-workspace
+npm run verify:tenant-isolation
 npm run dev
 ```
 
-The health endpoint is available at `GET /api/health`. See the [backend README](server/README.md) for Windows setup notes, Prisma commands, and the local seed account.
+Frontend setup:
 
-## Development Roadmap
+```bash
+cd client
+cp .env.example .env
+# VITE_API_BASE_URL=http://localhost:5000/api
+npm run dev
+```
 
-1. **Project foundation and documentation** - repository structure, requirements, data model, API plan, and roadmap
-2. **Public website** - responsive pages, reusable components, and customer-facing forms
-3. **Backend foundation** - Express, TypeScript, Prisma, PostgreSQL, validation, and error handling
-4. **Authentication and authorization** - JWT authentication and role-based access control
-5. **Core CRM APIs** - customers, services, case profiles, appointments, tasks, and documents
-6. **Admin dashboard** - operational interfaces for staff, managers, and administrators
-7. **Reporting and deployment** - dashboards, production infrastructure, and portfolio presentation
-8. **Advanced features** - richer customer portal workflows, notifications, OCR, analytics, and multi-branch support
+Useful checks:
 
-See the [Development Roadmap](docs/development-roadmap.md) for the complete phase-by-phase plan.
+```bash
+cd client
+npm run build
+npm run lint
 
-## Future Improvements
+cd ../server
+npm run build
+npm run lint
+npx prisma validate
+npm run prisma:generate
+```
 
-- Customer portal self-service profile flows
-- Email and SMS notifications
-- Production operation of private S3-compatible storage, malware scanning, and
-  OCR services
-- Advanced analytics and configurable reports
-- Multi-branch support and deeper localization coverage
-- Backend API response and email template localization
-- Calendar and third-party integrations
-- Export to Excel and PDF
-- Automated testing and continuous delivery
-- Accessibility, security, and performance audits
-- Production provisioning of private S3-compatible document storage
-- HttpOnly cookie authentication
-- Distributed production rate limiting, captcha, and abuse monitoring
-- Automated end-to-end tests
+Never commit `.env`, database URLs, JWT secrets, access tokens, provider keys,
+uploaded files, or generated `dist` output.
 
-## Implemented Vs Future
+## Deployment Notes
 
-| Area | Current status |
-| --- | --- |
-| Public website | Implemented with typed local content and responsive routes |
-| Public consultation request | Submits to the backend public consultation API |
-| Public contact and appointment forms | Validation/demo flows only; backend intake remains future work |
-| Admin CRM | Implemented for dashboard, customers, consultation requests, cases, appointments, tasks, internal users, workspace invitations, workspace settings, documents, and reports |
-| Backend API | Implemented for auth, workspace signup, workspace settings, workspace invitations, CRM workflows, internal user management, documents, dashboard, and reports |
-| Database | Prisma schema, migrations, seed, workspace tenant foundation, and Neon verification completed |
-| Organization / Workspace | Implemented as a backend tenant boundary for internal users and CRM business data; public workspace signup is available behind `WORKSPACE_SIGNUP_ENABLED`; admins can edit the current workspace profile |
-| Workspace invitations | Implemented for admin-created internal `ADMIN`, `MANAGER`, and `STAFF` invitations with hashed one-time tokens, console email preview, optional Resend delivery, and resend token rotation |
-| Customer portal | Implemented with separate `CustomerPortalAccount` records, portal-purpose JWTs, `/portal/login`, `/portal/dashboard`, `/portal/cases`, read-only portal case detail, `/portal/documents` upload/download, and internal admin/manager portal access controls for existing customers |
-| Bilingual UI | Implemented with English/Vietnamese resources, `advisora_locale` persistence, switchers in public/admin/portal layouts and login flows, localized core status labels, and locale-aware portal date/file-size helpers |
-| Staging deployment preparation | Checklist, environment matrix, smoke tests, rollback, and go/no-go guidance documented |
-| Vercel/Render/Neon staging guide | Provider-specific setup, CORS order, smoke tests, and troubleshooting documented |
-| Staging demo data | Idempotent fictional demo seed and safer internal demo accounts prepared for portfolio staging |
-| Production deployment | Not deployed yet |
-| Document storage | Local provider remains the default; S3-compatible private object storage, protected streaming downloads, scan/OCR abstractions, and download audits are implemented/configurable |
-| Auth hardening | JWT Bearer flow implemented; HttpOnly cookie session strategy remains future work |
-| Security hardening | Step 31 adds Helmet headers, body limits, in-memory rate limiting, redaction helpers, expanded audit coverage, tenant verification updates, and production smoke guidance |
+- Frontend: configure `VITE_API_BASE_URL` on Vercel.
+- Backend: configure `DATABASE_URL`, `CLIENT_URL`, `JWT_SECRET`, document
+  storage, email, scan/OCR, and rate-limit env vars on Render.
+- Database: run committed migrations against Neon with `npm run prisma:deploy`.
+- Smoke: run `npm run smoke:production` only when `SMOKE_*` credentials are
+  configured outside the repository.
+
+Detailed docs:
+
+- [Production Readiness](docs/production-readiness.md)
+- [Staging Deployment Checklist](docs/staging-deployment-checklist.md)
+- [Deployment Guide](docs/deployment-guide.md)
+- [Vercel/Render Staging Guide](docs/vercel-render-staging-guide.md)
+
+## QA / Production Readiness
+
+Step 33 final QA passed:
+
+- Client build/lint.
+- Server build/lint/Prisma validate/generate.
+- EN/VI key parity and static missing-key scan.
+- Tenant-isolation verification.
+- Public/admin/portal local smoke.
+- Document security regression check.
+- Security headers and rate-limit smoke.
+- Production smoke script readiness.
+
+Production live smoke is skipped unless deployed `SMOKE_*` variables are
+configured. See [Final QA Checklist](docs/final-qa-checklist.md) and
+[Release Notes](docs/release-notes.md).
 
 ## Known Limitations
 
-- No real production deployment has been performed yet.
-- Staging deployment uses provider URLs, credentials, and environment variables
-  kept outside the repository.
-- Staging URLs in this repository remain placeholders by design.
-- Local disk uploads are for development only.
-- Access tokens are stored in browser local storage for the portfolio demo.
-- Rate limiting is process-local and IP-based for portfolio/staging; use Redis
-  or another shared store before multi-instance production.
-- Contact and appointment public forms validate locally but do not create backend records yet.
-- Internal user management and workspace invitations are for CRM team members
-  only; customer portal accounts are created separately for existing customers.
-- Workspace signup is gated by `WORKSPACE_SIGNUP_ENABLED` and intended for
-  local or controlled staging onboarding tests in this portfolio phase.
-- Workspace settings use a logo URL only; logo upload, custom domains,
-  billing, workspace switching, and multi-membership remain future roadmap
-  scope.
-- Invitation email delivery defaults to `EMAIL_PROVIDER=console`; real Resend
-  sending requires provider secrets configured outside the repository.
-- The customer portal currently supports login, session restore, dashboard,
-  profile/account summary, internal access controls, read-only case tracking,
-  customer document upload/download, and customer-safe recent updates for the
-  authenticated customer.
-- Bilingual UI currently focuses on core navigation, layout chrome, login
-  flows, status labels, and portal case tracking. Backend API response
-  localization, email template localization, and translation of user-generated
-  database content remain future work.
-- No customer self-registration, billing, live OCR/scanner infrastructure,
-  configured production object-storage credentials, report exports, realtime or
-  push notifications, distributed production-grade rate limiting, or centralized
-  observability yet.
+- Render Free may sleep, so the first backend call can be slow.
+- In-memory rate limiting is suitable for portfolio/staging only; production
+  scale should use Redis or another shared limiter.
+- Local document storage is for dev/demo; production-like document handling
+  should use private S3-compatible object storage.
+- ClamAV and Tesseract providers are abstraction-ready, but real production
+  scanner/OCR infrastructure must be configured outside the repo.
+- Browser local storage is used for demo Bearer tokens; higher-risk production
+  should review HttpOnly cookie sessions or another hardened strategy.
+- Contact and appointment public forms are validation/demo flows; consultation
+  requests are the public backend intake.
+- No realtime notifications, customer messaging, billing/payment, report
+  exports, or full Playwright E2E suite yet.
 
-## Learning Goals
+## Roadmap / Future Work
 
-This project is designed to practice:
+- Realtime/customer messaging and notification preferences.
+- Production object storage, malware scanning, and OCR infrastructure.
+- Playwright E2E browser automation.
+- Password reset, refresh-token rotation, and token revocation.
+- Report exports and richer analytics.
+- Billing/payment and customer self-service profile updates.
 
-- Fullstack project planning
-- Business requirement analysis
-- UI and UX structure planning
-- REST API design
-- Relational database schema design
-- Authentication and authorization
-- Business workflow modeling
-- Dashboard and reporting design
-- Technical documentation
-- Professional GitHub portfolio presentation
+## GitHub Topics
 
-## Current Progress
+Suggested repository topics:
 
-- [x] Project foundation and documentation
-- [x] Frontend public website
-- [x] Backend foundation setup
-- [x] Authentication and authorization foundation
-- [x] Customer, service, and consultation request APIs
-- [x] Case profile workflow APIs
-- [x] Appointment and task APIs
-- [x] Document management APIs
-- [x] Dashboard and reporting APIs
-- [x] Real database migration and seed verification
-- [x] Live Neon PostgreSQL verification
-- [x] Admin dashboard frontend foundation
-- [x] Admin customers and consultation requests UI
-- [x] Admin case management UI
-- [x] Assignable users endpoint fix
-- [x] Admin appointments and tasks UI
-- [x] Admin document management UI
-- [x] Admin reports UI
-- [x] Route-based bundle optimization
-- [x] Production readiness and final QA preparation
-- [x] Final local QA and portfolio polish
-- [x] Staging deployment preparation
-- [x] Vercel/Render/Neon staging deployment guide
-- [x] Staging demo data and safer demo accounts
-- [x] Internal user management
-- [x] Staging deployment
-- [x] Organization / Workspace tenant foundation
-- [x] Workspace settings / organization profile
-- [x] Customer portal case tracking
-- [x] Bilingual English/Vietnamese UI
-- [x] Customer portal documents
-- [x] Production document storage and security hardening
-- [x] Activity Center and Portal Updates
-- [x] Audit log, security review, and production QA hardening
-- [ ] Production deployment
+`react`, `typescript`, `nodejs`, `express`, `prisma`, `postgresql`,
+`tailwindcss`, `saas`, `crm`, `multi-tenant`, `customer-portal`, `jwt-auth`,
+`fullstack`, `portfolio-project`
 
-## Repository Status
+## Author
 
-**Current phase:** Step 33 complete - Final QA smoke and small bug-fix pass
+Nguyen Duc Tri
 
-The public website and core CRM backend now cover authentication, customers,
-services, consultation requests, case workflows, appointments, tasks, and
-authenticated local-development document management, plus role-aware dashboard
-and reporting APIs. The repository now includes the versioned migration,
-idempotent seed, database verification command, and real-database test
-documentation.
-
-The committed migrations, idempotent seed, database verification command,
-health endpoint, and administrator login have passed against a live Neon
-PostgreSQL database. The connection URL remains configured only in the local
-`server/.env` file and is not committed. See the
-[live database verification record](server/docs/live-database-verification.md)
-for the sanitized result.
-
-The frontend now includes the admin login flow, persisted authentication,
-protected admin routing, responsive dashboard layout, and dashboard overview
-powered by the backend APIs. The first admin management pages add customer
-list, search, pagination, create, edit, and delete workflows plus consultation
-request list, filtering, details, and status updates. The case management page
-adds case search, workflow filters, overdue review, creation, editing, status
-transitions, staff assignment, history, and role-aware deletion. Appointment and
-task management now cover list filters, pagination, create/edit/status/delete
-flows, today appointments, overdue tasks, and role-aware destructive actions.
-Document management now covers list/search/filter/pagination, multipart upload,
-detail review, protected download, and role-aware deletion. Reports now use the
-dashboard/reporting APIs for overview metrics, case status distribution, monthly
-case trends, upcoming deadlines, staff performance, and recent activities. Staff
-performance is available only to administrators and managers. User management
-now lets administrators list, create, edit, activate/deactivate, and reset
-passwords for internal CRM users, using deactivation rather than hard delete.
-Admin pages are
-route-lazy-loaded for better bundle splitting. Phase 17 adds production
-readiness documentation, a provider-neutral deployment guide, final QA
-checklists, CORS production guidance, environment-variable guidance, and file
-upload/storage warnings. Phase 18A adds local smoke-test coverage, README
-portfolio polish, and a guided demo walkthrough. Phase 18B adds a
-provider-neutral staging deployment checklist with environment-variable matrix,
-CORS checks, migration steps, smoke tests, rollback planning, and go/no-go
-criteria. Phase 19 adds a Vercel frontend, Render backend, and Neon database
-staging runbook plus Vercel SPA rewrite support for route refreshes. Phase 20
-adds an idempotent staging demo seed with fictional CRM data, safer demo
-accounts for admin/manager/staff review, Render JWT rotation notes, and
-portfolio demo guidance. Phase 21 adds internal Team Members management for
-administrator-only CRM user administration. Phase 22 adds the Organization /
-Workspace tenant foundation: existing data is backfilled to Advisora Demo
-Workspace, auth responses include safe workspace info, public consultation
-requests map to `DEFAULT_ORGANIZATION_SLUG`, and CRM APIs scope internal users,
-customers, requests, cases, appointments, tasks, documents, dashboard, and
-reports by `organizationId`. Production deployment remains a future phase.
-Step 22.5 adds an optional Northstar Legal Workspace seed and a Prisma-based
-tenant-isolation verification script for staging QA.
-Step 23 adds public Workspace Signup / Organization Onboarding: a guarded
-`POST /api/workspaces/signup` endpoint, a `/workspace-signup` frontend page,
-automatic owner admin login, and docs for the signup flag and default public
-consultation behavior.
-Step 24 adds workspace invitations: admin-only invitation list/create/revoke,
-public invite preview and accept, hashed one-time tokens, auto-login after
-accept, and `/admin/invitations` plus `/invite/:token` frontend routes.
-Step 25 adds invitation email delivery: `EMAIL_PROVIDER` supports
-`disabled`, `console`, and `resend`; create invitation can send email or skip
-delivery; resend rotates the invite token so older links stop working; email
-failure keeps the invitation and returns a copyable one-time link.
-Step 26 adds Workspace Settings / Organization Profile: authenticated internal
-users can read `/api/workspace/me`, administrators can update safe workspace
-profile fields from `/admin/settings`, slug uniqueness is enforced, and
-workspace updates write `WORKSPACE_UPDATED` activity logs.
-Step 27 adds Customer Portal Foundation: customer portal accounts live in a
-separate `CustomerPortalAccount` model, portal JWTs carry
-`purpose: "customer_portal"`, internal auth rejects portal tokens, portal auth
-rejects internal tokens, internal admins/managers can create/reset/activate
-portal access for existing customers, and `/portal/login` plus
-`/portal/dashboard` provide the first separate customer-facing portal UI.
-Step 28 adds read-only Customer Portal Case Tracking: portal customers can view
-only cases scoped to their portal account's `organizationId + customerId`,
-open safe case detail pages, see status timeline, appointments, safe document
-metadata, and task summary, while internal notes, document file URLs, and
-secrets remain excluded.
-Step 28.5 adds bilingual UI support: i18next resources for English and
-Vietnamese, `advisora_locale` local storage persistence, language switchers in
-public/admin/portal surfaces, translated core navigation/buttons/status labels,
-and locale-aware formatting helpers for the portal case-tracking flow. Backend
-API response localization, email template localization, and translation of
-user-generated/database content remain future work.
-Step 29 adds Customer Portal Documents: portal customers use `/portal/documents`
-and `/api/portal/documents` with portal-purpose JWTs to list visible documents,
-upload customer-provided files, and download through a dedicated portal route.
-Existing internal documents default to `INTERNAL_ONLY`; Admins and Managers can
-toggle `CUSTOMER_VISIBLE` from admin document management. Portal document
-responses never expose `fileUrl`, raw storage paths, or internal-only documents,
-and every portal document query is scoped by `organizationId`, `customerId`, and
-case ownership when a document is case-linked.
-Step 29.5 adds a document storage provider layer with local default and
-  S3-compatible private object storage support, protected API streaming for
-  downloads, malware scanner and OCR abstractions with disabled/mock providers,
-  scan-based download blocking, OCR previews for admin review, and
-  `DocumentDownloadAudit` records plus `downloadCount`/`lastDownloadedAt`.
-  Portal responses still never expose `fileUrl`, `storageKey`, bucket, object key,
-  or local paths.
-Step 30 adds Activity Center and Portal Updates. Admins and Managers can open
-`/admin/activity` and call `/api/activity` for an organization-scoped activity
-feed with filters, summary metrics, search, date range, sort, and pagination.
-Staff are blocked from this internal audit surface. Portal customers can open
-`/portal/updates` and call `/api/portal/updates` for a customer-scoped feed
-built from safe case history, appointment, document, download, and account
-events. Portal update responses do not expose internal notes, raw ActivityLog
-descriptions, `fileUrl`, storage keys, object keys, bucket names, signed URLs,
-password hashes, token hashes, IP addresses, or user-agent data. Step 30 does
-not add realtime websocket, push notification, email automation, or notification
-preference features.
-Step 31 adds production-like security hardening: Helmet security headers,
-`x-powered-by` removal, `1mb` JSON/body limits, configurable in-memory rate
-limits for auth/public/invitation/upload/download routes, redacted request/error
-logging, internal JWT `purpose: "internal"` signing while preserving existing
-internal sessions, expanded user and document audit events, a read-only
-production smoke script, tenant-isolation verification for documents/downloads
-and portal accounts, plus dedicated security hardening and RBAC matrix docs.
-The rate limiter remains single-process and should be replaced with
-Redis-backed shared state before multi-instance production.
-Step 32 polishes loading, empty, error, responsive, accessibility, and
-bilingual microcopy states for the public/admin/portal demo path.
-Step 33 completes the final local QA/fix sprint before portfolio release:
-client/server build and lint passed, Prisma validate/generate passed, EN/VI key
-parity and static translation-key scans passed, tenant-isolation verification
-passed, local API smoke passed, and the production smoke script passed against
-localhost with sanitized demo credentials. No `SMOKE_*` values were present for
-a live production smoke run, so live production smoke remains skipped until a
-deployed API and safe smoke credentials are provided outside the repository.
+AI student / fullstack learner
+GitHub: <https://github.com/Ductri2006>

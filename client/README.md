@@ -6,6 +6,26 @@ fictional consulting brand used for the demonstration interface.
 The UI uses the word Workspace for the backend Organization tenant model; the
 current demo/staging workspace is `Advisora Demo Workspace`.
 
+## Portfolio Release Summary
+
+The frontend exposes three route surfaces:
+
+- Public website: `/`, `/about`, `/services`, `/projects`, `/news`,
+  `/contact`, `/consultation`, `/appointment`, `/workspace-signup`, and
+  `/invite/:token`.
+- Internal Admin CRM: `/admin/login` plus protected dashboard, customers,
+  consultation requests, cases, appointments, tasks, documents, reports,
+  activity, users, invitations, and settings routes.
+- Customer Portal: `/portal/login` plus protected dashboard, cases, case
+  detail, documents, and updates routes.
+
+Admin routes use the internal auth context, `ProtectedRoute`, `AdminLayout`,
+and the `consulting_crm_access_token` key. Portal routes use
+`PortalProtectedRoute`, `PortalLayout`, the portal API client, and the
+`advisora_portal_access_token` key. UI state polish covers loading, empty,
+error, retry, responsive overflow, and bilingual EN/VI microcopy for the demo
+path.
+
 ## Stack
 
 - React
@@ -70,7 +90,7 @@ Create a production build with:
 npm run build
 ```
 
-Run the frontend static checks used by the final QA pass with:
+Run the frontend checks used by the final QA pass with:
 
 ```bash
 npm run lint

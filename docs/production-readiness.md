@@ -1,17 +1,17 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System through Step 33. It documents staging demo hardening, the workspace
-tenant foundation, customer portal document security, activity feeds, and UI
-polish/final QA status while keeping real provider URLs, credentials, and
+System through Step 34. It documents staging demo hardening, the workspace
+tenant foundation, customer portal document security, activity feeds, UI/final
+QA status, and portfolio release documentation while keeping real provider
 secrets out of the repository.
 
 ## Current Production Readiness Status
 
-Status: staging portfolio path prepared with fictional demo data; production is
-not approved. Do not treat this repository as approved for real sensitive
-production data until the known limitations below are resolved or explicitly
-accepted.
+Status: portfolio-ready and production-like staging-ready with fictional demo
+data; real sensitive production use is not approved. Do not treat this
+repository as approved for real customer data until the known limitations below
+are resolved or explicitly accepted.
 
 - Live Neon PostgreSQL verification: PASS.
 - Staging deployment checklist: prepared in
@@ -54,10 +54,19 @@ accepted.
   smoke. It also fixes a document access regression so staff users can no longer
   read unrelated customer-portal uploads solely because the document source is
   `CUSTOMER_PORTAL`.
+- Step 34 portfolio release documentation adds a recruiter-friendly README,
+  Mermaid architecture diagrams, release notes, screenshot checklist, and a
+  concise demo walkthrough script.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
   committed.
+
+Release docs:
+
+- [Architecture](architecture.md)
+- [Release Notes](release-notes.md)
+- [Screenshots Checklist](screenshots/README.md)
 
 ## Completed Features
 
@@ -363,12 +372,16 @@ Production document requirements:
 - [ ] Verify `GET /api/health`.
 - [ ] Run `npm run smoke:production` when smoke credentials are available.
 - [ ] Complete the final QA checklist.
+- [ ] Review [Release Notes](release-notes.md) and confirm known limitations
+  are still accurate for the target environment.
+- [ ] Capture and review real screenshots before adding image links to the
+  README.
 
 ## Known Limitations
 
-- No real production deployment has been performed yet.
-- Staging URLs, provider settings, and credentials are intentionally not
-  committed.
+- The deployed demo is for portfolio/staging review, not real production use
+  with sensitive data.
+- Provider settings and secret credentials are intentionally not committed.
 - `/api/health` is a liveness endpoint, not a database readiness check.
 - File storage defaults to local for development. S3-compatible private storage
   is implemented but must be configured with provider secrets outside the repo.

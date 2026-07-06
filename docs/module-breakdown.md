@@ -46,14 +46,16 @@ Main features:
 - Role-based access control
 - Active-user checks
 
-Planned roles:
+Internal roles:
 
 - Admin
 - Manager
 - Staff
-- Customer
 
-The Customer role is reserved for a future portal. Authorization must be enforced by the backend; hiding user interface controls alone is not sufficient.
+Customer portal access uses separate `CustomerPortalAccount` records and portal
+JWTs with `purpose: "customer_portal"` rather than an internal `User` role.
+Authorization must be enforced by the backend; hiding user interface controls
+alone is not sufficient.
 
 ## 3. User Management Module
 
@@ -64,7 +66,7 @@ Main features:
 - Create user
 - Update user
 - Disable user
-- Delete user when permitted
+- Deactivate or reactivate users instead of hard delete
 - View user list and details
 - Assign role
 - Search users
@@ -86,7 +88,7 @@ Key relationships:
 
 - Users can own or be assigned case profiles.
 - Users can be assigned appointments and tasks.
-- Users can upload documents and author news.
+- Users can upload documents and trigger audited CRM actions.
 - Significant user actions can produce activity log records.
 
 ## 4. Customer Management Module

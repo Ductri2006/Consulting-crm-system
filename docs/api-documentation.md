@@ -1040,21 +1040,26 @@ Request body:
 }
 ```
 
-### Convert Request to Customer
+### Planned: Convert Request to Customer
 
 ```http
 POST /api/consultation-requests/:id/convert-to-customer
 ```
 
-Creates or links a customer record and marks the request as `CONVERTED`.
+Planned endpoint; it is not mounted in the current backend route list. The
+current release supports request review and status updates, but
+request-to-customer conversion remains future work.
 
-### Convert Request to Case Profile
+### Planned: Convert Request to Case Profile
 
 ```http
 POST /api/consultation-requests/:id/convert-to-case
 ```
 
-Creates or links the customer before creating a case profile. The operation should be transactional and should mark the request as `CONVERTED` only after successful completion.
+Planned endpoint; it is not mounted in the current backend route list. When
+implemented, it should create or link the customer before creating a case
+profile and mark the request as `CONVERTED` only after a successful
+transaction.
 
 ## 6. Case Profile API
 
@@ -1167,13 +1172,16 @@ Deletion should be restricted when retention is required for history, documents,
 
 ## 7. Appointment API
 
-### Submit Public Appointment Request
+### Planned: Submit Public Appointment Request
 
 ```http
 POST /api/public/appointments
 ```
 
-This endpoint supports the public appointment form. The backend should match or create a customer record from the submitted contact details before creating the appointment.
+Planned endpoint; it is not mounted in the current backend route list. In the
+current release, the public appointment page is a frontend validation/demo
+flow. When implemented, the backend should match or create a customer record
+from submitted contact details before creating the appointment.
 
 Request body:
 
@@ -1470,7 +1478,11 @@ GET /api/dashboard/staff-performance
 GET /api/dashboard/upcoming-deadlines
 ```
 
-## 11. News API
+## 11. Planned News API
+
+The current release renders public news pages from typed frontend content. The
+backend CMS-style news endpoints below are planned and are not mounted in the
+current backend route list.
 
 ### Get Public News
 
@@ -1512,7 +1524,11 @@ DELETE /api/news/:id
 
 Admin list and mutation endpoints support the `DRAFT`, `PUBLISHED`, and `ARCHIVED` publication statuses.
 
-## 12. Project Gallery API
+## 12. Planned Project Gallery API
+
+The current release renders public project/gallery pages from typed frontend
+content. The backend CMS-style project endpoints below are planned and are not
+mounted in the current backend route list.
 
 ### Get Public Projects
 
