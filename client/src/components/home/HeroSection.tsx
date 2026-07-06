@@ -89,7 +89,7 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-xl lg:mx-0">
+        <div className="relative mx-auto w-full max-w-xl lg:mx-0 lg:justify-self-end">
           <div
             aria-hidden="true"
             className="absolute -inset-6 rounded-[2.5rem] bg-cyan-400/15 blur-3xl"
@@ -162,36 +162,41 @@ export function HeroSection() {
                   ))}
                 </div>
               </div>
-            </div>
 
-            <div className="pointer-events-none absolute inset-x-5 bottom-5 hidden grid-cols-2 gap-3 sm:grid">
-              {floatingCards.map(({ labelKey, icon: Icon }, index) => (
-                <div
-                  className={`rounded-2xl border border-white/15 bg-white/90 px-3 py-2 text-xs font-bold text-slate-800 shadow-lg shadow-slate-950/20 backdrop-blur ${
-                    index % 2 === 0 ? 'landing-float-slow' : 'landing-float-delayed'
-                  }`}
-                  key={labelKey}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Icon className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
-                    {t(`public.home.${labelKey}`)}
-                  </span>
-                </div>
-              ))}
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {floatingCards.map(({ labelKey, icon: Icon }, index) => (
+                  <div
+                    className={`min-h-11 rounded-2xl border border-white/15 bg-white/90 px-3 py-2 text-xs font-bold leading-5 text-slate-800 shadow-lg shadow-slate-950/20 backdrop-blur ${
+                      index % 2 === 0 ? 'landing-float-slow' : 'landing-float-delayed'
+                    }`}
+                    key={labelKey}
+                  >
+                    <span className="flex items-start gap-2">
+                      <Icon
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600"
+                        aria-hidden="true"
+                      />
+                      <span>{t(`public.home.${labelKey}`)}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="absolute -right-2 top-6 hidden max-w-[13rem] rounded-2xl border border-white/15 bg-white/90 p-3 text-xs font-semibold text-slate-700 shadow-xl shadow-slate-950/25 backdrop-blur lg:block">
-            <span className="mb-2 block text-[10px] uppercase tracking-[0.16em] text-slate-500">
-              {t('public.home.liveSignal')}
-            </span>
-            {t('public.home.liveSignalDescription')}
-          </div>
-          <div className="absolute -bottom-5 -left-3 hidden max-w-[14rem] rounded-2xl border border-emerald-200/80 bg-emerald-50 p-3 text-xs font-semibold text-emerald-900 shadow-xl shadow-emerald-950/20 lg:block">
-            <span className="mb-2 block text-[10px] uppercase tracking-[0.16em] text-emerald-700">
-              {t('public.home.securitySignal')}
-            </span>
-            {t('public.home.securitySignalDescription')}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/15 bg-white/90 p-3 text-xs font-semibold leading-5 text-slate-700 shadow-xl shadow-slate-950/20 backdrop-blur">
+              <span className="mb-2 block text-[10px] uppercase tracking-[0.16em] text-slate-500">
+                {t('public.home.liveSignal')}
+              </span>
+              {t('public.home.liveSignalDescription')}
+            </div>
+            <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50 p-3 text-xs font-semibold leading-5 text-emerald-900 shadow-xl shadow-emerald-950/20">
+              <span className="mb-2 block text-[10px] uppercase tracking-[0.16em] text-emerald-700">
+                {t('public.home.securitySignal')}
+              </span>
+              {t('public.home.securitySignalDescription')}
+            </div>
           </div>
         </div>
       </Container>
