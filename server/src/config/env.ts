@@ -16,6 +16,16 @@ const isHttpOrigin = (value: string): boolean => {
   }
 };
 
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 const isClientUrlList = (value: string): boolean =>
   value
     .split(",")
@@ -223,7 +233,25 @@ const envSchema = z.object({
     .int("AI_RATE_LIMIT_MAX must be an integer.")
     .min(1, "AI_RATE_LIMIT_MAX must be at least 1.")
     .default(20),
+  PROVIDER_READINESS_MODE: z
+    .enum(["dry-run", "live"])
+    .default("dry-run"),
+  PROVIDER_READINESS_STORAGE_CHECK: booleanString("true"),
+  PROVIDER_READINESS_EMAIL_CHECK: booleanString("true"),
+  PROVIDER_READINESS_TEST_EMAIL_TO: optionalTrimmedString,
+  PROVIDER_READINESS_ALLOW_WRITE: booleanString("false"),
 }).superRefine((value, context) => {
+  if (
+    value.DOCUMENT_STORAGE_ENDPOINT &&
+    !isHttpUrl(value.DOCUMENT_STORAGE_ENDPOINT)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["DOCUMENT_STORAGE_ENDPOINT"],
+      message: "DOCUMENT_STORAGE_ENDPOINT must be a valid HTTP or HTTPS URL.",
+    });
+  }
+
   if (value.DOCUMENT_STORAGE_PROVIDER !== "s3") {
     if (value.AI_PROVIDER !== "external") {
       return;

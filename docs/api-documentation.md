@@ -8,7 +8,8 @@ foundation. Step 30 adds the Admin/Manager Activity Center and customer-safe
 Portal Updates feed. Step 31 adds security header, rate-limit, token-purpose,
 redaction, audit, and production smoke documentation. Step 37 adds the
 internal AI Case Summary endpoint with a safe context builder and provider
-abstraction.
+abstraction. Step 38 documents cloud storage and email provider readiness
+without adding a public provider-management API.
 
 ## Base URL and Conventions
 
@@ -46,6 +47,8 @@ Security conventions:
 - Request logging and error output must redact Bearer tokens, invitation
   tokens, password/token/secret query values, storage URLs, local file paths,
   and upload paths.
+- Document JSON responses must not expose storage keys, object keys, bucket
+  names, signed URLs, `fileUrl`, raw upload paths, or local filesystem paths.
 - See [Security Hardening](security-hardening.md) and
   [Security RBAC Matrix](security-rbac-matrix.md) for the full Step 31 review.
 
@@ -450,6 +453,10 @@ Email provider modes:
 - `EMAIL_PROVIDER=resend` sends through Resend when `RESEND_API_KEY` and
   `EMAIL_FROM` are configured outside the repo; missing config returns
   `FAILED` without rolling back the invitation.
+
+See [Email Provider Setup](email-provider-setup.md) for verified sender,
+API-key redaction, invite-token handling, staging/test recipient guidance, and
+`npm run verify:providers`.
 
 ### Revoke Invitation
 
@@ -1462,7 +1469,8 @@ Internal uploads default to `source=INTERNAL` and `visibility=INTERNAL_ONLY`.
 Uploads use the configured storage provider. `DOCUMENT_STORAGE_PROVIDER=local`
 stores server-local objects for development; `s3` stores objects in a private
 S3-compatible bucket. The API stores generated object keys internally and does
-not return them to clients.
+not return them to clients. See [Cloud Storage Setup](cloud-storage-setup.md)
+for private bucket, least-privilege, scan policy, and readiness checks.
 
 ### Get Documents
 
@@ -1861,3 +1869,6 @@ Rate-limited endpoint groups:
 - Prevent duplicate slugs, user emails, and case codes through both validation and database constraints.
 - Apply rate limiting and abuse protection to login and public form endpoints.
 - Field-level permissions, refresh-token handling, protected document downloads, and deletion policies are enforced in backend services and must stay covered by regression tests.
+- Provider readiness is run with `cd server && npm run verify:providers`. It is
+  a server-side operational script; dry-run is the default and live storage
+  write or Resend send checks require explicit opt-in environment variables.

@@ -74,6 +74,10 @@ jobs:
       DOCUMENT_STORAGE_PROVIDER: "local"
       DOCUMENT_MALWARE_SCANNER: "disabled"
       DOCUMENT_OCR_PROVIDER: "disabled"
+      PROVIDER_READINESS_MODE: "dry-run"
+      PROVIDER_READINESS_STORAGE_CHECK: "true"
+      PROVIDER_READINESS_EMAIL_CHECK: "true"
+      PROVIDER_READINESS_ALLOW_WRITE: "false"
       RATE_LIMIT_ENABLED: "false"
     steps:
       - name: Checkout
@@ -100,6 +104,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Provider readiness dry-run
+        run: npm run verify:providers
 
   docs-and-safety:
     name: Docs and Safety

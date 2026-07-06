@@ -1,6 +1,6 @@
 # Architecture
 
-This document summarizes the Advisora CRM architecture as of the Step 34
+This document summarizes the Advisora CRM architecture as of the Step 38
 portfolio release. It focuses on current implemented behavior and uses Mermaid
 diagrams only so the diagrams render directly on GitHub.
 
@@ -30,6 +30,7 @@ flowchart TB
     AIModule["AI summary module\nsafe context + provider abstraction"]
     PortalModules["Portal modules\nprofile, cases, docs, updates"]
     Email["Email provider\nConsole or Resend"]
+    ProviderReady["Provider readiness script\nDry-run default; live opt-in"]
   end
 
   subgraph Data["Data and File Layer"]
@@ -78,6 +79,8 @@ flowchart TB
   PortalModules --> Audit
   Audit --> DB
   Modules --> Email
+  ProviderReady --> Storage
+  ProviderReady --> Email
 ```
 
 ## Request Flow For Admin CRM
@@ -235,6 +238,31 @@ Document security invariants:
 - Portal JSON responses never expose raw file paths, buckets, storage keys,
   object keys, signed URLs, password hashes, token hashes, IP addresses, or
   user-agent data.
+- Storage provider details remain backend-only. Private S3-compatible storage
+  must use a non-public bucket and least-privilege credentials.
+
+## Provider Readiness Boundary
+
+`cd server && npm run verify:providers` is an operational script, not a public
+API route. It loads the same storage and email provider configuration as the
+backend and reports readiness with redacted output.
+
+Default dry-run behavior:
+
+- Local storage and console/disabled email can be verified without external
+  provider accounts.
+- S3-compatible storage config can be checked without uploading, reading,
+  signing, or deleting objects.
+- Resend config can be checked without sending email.
+
+Live behavior is explicit opt-in:
+
+- Storage write/read/delete requires `PROVIDER_READINESS_MODE=live` and
+  `PROVIDER_READINESS_ALLOW_WRITE=true`.
+- Resend test send requires `PROVIDER_READINESS_MODE=live` and
+  `PROVIDER_READINESS_TEST_EMAIL_TO=<staging-recipient@example.com>`.
+- First live runs should use staging/test buckets, prefixes, recipients, and
+  dashboard-managed secrets only.
 
 ## Tenant Isolation Explanation
 

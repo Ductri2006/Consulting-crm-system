@@ -1,0 +1,118 @@
+name: Provider Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Readiness mode. Live mode can write a disposable object or send a test email only when the matching inputs are enabled."
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - live
+      document_storage_provider:
+        description: "Document storage provider configuration to validate."
+        required: true
+        default: "local"
+        type: choice
+        options:
+          - local
+          - s3
+      email_provider:
+        description: "Email provider configuration to validate."
+        required: true
+        default: "disabled"
+        type: choice
+        options:
+          - disabled
+          - console
+          - resend
+      storage_check:
+        description: "Run storage readiness checks."
+        required: true
+        default: true
+        type: boolean
+      email_check:
+        description: "Run email readiness checks."
+        required: true
+        default: true
+        type: boolean
+      allow_write:
+        description: "Allow live mode to write/read/delete a disposable storage object."
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  provider-readiness:
+    name: Provider Readiness
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    env:
+      NODE_ENV: test
+      DATABASE_URL: "postgresql://provider_readiness:provider_readiness@localhost:5432/provider_readiness"
+      CLIENT_URL: "http://localhost:5173"
+      JWT_SECRET: "provider-readiness-jwt-secret-at-least-32-characters"
+      JWT_EXPIRES_IN: "7d"
+      DEFAULT_ORGANIZATION_SLUG: "advisora-demo"
+      WORKSPACE_SIGNUP_ENABLED: "false"
+      CONSULTATION_AUTOMATION_ENABLED: "true"
+      CONSULTATION_AUTO_TASK_ENABLED: "true"
+      CONSULTATION_AUTO_EMAIL_ENABLED: "false"
+      CONSULTATION_FOLLOW_UP_DUE_HOURS: "24"
+      AI_PROVIDER: "mock"
+      AI_MODEL: "mock-case-summary"
+      APP_NAME: "Advisora CRM"
+      DOCUMENT_SIGNED_URL_EXPIRES_SECONDS: "300"
+      DOCUMENT_MALWARE_SCANNER: "disabled"
+      DOCUMENT_OCR_PROVIDER: "disabled"
+      RATE_LIMIT_ENABLED: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Explain safety gates
+        run: |
+          echo "Provider readiness is manual-only."
+          echo "Dry-run never writes objects or sends email."
+          echo "Live storage writes only when mode=live, provider=s3, storage_check=true, and allow_write=true."
+          echo "Live email sends only when mode=live, provider=resend, email_check=true, and PROVIDER_READINESS_TEST_EMAIL_TO is configured."
+
+      - name: Run provider readiness
+        env:
+          DOCUMENT_STORAGE_PROVIDER: ${{ inputs.document_storage_provider }}
+          DOCUMENT_STORAGE_BUCKET: ${{ inputs.document_storage_provider == 's3' && secrets.DOCUMENT_STORAGE_BUCKET || '' }}
+          DOCUMENT_STORAGE_REGION: ${{ inputs.document_storage_provider == 's3' && secrets.DOCUMENT_STORAGE_REGION || '' }}
+          DOCUMENT_STORAGE_ENDPOINT: ${{ inputs.document_storage_provider == 's3' && secrets.DOCUMENT_STORAGE_ENDPOINT || '' }}
+          DOCUMENT_STORAGE_ACCESS_KEY_ID: ${{ inputs.document_storage_provider == 's3' && secrets.DOCUMENT_STORAGE_ACCESS_KEY_ID || '' }}
+          DOCUMENT_STORAGE_SECRET_ACCESS_KEY: ${{ inputs.document_storage_provider == 's3' && secrets.DOCUMENT_STORAGE_SECRET_ACCESS_KEY || '' }}
+          DOCUMENT_STORAGE_FORCE_PATH_STYLE: ${{ inputs.document_storage_provider == 's3' && secrets.DOCUMENT_STORAGE_FORCE_PATH_STYLE || '' }}
+          EMAIL_PROVIDER: ${{ inputs.email_provider }}
+          EMAIL_FROM: ${{ inputs.email_provider == 'resend' && secrets.EMAIL_FROM || '' }}
+          EMAIL_REPLY_TO: ${{ inputs.email_provider == 'resend' && secrets.EMAIL_REPLY_TO || '' }}
+          RESEND_API_KEY: ${{ inputs.email_provider == 'resend' && secrets.RESEND_API_KEY || '' }}
+          PROVIDER_READINESS_MODE: ${{ inputs.mode }}
+          PROVIDER_READINESS_STORAGE_CHECK: ${{ inputs.storage_check }}
+          PROVIDER_READINESS_EMAIL_CHECK: ${{ inputs.email_check }}
+          PROVIDER_READINESS_TEST_EMAIL_TO: ${{ inputs.email_provider == 'resend' && secrets.PROVIDER_READINESS_TEST_EMAIL_TO || '' }}
+          PROVIDER_READINESS_ALLOW_WRITE: ${{ inputs.allow_write }}
+        run: |
+          export DOCUMENT_STORAGE_FORCE_PATH_STYLE="${DOCUMENT_STORAGE_FORCE_PATH_STYLE:-true}"
+          export EMAIL_FROM="${EMAIL_FROM:-Advisora CRM <no-reply@advisora.test>}"
+          npm run verify:providers

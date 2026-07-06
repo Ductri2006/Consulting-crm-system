@@ -1,7 +1,7 @@
 # Production Readiness
 
 This document records the production readiness status for the Consulting CRM
-System through Step 34. It documents staging demo hardening, the workspace
+System through Step 38. It documents staging demo hardening, the workspace
 tenant foundation, customer portal document security, activity feeds, UI/final
 QA status, and portfolio release documentation while keeping real provider
 secrets out of the repository.
@@ -44,6 +44,9 @@ are resolved or explicitly accepted.
   configurable in-memory rate limiting, logging/error redaction, expanded audit
   coverage, tenant verification updates, and a read-only production smoke
   script.
+- Step 38 documents provider readiness for private S3-compatible storage and
+  Resend email. `npm run verify:providers` defaults to dry-run and does not
+  upload storage objects or send email unless live opt-in variables are set.
 - Step 32 final UI/UX polish standardizes loading, empty, and error states,
   responsive table/card behavior, accessible labels, and bilingual microcopy for
   the demo path without changing backend API contracts or resetting data.
@@ -136,6 +139,12 @@ Server:
 | `JWT_EXPIRES_IN` | Access-token lifetime, for example `7d`. |
 | `UPLOAD_DIR` | Local upload directory used by the current document module. |
 | `MAX_FILE_SIZE_MB` | Per-file upload limit from 1 to 50 MB. |
+| `DOCUMENT_STORAGE_PROVIDER` | `local` for dev/demo or `s3` for private S3-compatible storage. Defaults to `local`. |
+| `DOCUMENT_STORAGE_BUCKET` / `DOCUMENT_STORAGE_REGION` | Required only when `DOCUMENT_STORAGE_PROVIDER=s3`; store outside the repository. |
+| `DOCUMENT_STORAGE_ENDPOINT` | Optional S3-compatible endpoint. |
+| `DOCUMENT_STORAGE_ACCESS_KEY_ID` / `DOCUMENT_STORAGE_SECRET_ACCESS_KEY` | Required only when `DOCUMENT_STORAGE_PROVIDER=s3`; never commit these secrets. |
+| `DOCUMENT_STORAGE_FORCE_PATH_STYLE` | S3-compatible path-style toggle. Defaults to `true`. |
+| `DOCUMENT_SIGNED_URL_EXPIRES_SECONDS` | Short-lived signed URL TTL if signed storage access is used. Defaults to `300`. |
 | `DEFAULT_ORGANIZATION_SLUG` | Workspace slug used by public consultation requests, defaults to `advisora-demo`. |
 | `WORKSPACE_SIGNUP_ENABLED` | Public workspace signup flag. Defaults to `false`; use `true` only for controlled onboarding QA until production abuse protection and auth hardening are complete. |
 | `CONSULTATION_AUTOMATION_ENABLED` | Enables public consultation automation. Defaults to `true`. |
@@ -153,6 +162,10 @@ Server:
 | `EMAIL_FROM` | Sender identity for outbound emails. Use a verified sender for real Resend delivery. |
 | `EMAIL_REPLY_TO` | Optional reply-to address for outbound emails. |
 | `RESEND_API_KEY` | Resend API key. Required only when `EMAIL_PROVIDER=resend`; never commit it. |
+| `PROVIDER_READINESS_MODE` | `dry-run` or `live`. Defaults to `dry-run`. |
+| `PROVIDER_READINESS_STORAGE_CHECK` / `PROVIDER_READINESS_EMAIL_CHECK` | Toggle readiness reporting for storage and email. Defaults to `true`. |
+| `PROVIDER_READINESS_TEST_EMAIL_TO` | Required only for live email readiness. Use a staging/test recipient first. |
+| `PROVIDER_READINESS_ALLOW_WRITE` | Must be `true` before live storage readiness writes a disposable object. |
 | `RATE_LIMIT_ENABLED` | Enables in-memory rate limits. Defaults to `true`. |
 | `AUTH_RATE_LIMIT_WINDOW_MINUTES` / `AUTH_RATE_LIMIT_MAX` | Auth and invitation limit window/count. Defaults to `15` and `10`. |
 | `PUBLIC_RATE_LIMIT_WINDOW_MINUTES` / `PUBLIC_RATE_LIMIT_MAX` | Public intake limit window/count. Defaults to `15` and `50`. |
@@ -185,6 +198,11 @@ Production rules:
 - `AI_PROVIDER=mock` is demo-ready and does not call a network provider.
   Production external mode requires `AI_API_KEY` and `AI_API_BASE_URL` from a
   secret manager, never the repository.
+- `DOCUMENT_STORAGE_PROVIDER=local` is for development and demos. Hosted
+  durable document handling requires a private S3-compatible bucket and
+  dashboard-managed secrets.
+- `EMAIL_PROVIDER=console` or `disabled` is safest until Resend has a verified
+  sender, API key, and staging/test recipient plan.
 - Current rate limiting is in-memory and IP-based. Use Redis or another shared
   rate-limit store before multi-instance production.
 - Do not commit `.env`, tokens, local upload files, or generated secrets.
@@ -316,6 +334,36 @@ against localhost with sanitized demo credentials, including
 `SMOKE_RATE_LIMIT_CHECK=true`. A live production smoke run was skipped because
 no `SMOKE_*` variables were available in the shell.
 
+## Provider Readiness Script
+
+Run the provider readiness script after environment variables are configured:
+
+```bash
+cd server
+npm run verify:providers
+```
+
+The default `PROVIDER_READINESS_MODE=dry-run` is safe for local, staging, and
+CI-style checks:
+
+- Local storage and console/disabled email require no external provider secrets.
+- S3-compatible storage dry-run validates that configuration loads but does not
+  upload, read, sign, or delete objects.
+- Resend dry-run checks required email configuration but does not send an email.
+
+Live checks are explicit opt-in and should run only against staging-safe
+resources:
+
+```bash
+cd server
+PROVIDER_READINESS_MODE=live PROVIDER_READINESS_ALLOW_WRITE=true PROVIDER_READINESS_TEST_EMAIL_TO=<staging-recipient@example.com> npm run verify:providers
+```
+
+`PROVIDER_READINESS_ALLOW_WRITE=true` permits a disposable storage
+write/read/delete check. `PROVIDER_READINESS_TEST_EMAIL_TO` permits one generic
+test email when `EMAIL_PROVIDER=resend`. Do not use production recipients,
+production buckets, or production secrets for the first live readiness run.
+
 ## File Upload Limitation
 
 Local file uploads work for development and single-instance testing.
@@ -331,6 +379,8 @@ Production document requirements:
 - Use a private persistent S3-compatible bucket with no public ACL/policy.
 - Keep downloads authenticated through backend-protected routes or short-lived
   signed URLs issued only after authorization.
+- Keep bucket names, object keys, signed URLs, storage paths, and local paths out
+  of JSON responses.
 - Configure scanner/OCR infrastructure outside the repository when real
   customer documents are handled.
 - Retain `DocumentDownloadAudit` records according to the compliance policy.
@@ -384,6 +434,16 @@ Production document requirements:
 - [ ] External AI provider secrets are supplied only through environment/secret
   management; `AI_PROVIDER=mock` is used for demo/CI when no provider is
   configured.
+- [ ] Private S3-compatible storage uses a non-public bucket and least-privilege
+  credentials supplied only through environment/secret management.
+- [ ] Provider readiness dry-run has passed with `npm run verify:providers`.
+- [ ] Any live storage readiness run used `PROVIDER_READINESS_MODE=live` and
+  `PROVIDER_READINESS_ALLOW_WRITE=true` only against a disposable staging
+  bucket or prefix.
+- [ ] Any live Resend readiness run used a verified sender and
+  `PROVIDER_READINESS_TEST_EMAIL_TO` pointing to a staging/test recipient.
+- [ ] API responses for internal and portal documents do not include bucket
+  names, object keys, storage keys, signed URLs, `fileUrl`, or local paths.
 - [ ] Public forms have abuse protection or a plan for rate limiting.
 - [ ] Logs do not include passwords, tokens, connection strings, or document
   contents.
@@ -442,6 +502,8 @@ deployed API smoke environment.
 - `/api/health` is a liveness endpoint, not a database readiness check.
 - File storage defaults to local for development. S3-compatible private storage
   is implemented but must be configured with provider secrets outside the repo.
+  Local storage is not durable on hosted environments that restart, redeploy, or
+  scale instances.
 - Render Free may cold start during portfolio staging.
 - No refresh tokens or token revocation workflow yet.
 - No separate JWT signing secrets per token family yet; current separation uses
@@ -460,6 +522,8 @@ deployed API smoke environment.
   but real delivery depends on provider DNS/sender setup and secrets configured
   outside the repository. Invite URLs are still returned once at create/resend
   as a manual fallback.
+- Live cloud storage and live email verification require external provider
+  accounts, dashboard-managed secrets, and staging/test checks first.
 - Workspace settings allow administrator-only profile edits and slug changes.
   Public consultation requests still resolve `DEFAULT_ORGANIZATION_SLUG`; keep
   that environment value aligned with the intended default workspace.
@@ -487,12 +551,15 @@ deployed API smoke environment.
 
 1. Choose frontend hosting, backend Node runtime, and private persistent object storage.
 2. Create staging environment variables outside the repository.
-3. Complete `docs/staging-deployment-checklist.md`.
-4. Run the full verification commands listed in the deployment checklist.
-5. Deploy to a staging environment before production.
-6. Complete `docs/final-qa-checklist.md` on staging.
-7. Replace local/demo credentials with secure production provisioning.
-8. Review token storage and consider HttpOnly secure cookies before handling
+3. Complete `docs/cloud-storage-setup.md` and
+   `docs/email-provider-setup.md` when enabling S3-compatible storage or Resend.
+4. Complete `docs/staging-deployment-checklist.md`.
+5. Run the full verification commands listed in the deployment checklist,
+   including `cd server && npm run verify:providers`.
+6. Deploy to a staging environment before production.
+7. Complete `docs/final-qa-checklist.md` on staging.
+8. Replace local/demo credentials with secure production provisioning.
+9. Review token storage and consider HttpOnly secure cookies before handling
    real customer data.
-9. Add rate limiting, monitoring, backups, and production object-storage
+10. Add rate limiting, monitoring, backups, and production object-storage
    credentials before handling real customer data.

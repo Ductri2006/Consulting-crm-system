@@ -45,6 +45,8 @@ strings.
   private short-lived staging window.
 - [ ] Browser-readable Bearer token storage, missing rate limiting, and local
   upload storage are accepted risks for portfolio staging only.
+- [ ] If live providers are in scope, a private S3-compatible bucket and Resend
+  verified sender are prepared before secrets are added to Render.
 - [ ] Public internet staging is no-go until the known demo admin, auth-route
   rate limiting, and local-disk upload limitations are either fixed or
   explicitly accepted for a private portfolio review window.
@@ -101,6 +103,17 @@ Render environment variables:
 | `JWT_EXPIRES_IN` | `7d` | Adjust only after review. |
 | `UPLOAD_DIR` | `uploads` | Local disk only; smoke-test files only. |
 | `MAX_FILE_SIZE_MB` | `10` | Must match expected upload limit. |
+| `DOCUMENT_STORAGE_PROVIDER` | `local` by default | Use `s3` only with a private bucket and Render-managed secrets. |
+| `DOCUMENT_STORAGE_BUCKET` / `DOCUMENT_STORAGE_REGION` | `<private-staging-bucket>` / `<region>` when using `s3` | Store only in Render. Never commit. |
+| `DOCUMENT_STORAGE_ENDPOINT` | Optional | Required only for some S3-compatible providers. |
+| `DOCUMENT_STORAGE_ACCESS_KEY_ID` / `DOCUMENT_STORAGE_SECRET_ACCESS_KEY` | S3 only | Store only in Render. Never commit. |
+| `EMAIL_PROVIDER` | `console` by default | Use `disabled`, `console`, or `resend`. |
+| `EMAIL_FROM` | Verified sender when using Resend | Do not use an unverified production sender for staging. |
+| `EMAIL_REPLY_TO` | Optional | Use a reviewed support inbox or leave blank. |
+| `RESEND_API_KEY` | Resend only | Store only in Render. Never commit. |
+| `PROVIDER_READINESS_MODE` | `dry-run` by default | Set `live` only for an intentional provider readiness window. |
+| `PROVIDER_READINESS_TEST_EMAIL_TO` | Live Resend readiness only | Use a staging/test recipient first. |
+| `PROVIDER_READINESS_ALLOW_WRITE` | `false` by default | Set `true` only for disposable live storage readiness writes. |
 
 `PORT` note:
 
@@ -267,6 +280,8 @@ Backend:
 - [ ] Admin login succeeds with a staging-safe account.
 - [ ] `GET /api/auth/me` returns a sanitized user.
 - [ ] `GET /api/dashboard/overview` returns data.
+- [ ] `npm run verify:providers` passes in default dry-run mode from the Render
+  shell or equivalent one-off command.
 - [ ] At least one database-backed endpoint succeeds, such as
   `GET /api/public/services` or `GET /api/customers`.
 
@@ -296,6 +311,8 @@ Documents:
 - [ ] Download through the protected endpoint.
 - [ ] Delete the test document.
 - [ ] Confirm no downloaded or uploaded test file is staged or committed.
+- [ ] If `DOCUMENT_STORAGE_PROVIDER=s3`, live provider readiness writes only to
+  a disposable staging bucket or prefix with `PROVIDER_READINESS_ALLOW_WRITE=true`.
 
 Security:
 
@@ -322,6 +339,8 @@ Security:
 | First API call is slow | Render free instance or Neon compute cold start | Wait, refresh once, review Render/Neon logs, or use a non-sleeping backend/database plan |
 | Refreshing `/admin/reports` shows 404 | Vercel SPA rewrite is missing or not picked up | Confirm `client/vercel.json` is deployed and Root Directory is `client` |
 | Document upload works then disappears later | Render local disk is ephemeral, the service was redeployed, or `DOCUMENT_STORAGE_PROVIDER` is still `local` | Use local uploads only for tiny smoke tests; configure the private S3-compatible provider before real documents |
+| Provider readiness sends no email | Dry-run mode is active, `EMAIL_PROVIDER` is not `resend`, or `PROVIDER_READINESS_TEST_EMAIL_TO` is missing | Use dry-run for normal staging checks; set live mode and a staging/test recipient only during an intentional email readiness window |
+| Provider readiness skips live storage write | `PROVIDER_READINESS_ALLOW_WRITE` is not `true` or storage provider is still `local` | Keep dry-run for normal checks; enable live write only against a disposable staging bucket or prefix |
 
 ## Rollback
 
@@ -344,3 +363,5 @@ the staging run record.
 - Vercel Vite docs: https://vercel.com/docs/frameworks/frontend/vite
 - Vercel build configuration: https://vercel.com/docs/builds/configure-a-build
 - Neon Prisma guide: https://neon.com/docs/guides/prisma
+- Cloud storage setup: [cloud-storage-setup.md](cloud-storage-setup.md)
+- Email provider setup: [email-provider-setup.md](email-provider-setup.md)

@@ -29,8 +29,7 @@ Do not paste real secrets, database URLs, or access tokens into this document.
 - [ ] `git diff --check` passes.
 - [ ] Server `npm run verify:tenant-isolation` passes after the optional
   Northstar QA seed is present.
-- [ ] EN/VI i18n key parity check passes. Step 33 used an ad hoc read-only
-  TypeScript AST command because no package script exists yet.
+- [ ] EN/VI i18n key parity check passes with `cd client && npm run i18n:check`.
 - [ ] No `.env`, token, secret, database URL, or upload file is staged.
 
 ## Public Website
@@ -246,7 +245,9 @@ Invitations:
 - [ ] Console provider masks recipient logs and redacts invite links.
 - [ ] `sendEmail=false` creates invitation, returns `DISABLED`, and manual
   accept still works.
-- [ ] Resend works for pending/expired invitations and rotates the invite link.
+- [ ] Resend works for pending/expired invitations and rotates the invite link
+  only after a verified sender, API key, and staging/test recipient are
+  configured outside the repository.
 - [ ] Old invite link fails after resend; new link previews and accepts.
 - [ ] Accepted and revoked invitations cannot be resent.
 - [ ] Email delivery failure does not delete the invitation and copy link still
@@ -337,6 +338,7 @@ testing.
   available.
 - [ ] Optional `SMOKE_RATE_LIMIT_CHECK=true npm run smoke:production` observes
   `429` during an intentional abuse-protection test window.
+- [ ] `cd server && npm run verify:providers` passes in default dry-run mode.
 - [ ] Admin login returns a sanitized user and access token.
 - [ ] Dashboard API returns data.
 - [ ] Portal token cannot call `/api/users`.
@@ -349,7 +351,8 @@ testing.
   `CUSTOMER_VISIBLE`.
 - [ ] Admin document list/detail shows storage provider, scan status, OCR
   status, OCR preview, download count, and last downloaded.
-- [ ] S3-compatible provider smoke is run when test bucket env is available.
+- [ ] S3-compatible provider smoke is run when private test bucket env is
+  available and `PROVIDER_READINESS_ALLOW_WRITE=true` is explicitly set.
 - [ ] Reports APIs return data for an admin account.
 - [ ] Admin user management create/edit/reset/deactivate/reactivate smoke works
   with fictional users.
@@ -506,6 +509,23 @@ Step 33 results:
 - [x] EN/VI labels are present for AI summary UI and Activity Center actions.
 - [x] CI uses safe AI env values and no API key.
 
+## Step 38 Provider Readiness Checklist
+
+- [x] Cloud storage setup docs state that local storage is the dev/demo default
+  and is not durable on hosted environments.
+- [x] Cloud storage setup docs require private S3-compatible buckets, least
+  privilege, no public bucket access, and no storage keys/buckets/paths in JSON
+  responses.
+- [x] Email setup docs state that console/disabled email is the dev/demo default
+  and Resend requires external account setup, verified sender, and dashboard
+  secrets.
+- [x] Provider readiness docs cover `cd server && npm run verify:providers`,
+  dry-run default behavior, and explicit opt-in for live write/send checks.
+- [ ] Live storage write/read/delete readiness has been run against a disposable
+  staging bucket or prefix, if S3-compatible test secrets are available.
+- [ ] Live Resend readiness email has been sent only to a staging/test
+  recipient, if Resend test secrets are available.
+
 ## Final Sign-Off
 
 | Area | Result | Notes |
@@ -520,6 +540,7 @@ Step 33 results:
 | Activity Center / Portal Updates |  |  |
 | Consultation workflow automation |  |  |
 | AI Case Summary |  |  |
+| Provider Readiness |  |  |
 | Step 31 security hardening |  |  |
 | Step 32 UI polish |  |  |
 | Step 33 final QA / bug fix | PASS | Local build/lint/prisma/i18n/tenant/API smoke passed; live production smoke skipped because no `SMOKE_*` env was available. |

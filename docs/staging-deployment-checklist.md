@@ -71,7 +71,9 @@ Database: <staging-postgres-database>
 - Backend Node runtime account.
 - Dedicated staging PostgreSQL or Neon project/database.
 - Secure environment-variable storage in the hosting providers.
-- Optional persistent object-storage provider before handling real documents.
+- Optional persistent S3-compatible object-storage provider before handling real
+  documents.
+- Optional Resend account with verified sender before real email delivery tests.
 - Optional malware scanner and OCR infrastructure for production-like document
   security tests.
 - Access to deployment logs for backend and frontend.
@@ -95,6 +97,12 @@ credentials.
 | `JWT_EXPIRES_IN` | `7d` or another reviewed value | Keep explicit and documented. |
 | `UPLOAD_DIR` | `uploads` or provider writable path | Local disk is only for limited staging smoke tests. |
 | `MAX_FILE_SIZE_MB` | `10` or another reviewed value from 1 to 50 | Must match the expected staging upload limit. |
+| `DOCUMENT_STORAGE_PROVIDER` | `local` by default | Use `s3` only after a private bucket and secrets are configured. |
+| `DOCUMENT_STORAGE_BUCKET` / `DOCUMENT_STORAGE_REGION` | Only when `DOCUMENT_STORAGE_PROVIDER=s3` | Store only in provider secrets; never commit. |
+| `DOCUMENT_STORAGE_ENDPOINT` | Optional | Required only for some S3-compatible providers. |
+| `DOCUMENT_STORAGE_ACCESS_KEY_ID` / `DOCUMENT_STORAGE_SECRET_ACCESS_KEY` | Only when `DOCUMENT_STORAGE_PROVIDER=s3` | Store only in provider secrets; never commit. |
+| `DOCUMENT_STORAGE_FORCE_PATH_STYLE` | `true` by default | Review for the selected S3-compatible provider. |
+| `DOCUMENT_SIGNED_URL_EXPIRES_SECONDS` | `300` by default | Keep short if signed storage access is used. |
 | `DEFAULT_ORGANIZATION_SLUG` | `advisora-demo` unless intentionally changed | Public consultation requests are assigned to this active workspace. |
 | `WORKSPACE_SIGNUP_ENABLED` | `false` by default; `true` only for controlled signup QA | Enables `POST /api/workspaces/signup`. Do not leave enabled for public long-lived staging without abuse protection and auth review. |
 | `APP_NAME` | `Advisora CRM` or reviewed app name | Used in invitation email templates. |
@@ -102,6 +110,10 @@ credentials.
 | `EMAIL_FROM` | Placeholder sender or verified sender for Resend | Do not use unverified production sender domains casually. |
 | `EMAIL_REPLY_TO` | Optional support inbox | Leave blank if not reviewed. |
 | `RESEND_API_KEY` | Only when `EMAIL_PROVIDER=resend` | Store only in provider secrets; never commit. |
+| `PROVIDER_READINESS_MODE` | `dry-run` by default | Set `live` only for an intentional provider readiness window. |
+| `PROVIDER_READINESS_STORAGE_CHECK` / `PROVIDER_READINESS_EMAIL_CHECK` | `true` by default | Disable only to isolate a known provider issue. |
+| `PROVIDER_READINESS_TEST_EMAIL_TO` | Only for live Resend readiness | Use a staging/test recipient first. |
+| `PROVIDER_READINESS_ALLOW_WRITE` | `false` by default | Set `true` only when live storage readiness may write a disposable object. |
 | `RATE_LIMIT_ENABLED` | `true` by default | Keep enabled unless a short, documented troubleshooting window requires otherwise. |
 | `AUTH_RATE_LIMIT_WINDOW_MINUTES` / `AUTH_RATE_LIMIT_MAX` | `15` / `10` by default | Covers internal login, portal login, workspace signup, and invitation routes. |
 | `PUBLIC_RATE_LIMIT_WINDOW_MINUTES` / `PUBLIC_RATE_LIMIT_MAX` | `15` / `50` by default | Covers public consultation request submission. |
@@ -122,6 +134,10 @@ Backend rules:
   (`advisora-demo`).
 - `WORKSPACE_SIGNUP_ENABLED` should remain `false` unless Step 23 signup QA is
   intentionally in progress.
+- `DOCUMENT_STORAGE_PROVIDER=local` is acceptable only for limited fictional
+  smoke files. Use `s3` with a private bucket before real document handling.
+- `EMAIL_PROVIDER=console` or `disabled` remains the default until Resend has a
+  verified sender, secret API key, and staging/test recipient.
 - Do not reuse local demo secrets.
 
 One-time demo seed flag:
@@ -160,6 +176,11 @@ Frontend rules:
   when it is intentionally set to `true`.
 - [ ] Confirm `RATE_LIMIT_ENABLED=true`, or document a temporary exception.
 - [ ] Confirm `UPLOAD_DIR` is writable if document smoke testing is planned.
+- [ ] Confirm storage/email provider settings follow
+  [Cloud Storage Setup](cloud-storage-setup.md) and
+  [Email Provider Setup](email-provider-setup.md).
+- [ ] Run `npm run verify:providers` in dry-run mode after backend env vars are
+  configured.
 - [ ] Install dependencies with `npm install`.
 - [ ] Generate Prisma Client with `npm run prisma:generate`.
 - [ ] Validate schema with `npx prisma validate`.
@@ -358,7 +379,7 @@ demo credential incident.
 
 ## File Upload Warning
 
-The current document module stores files in `UPLOAD_DIR` on local disk.
+The default document module stores files in `UPLOAD_DIR` on local disk.
 
 For staging:
 
@@ -373,6 +394,8 @@ Before real customer documents:
 
 - Use private persistent object storage with no public ACL/policy.
 - Keep downloads authenticated or use short-lived signed URLs after auth checks.
+- Keep bucket names, object keys, signed URLs, storage keys, `fileUrl`, and local
+  paths out of internal and portal JSON responses.
 - Configure malware scanning and decide scan failure policy.
 - Configure OCR only for approved MIME types and size limits.
 - Add retention and deletion policies.
@@ -407,6 +430,7 @@ Before real customer documents:
 - [ ] Public consultation, invitation public preview/accept, upload, and
   download limits are enabled or documented as an accepted staging exception.
 - [ ] Oversized JSON bodies over `1mb` are rejected safely.
+- [ ] `npm run verify:providers` passes in default dry-run mode.
 - [ ] At least one database-backed API call succeeds, such as
   `GET /api/customers` or `GET /api/public/services`.
 - [ ] Internal Admin or Manager can create
@@ -515,6 +539,8 @@ Before real customer documents:
 - [ ] Create invitation with email delivery enabled returns `emailDelivery`.
 - [ ] Create invitation with email delivery disabled still returns one-time
   invite link for manual copy.
+- [ ] If `EMAIL_PROVIDER=resend`, the sender is verified and the first live test
+  goes only to a staging/test recipient.
 - [ ] Resend rotates the invitation link and invalidates the old link.
 - [ ] Documents page loads.
 - [ ] Reports page loads.
@@ -527,6 +553,9 @@ Before real customer documents:
 - [ ] Download through the protected endpoint.
 - [ ] Delete the test document.
 - [ ] Confirm no downloaded or uploaded test file is staged or committed.
+- [ ] If `DOCUMENT_STORAGE_PROVIDER=s3`, confirm the bucket is private and
+  `npm run verify:providers` live storage check was run only with
+  `PROVIDER_READINESS_ALLOW_WRITE=true` against a disposable staging prefix.
 
 ### Security
 
@@ -585,6 +614,31 @@ Before real customer documents:
   strategy before real customer data.
 - [ ] Login, public consultation, invitation, upload, and download rate limits
   are active before public exposure.
+
+## Provider Readiness Script
+
+Use provider readiness after backend environment variables are configured:
+
+```bash
+cd server
+npm run verify:providers
+```
+
+Default dry-run mode must not upload objects or send email. It is the expected
+check for local/default `DOCUMENT_STORAGE_PROVIDER=local` and
+`EMAIL_PROVIDER=console` or `disabled`.
+
+Live checks are optional and require explicit staging-safe opt-in:
+
+```bash
+cd server
+PROVIDER_READINESS_MODE=live PROVIDER_READINESS_ALLOW_WRITE=true PROVIDER_READINESS_TEST_EMAIL_TO=<staging-recipient@example.com> npm run verify:providers
+```
+
+Record live storage or email readiness only if external provider accounts and
+dashboard secrets are already configured. Do not use production buckets,
+production recipients, or production provider credentials for the first live
+readiness run.
 
 ## Production Smoke Script
 
@@ -658,6 +712,8 @@ Choose `Go with accepted limitations`, not full `Go`, when:
 - Sensitive routes have only process-local in-memory rate limiting; distributed
   production-grade rate limiting is not configured yet.
 - Local disk upload storage is used only for tiny fictional smoke-test files.
+- S3-compatible storage and Resend are either dry-run verified or documented as
+  not configured for this staging run.
 - The staging environment is private or short-lived portfolio review only.
 
 Known staging limitations to acknowledge:
@@ -667,6 +723,9 @@ Known staging limitations to acknowledge:
 - Local disk upload storage is not suitable for real multi-instance document
   handling. Use `DOCUMENT_STORAGE_PROVIDER=s3` and private bucket credentials
   from provider secrets for production-like tests.
+- Live cloud storage and live Resend email require external provider accounts
+  and dashboard-managed secrets; the repository intentionally does not include
+  them.
 - Access tokens are stored in browser local storage in this portfolio phase.
 - Workspace signup is guarded by `WORKSPACE_SIGNUP_ENABLED` and should be
   enabled only for controlled QA windows.

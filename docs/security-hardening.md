@@ -146,6 +146,7 @@ Current usage:
 - Non-production error details are redacted before returning.
 - 404 `path` values are redacted.
 - Activity descriptions are redacted before returning from Activity Center.
+- Provider readiness messages are redacted before they are printed.
 
 Do not log request bodies for login, portal login, invitation accept, upload,
 or password reset flows. Do not print raw `Authorization`, JWTs, invitation
@@ -224,6 +225,46 @@ The Step 29.5 document security invariants remain required:
 - S3-compatible storage must use private buckets. Local storage must not allow
   path traversal and is for development/single-instance smoke only.
 
+## Cloud Storage And Email Provider Readiness
+
+Step 38 provider readiness does not mean live providers are configured. It means
+the repository documents the required setup and includes a dry-run readiness
+script.
+
+Storage requirements:
+
+- `DOCUMENT_STORAGE_PROVIDER=local` remains the development/demo default.
+- `DOCUMENT_STORAGE_PROVIDER=s3` must use a private S3-compatible bucket with no
+  public ACL or public bucket policy.
+- Storage credentials must be least privilege and supplied only through
+  environment or secret management.
+- Bucket names, object keys, storage keys, signed URLs, `fileUrl`, raw upload
+  paths, and local filesystem paths must not appear in internal or portal JSON
+  responses.
+- Backend permission checks must run before object access for both internal and
+  portal routes.
+- Portal and internal document boundaries must stay separate, including portal
+  customer scope and Admin/Manager-only visibility changes.
+- Scan policy must be reviewed before real customer documents. Demo-friendly
+  skipped-scan downloads are not enough for production approval.
+
+Email requirements:
+
+- `EMAIL_PROVIDER=console` or `disabled` remains the safe local/demo default.
+- `EMAIL_PROVIDER=resend` requires a verified sender and `RESEND_API_KEY` stored
+  outside the repository.
+- Request logs, provider readiness output, activity descriptions, and error
+  details must redact API keys and invite tokens.
+- The first live email readiness run must use a staging/test recipient through
+  `PROVIDER_READINESS_TEST_EMAIL_TO`.
+- Invitation create/resend can return a one-time `inviteUrl` as a manual
+  fallback, but raw invite links must not be copied into logs, tickets, or
+  release notes.
+
+Run `cd server && npm run verify:providers` for dry-run readiness. Live storage
+write/read/delete and live Resend send checks require explicit opt-in with
+`PROVIDER_READINESS_MODE=live` and the storage/email-specific live variables.
+
 ## Frontend Route Guards
 
 The frontend keeps admin and portal auth separate:
@@ -272,6 +313,11 @@ invalid login attempts until a `429` is observed.
   are for demo/local compatibility.
 - `DOCUMENT_ALLOW_DOWNLOAD_WHEN_SCAN_SKIPPED=true` is demo-friendly and must be
   reviewed before real customer documents.
+- Live S3-compatible storage and Resend require external accounts, verified
+  provider setup, and dashboard-managed secrets. The repository does not include
+  live provider credentials.
+- Local storage is not durable on hosted environments that restart, redeploy, or
+  scale instances.
 - No token revocation, refresh-token rotation, or separate JWT secrets by token
   family yet.
 - Tokens are stored in browser local storage in this portfolio phase.
@@ -290,6 +336,7 @@ npm run prisma:generate
 npm run build
 npm run lint
 npm run verify:tenant-isolation
+npm run verify:providers
 ```
 
 ```bash

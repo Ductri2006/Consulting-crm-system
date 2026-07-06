@@ -26,6 +26,9 @@ path, use the [Vercel + Render + Neon Staging Guide](vercel-render-staging-guide
 - A PostgreSQL database connection string.
 - Separate server and client environment variables.
 - A production-grade `JWT_SECRET`.
+- Optional private S3-compatible bucket and secrets for durable document
+  storage.
+- Optional Resend account, verified sender, and API key for live email delivery.
 - For staging, a dedicated staging database, staging JWT secret, and exact
   staging frontend/backend origins.
 
@@ -107,6 +110,9 @@ JWT_SECRET=<strong-private-secret>
 JWT_EXPIRES_IN=7d
 UPLOAD_DIR=uploads
 MAX_FILE_SIZE_MB=10
+DOCUMENT_STORAGE_PROVIDER=local
+EMAIL_PROVIDER=console
+PROVIDER_READINESS_MODE=dry-run
 ```
 
 `CLIENT_URL` may contain one allowed frontend origin or a comma-separated
@@ -121,6 +127,13 @@ Do not use wildcard CORS origins for authenticated production traffic.
 Provider note: local development commonly uses `PORT=5000`, but hosted Node
 providers may inject their own port. For Render-specific settings, use the
 [Vercel + Render + Neon Staging Guide](vercel-render-staging-guide.md).
+
+Provider note: keep `DOCUMENT_STORAGE_PROVIDER=local` and
+`EMAIL_PROVIDER=console` or `disabled` for dev/demo. Before enabling
+`DOCUMENT_STORAGE_PROVIDER=s3` or `EMAIL_PROVIDER=resend`, follow
+[Cloud Storage Setup](cloud-storage-setup.md) and
+[Email Provider Setup](email-provider-setup.md), and store all provider secrets
+outside the repository.
 
 ## Database Deployment
 
@@ -206,8 +219,24 @@ Before handling real production documents:
 
 - Configure private persistent object storage and keep the bucket non-public.
 - Keep downloads authenticated through backend routes or short-lived storage access.
+- Keep bucket names, object keys, signed URLs, storage keys, `fileUrl`, and local
+  paths out of API JSON responses.
 - Configure real malware scanning infrastructure.
 - Add retention and deletion policies.
+
+## Provider Readiness
+
+After backend environment variables are configured, run:
+
+```bash
+cd server
+npm run verify:providers
+```
+
+The default dry-run does not upload objects or send email. Live storage
+write/read/delete and live Resend test email checks require explicit opt-in with
+`PROVIDER_READINESS_MODE=live`, `PROVIDER_READINESS_ALLOW_WRITE=true`, and/or
+`PROVIDER_READINESS_TEST_EMAIL_TO=<staging-recipient@example.com>`.
 
 ## Health Check
 
@@ -233,6 +262,7 @@ Vercel/Render/Neon staging, also follow
 - Dashboard data loads.
 - Customers list loads.
 - Cases list, detail, status update, and assignment work.
+- `npm run verify:providers` passes in dry-run mode.
 - Appointments list and status update work.
 - Tasks list and status update work.
 - Documents upload, detail, protected download, and delete work.
@@ -260,4 +290,9 @@ Vercel/Render/Neon staging, also follow
 - Prisma errors: run `npx prisma validate` and confirm `DATABASE_URL`.
 - Upload failures: confirm `UPLOAD_DIR` is writable and the file is within
   `MAX_FILE_SIZE_MB`.
+- S3 readiness failures: confirm the bucket is private, S3 env vars are present
+  in the provider secret store, and live writes are enabled only for disposable
+  staging checks.
+- Email readiness failures: confirm `EMAIL_PROVIDER`, verified `EMAIL_FROM`,
+  `RESEND_API_KEY`, and staging/test recipient settings.
 - Frontend API errors: confirm `VITE_API_BASE_URL` includes `/api`.

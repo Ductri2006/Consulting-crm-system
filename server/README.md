@@ -98,6 +98,11 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `EMAIL_FROM` | No | Sender identity for outbound emails |
 | `EMAIL_REPLY_TO` | No | Optional reply-to address for outbound emails |
 | `RESEND_API_KEY` | No | Resend API key, required only when `EMAIL_PROVIDER=resend`; never commit it |
+| `PROVIDER_READINESS_MODE` | No | Provider readiness mode: `dry-run` or `live`; defaults to `dry-run` |
+| `PROVIDER_READINESS_STORAGE_CHECK` | No | Enables storage readiness reporting; defaults to `true` |
+| `PROVIDER_READINESS_EMAIL_CHECK` | No | Enables email readiness reporting; defaults to `true` |
+| `PROVIDER_READINESS_TEST_EMAIL_TO` | Live email only | Safe staging/test recipient for live provider readiness email |
+| `PROVIDER_READINESS_ALLOW_WRITE` | Live storage only | Must be `true` before the readiness script writes a disposable storage object |
 | `RATE_LIMIT_ENABLED` | No | Enables in-memory rate limits, defaults to `true` |
 | `AUTH_RATE_LIMIT_WINDOW_MINUTES` | No | Auth/invitation rate-limit window, defaults to `15` |
 | `AUTH_RATE_LIMIT_MAX` | No | Auth/invitation requests per window, defaults to `10` |
@@ -155,6 +160,11 @@ EMAIL_PROVIDER=console
 EMAIL_FROM="Advisora CRM <no-reply@advisora.test>"
 EMAIL_REPLY_TO=
 RESEND_API_KEY=
+PROVIDER_READINESS_MODE=dry-run
+PROVIDER_READINESS_STORAGE_CHECK=true
+PROVIDER_READINESS_EMAIL_CHECK=true
+PROVIDER_READINESS_TEST_EMAIL_TO=
+PROVIDER_READINESS_ALLOW_WRITE=false
 RATE_LIMIT_ENABLED=true
 AUTH_RATE_LIMIT_WINDOW_MINUTES=15
 AUTH_RATE_LIMIT_MAX=10
@@ -175,7 +185,15 @@ no paths, queries, hashes, trailing slashes, or wildcard origins. Do not leave
 trailing commas.
 
 Do not commit `.env`, real email provider API keys, AI provider keys, database
-URLs, or verified sender credentials in a shared or production environment.
+URLs, S3-compatible storage keys, or verified sender credentials in a shared or
+production environment.
+
+For provider setup details, see
+[`docs/cloud-storage-setup.md`](../docs/cloud-storage-setup.md) and
+[`docs/email-provider-setup.md`](../docs/email-provider-setup.md). Run
+`npm run verify:providers` from this directory for the dry-run readiness check.
+Dry-run mode does not upload storage objects or send email; live write/send
+checks require explicit opt-in environment variables.
 
 ## Security hardening
 
@@ -663,6 +681,11 @@ Email delivery is configured with `EMAIL_PROVIDER`:
   variables outside the repository. Missing or rejected provider config returns
   `FAILED` in `emailDelivery` without deleting the invitation.
 
+See [`docs/email-provider-setup.md`](../docs/email-provider-setup.md) for
+Resend readiness, verified sender requirements, invite-token redaction, and the
+`npm run verify:providers` dry-run/live check. The repository does not include a
+live Resend API key or verified sender configuration.
+
 Resend rotates the invitation token, sets the invitation back to `PENDING`,
 updates the expiry, and invalidates older links immediately. Accepted and
 revoked invitations cannot be resent.
@@ -1092,6 +1115,11 @@ before streaming the object. Each successful stream writes a
 `DocumentDownloadAudit` row and updates `downloadCount` plus
 `lastDownloadedAt`.
 
+See [`docs/cloud-storage-setup.md`](../docs/cloud-storage-setup.md) for private
+S3-compatible bucket setup, least-privilege credential guidance, hosted local
+storage limitations, and the `npm run verify:providers` dry-run/live check. The
+repository does not include live bucket credentials.
+
 ### Activity Center
 
 Step 30 adds `/api/activity` for the internal Admin/Manager Activity Center.
@@ -1359,8 +1387,11 @@ limits, redacted logging/error output, internal token purpose signing, expanded
 user/document audit events, tenant-isolation verification for documents and
 portal accounts, and the read-only production smoke script. The repository also
 includes production readiness, deployment, final QA, security hardening, and
-RBAC matrix documentation. It does not include request-to-customer conversion,
-configured live scanner/OCR infrastructure, report exports, realtime/push
+RBAC matrix documentation. Step 38 adds provider-readiness documentation for
+private S3-compatible storage and Resend email plus `verify:providers`, whose
+default dry-run does not write objects or send email. It does not include
+request-to-customer conversion, configured live scanner/OCR infrastructure,
+live cloud storage/email provider accounts, report exports, realtime/push
 notifications, distributed rate limiting, or real production deployment.
 
 ## Future phases

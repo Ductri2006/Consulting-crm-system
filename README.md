@@ -218,6 +218,8 @@ Suggested order:
 - [Final QA Checklist](docs/final-qa-checklist.md)
 - [Production Readiness](docs/production-readiness.md)
 - [Security Hardening](docs/security-hardening.md)
+- [Cloud Storage Setup](docs/cloud-storage-setup.md)
+- [Email Provider Setup](docs/email-provider-setup.md)
 - [Security RBAC Matrix](docs/security-rbac-matrix.md)
 - [API Documentation](docs/api-documentation.md)
 - [Database Design](docs/database-design.md)
@@ -275,6 +277,7 @@ npm run build
 npm run lint
 npx prisma validate
 npm run prisma:generate
+npm run verify:providers
 ```
 
 Never commit `.env`, database URLs, JWT secrets, access tokens, provider keys,
@@ -326,6 +329,13 @@ Each generated, failed, or skipped summary writes a safe `ActivityLog` event.
   storage, email, scan/OCR, AI summary provider, and rate-limit env vars on
   Render.
 - Database: run committed migrations against Neon with `npm run prisma:deploy`.
+- Providers: keep local storage and console/disabled email for dev/demo, or use
+  [Cloud Storage Setup](docs/cloud-storage-setup.md) and
+  [Email Provider Setup](docs/email-provider-setup.md) before enabling private
+  S3-compatible storage or Resend.
+- Readiness: run `cd server && npm run verify:providers`. The default dry-run
+  does not upload objects or send email; live write/send checks require explicit
+  opt-in environment variables.
 - Smoke: run `npm run smoke:production` only when `SMOKE_*` credentials are
   configured outside the repository.
 
@@ -338,13 +348,14 @@ Automatic CI on push and pull request to `main`:
 
 - Client: `npm ci`, `npm run lint`, `npm run i18n:check`, `npm run build`.
 - Server: `npm ci`, `npm run prisma:generate`, `npx prisma validate`,
-  `npm run lint`, `npm run build`.
+  `npm run lint`, `npm run build`, `npm run verify:providers`.
 - Docs/safety: committed whitespace check and an explicit no-deploy/no-DB-mutate
   guard note.
 
 CI uses safe dummy environment values for Prisma validation and server checks.
+Provider readiness runs in dry-run mode with local storage and disabled email.
 It does not run migrations, reset databases, seed data, deploy to Vercel/Render,
-or call live smoke endpoints.
+or call live smoke/provider endpoints.
 
 Manual production smoke is available through the `Production Smoke` workflow
 (`workflow_dispatch`) only after these repository secrets are configured:
@@ -356,6 +367,11 @@ Manual production smoke is available through the `Production Smoke` workflow
 - `SMOKE_PORTAL_EMAIL`
 - `SMOKE_PORTAL_PASSWORD`
 - Optional `SMOKE_RATE_LIMIT_CHECK`
+
+Manual provider readiness is available through the `Provider Readiness`
+workflow (`workflow_dispatch`). It is dry-run by default; live storage writes
+require `allow_write=true`, and live Resend sends require an explicit staging
+recipient secret.
 
 Detailed docs:
 
@@ -387,7 +403,10 @@ configured. See [Final QA Checklist](docs/final-qa-checklist.md) and
 - In-memory rate limiting is suitable for portfolio/staging only; production
   scale should use Redis or another shared limiter.
 - Local document storage is for dev/demo; production-like document handling
-  should use private S3-compatible object storage.
+  should use private S3-compatible object storage. Local storage is not durable
+  on hosted environments that restart, redeploy, or scale instances.
+- Live cloud storage and Resend email require external provider accounts,
+  private dashboard-managed secrets, and staging/test verification first.
 - ClamAV and Tesseract providers are abstraction-ready, but real production
   scanner/OCR infrastructure must be configured outside the repo.
 - Browser local storage is used for demo Bearer tokens; higher-risk production

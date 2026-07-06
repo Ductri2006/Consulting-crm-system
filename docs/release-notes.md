@@ -38,6 +38,8 @@ data without completing the production limitations listed below.
 - On-demand AI Case Summary for internal case detail, with safe context
   building, mock/demo provider, optional external provider mode, AI-specific
   rate limit, and ActivityLog events.
+- Provider readiness documentation for private S3-compatible storage and Resend
+  email, plus a dry-run-first `verify:providers` command.
 
 ## Verification
 
@@ -90,6 +92,15 @@ Step 37 adds AI case summary verification:
 - Generated, failed, and skipped AI summary attempts write generic ActivityLog
   events.
 
+Step 38 adds provider readiness verification:
+
+- `cd server && npm run verify:providers` is the documented entry point.
+- Dry-run is the default and does not upload storage objects or send email.
+- Live storage write/read/delete requires explicit opt-in with
+  `PROVIDER_READINESS_MODE=live` and `PROVIDER_READINESS_ALLOW_WRITE=true`.
+- Live Resend test email requires `PROVIDER_READINESS_MODE=live` and
+  `PROVIDER_READINESS_TEST_EMAIL_TO` pointing to a staging/test recipient.
+
 Production smoke live run remains conditional: run `npm run smoke:production`
 only when safe deployed `SMOKE_*` credentials are configured outside the
 repository.
@@ -102,7 +113,11 @@ repository.
 - In-memory rate limiting is not distributed; use Redis or another shared
   limiter before multi-instance production.
 - Local storage is the default for dev/demo. Production-like document handling
-  should use private S3-compatible storage.
+  should use private S3-compatible storage. Local storage is not durable on
+  hosted environments that restart, redeploy, or scale instances.
+- Live cloud storage and Resend email require external provider accounts,
+  verified/dashboard-managed secrets, and staging/test readiness checks; they
+  are not configured by this repository.
 - ClamAV/Tesseract provider hooks exist, but real scanner/OCR infrastructure
   must be provisioned outside the repository.
 - Browser local storage stores demo Bearer tokens; higher-risk production
@@ -124,6 +139,8 @@ repository.
 - Add real screenshot assets after a sensitive-data review.
 - Add Playwright E2E coverage for public, admin, and portal smoke paths.
 - Add production object storage, malware scanning, and OCR infrastructure.
+- Add provider-specific runbooks for the selected storage vendor and email
+  domain once real accounts are chosen.
 - Add refresh-token rotation, token revocation, and password recovery.
 - Add customer messaging and notification preferences.
 - Add report exports and richer analytics.
