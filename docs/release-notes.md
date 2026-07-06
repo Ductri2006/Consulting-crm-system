@@ -35,6 +35,9 @@ data without completing the production limitations listed below.
 - Rule-based consultation workflow automation that turns public intake into a
   same-workspace follow-up task, ActivityLog events, and optional assignee
   email notifications.
+- On-demand AI Case Summary for internal case detail, with safe context
+  building, mock/demo provider, optional external provider mode, AI-specific
+  rate limit, and ActivityLog events.
 
 ## Verification
 
@@ -74,6 +77,19 @@ Step 36 adds consultation automation verification:
 - Activity Center and dashboard recent activity can display automation events.
 - EN/VI labels and i18n key parity stay aligned.
 
+Step 37 adds AI case summary verification:
+
+- Internal `/api/cases/:id/ai-summary` route is protected by internal auth,
+  tenant scope, AI rate limit, and Staff assigned-case access.
+- Mock provider returns structured summary output without API keys or network
+  calls for portfolio demo/CI.
+- External provider mode requires secure env configuration and sends only
+  sanitized context.
+- AI context excludes raw files, storage paths, signed URLs, full OCR text,
+  token/hash fields, IP/user-agent values, database URLs, and provider secrets.
+- Generated, failed, and skipped AI summary attempts write generic ActivityLog
+  events.
+
 Production smoke live run remains conditional: run `npm run smoke:production`
 only when safe deployed `SMOKE_*` credentials are configured outside the
 repository.
@@ -96,6 +112,8 @@ repository.
 - Consultation-request conversion is not implemented yet.
 - Consultation automation is rule-based inline automation, not a workflow
   builder or background job queue; email delivery depends on provider setup.
+- AI summary is assistive and on-demand. There is no chat AI, vector database,
+  RAG pipeline, training flow, or background queue yet.
 - No realtime notifications, customer messaging, billing/payment, report
   exports, or automated Playwright E2E suite yet.
 - Screenshots are not committed yet; use the screenshots checklist before final

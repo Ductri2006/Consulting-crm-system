@@ -166,7 +166,12 @@ and delete workflows. The consultation request page supports list, search,
 status filtering, request details, and status updates. The case management page
 supports search, status and priority filters, overdue cases, pagination,
 creation, editing, status transitions, staff assignment, history, and deletion
-subject to role and backend workflow rules. Appointment and task management add
+subject to role and backend workflow rules. The case detail modal also includes
+an internal-only AI Case Summary panel with generate/loading/error/empty/result
+states, structured sections, source counts, provider/model metadata, and the
+assistive-output disclaimer. It calls `/api/cases/:id/ai-summary` through the
+admin API client only; customer portal routes do not render this feature.
+Appointment and task management add
 schedule filters, today appointments, overdue tasks, creation, editing, status
 updates, and role-aware deletion. Team member management lets administrators
 create, edit, activate/deactivate, and reset passwords for internal CRM users

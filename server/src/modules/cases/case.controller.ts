@@ -4,6 +4,7 @@ import { HTTP_STATUS } from "../../constants/httpStatus";
 import { AppError } from "../../utils/AppError";
 import { successResponse } from "../../utils/apiResponse";
 import type { SafeUser } from "../../utils/sanitizeUser";
+import { generateCaseAiSummary } from "../ai/ai.service";
 import {
   assignCase,
   createCase,
@@ -95,6 +96,24 @@ export const getCaseController = async (
     .json(
       successResponse("Case profile retrieved successfully.", {
         case: caseProfile,
+      }),
+    );
+};
+
+export const generateCaseAiSummaryController = async (
+  request: Request,
+  response: Response,
+): Promise<void> => {
+  const summary = await generateCaseAiSummary(
+    getCaseId(request),
+    getActor(request),
+  );
+
+  response
+    .status(HTTP_STATUS.OK)
+    .json(
+      successResponse("AI case summary generated successfully.", {
+        summary,
       }),
     );
 };

@@ -108,6 +108,35 @@ export interface CaseHistoryResponse {
   meta: PaginationMeta
 }
 
+export type AiSummaryProvider = 'mock' | 'external'
+export type AiSummaryConfidence = 'LOW' | 'MEDIUM' | 'HIGH'
+
+export interface CaseAiSummarySourceCounts {
+  caseHistories: number
+  appointments: number
+  tasks: number
+  documents: number
+}
+
+export interface CaseAiSummary {
+  summary: string
+  keyFacts: string[]
+  timeline: string[]
+  documentHighlights: string[]
+  risks: string[]
+  missingInformation: string[]
+  recommendedNextActions: string[]
+  confidence: AiSummaryConfidence
+  provider: AiSummaryProvider
+  model: string
+  generatedAt: string
+  sourceCounts: CaseAiSummarySourceCounts
+}
+
+export interface CaseAiSummaryResponse {
+  summary: CaseAiSummary
+}
+
 export interface CaseListParams {
   page: number
   limit: number

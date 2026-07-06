@@ -170,6 +170,17 @@ Cases:
 - [ ] Case history is recorded.
 - [ ] Overdue cases are visible.
 - [ ] Delete is restricted to allowed roles.
+- [ ] AI Case Summary panel appears in internal case detail only.
+- [ ] Admin and Manager can generate a mock AI summary for same-workspace cases.
+- [ ] Assigned Staff can generate a summary; unassigned Staff is blocked.
+- [ ] AI summary shows loading, error, empty, structured result, provider/model,
+  generated-at, confidence, and source-count states.
+- [ ] `AI_PROVIDER=disabled` returns a controlled disabled state and does not
+  break case detail.
+- [ ] Portal/public tokens cannot call `/api/cases/:id/ai-summary`.
+- [ ] AI summary responses do not include raw file data, storage paths, signed
+  URLs, full OCR text, token/hash fields, IP addresses, user agents, or secrets.
+- [ ] Activity Center shows safe AI summary generated/failed/skipped labels.
 
 Appointments:
 
@@ -479,6 +490,22 @@ Step 33 results:
 - [x] No database reset, destructive migration, seed, secret, upload, or
   generated `dist` output is required.
 
+## Step 37 AI Case Summary Checklist
+
+- [x] AI module/provider abstraction supports `disabled`, `mock`, and
+  `external` modes.
+- [x] Mock provider is deterministic and demo-ready without API keys.
+- [x] Internal AI endpoint is `/api/cases/:id/ai-summary`, not a portal route.
+- [x] Safe context builder excludes raw files, storage paths, signed URLs, full
+  OCR text, token/hash fields, IP/user-agent values, database URLs, and secrets.
+- [x] Staff assigned-case access and tenant scope are enforced before related
+  case data is fetched.
+- [x] Generated, failed, and skipped attempts write generic ActivityLog events.
+- [x] Admin case detail has loading, error, empty, structured-result,
+  provider/model, confidence, and source-count UI states.
+- [x] EN/VI labels are present for AI summary UI and Activity Center actions.
+- [x] CI uses safe AI env values and no API key.
+
 ## Final Sign-Off
 
 | Area | Result | Notes |
@@ -492,6 +519,7 @@ Step 33 results:
 | Reports |  |  |
 | Activity Center / Portal Updates |  |  |
 | Consultation workflow automation |  |  |
+| AI Case Summary |  |  |
 | Step 31 security hardening |  |  |
 | Step 32 UI polish |  |  |
 | Step 33 final QA / bug fix | PASS | Local build/lint/prisma/i18n/tenant/API smoke passed; live production smoke skipped because no `SMOKE_*` env was available. |

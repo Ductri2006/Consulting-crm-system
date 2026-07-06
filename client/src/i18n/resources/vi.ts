@@ -822,6 +822,36 @@ export const vi = {
       },
     },
     cases: {
+      aiSummaryConfidence: 'Độ tin cậy',
+      aiSummaryConfidenceValues: {
+        HIGH: 'Cao',
+        LOW: 'Thấp',
+        MEDIUM: 'Trung bình',
+      },
+      aiSummaryDisabled: 'Tóm tắt AI đang bị tắt trong cấu hình.',
+      aiSummaryDisclaimer:
+        'Nội dung AI chỉ mang tính hỗ trợ. Hãy kiểm tra hồ sơ nguồn trước khi ra quyết định.',
+      aiSummaryDocumentHighlights: 'Điểm chính từ tài liệu',
+      aiSummaryEmpty:
+        'Tạo tóm tắt để xem nhanh sự kiện hồ sơ, tài liệu, rủi ro và bước tiếp theo.',
+      aiSummaryError: 'Không thể tạo tóm tắt AI.',
+      aiSummaryGeneratedAt: 'Tạo lúc',
+      aiSummaryGeneratedFeedback: 'Đã tạo tóm tắt AI.',
+      aiSummaryGenerating: 'Đang tạo tóm tắt...',
+      aiSummaryKeyFacts: 'Thông tin chính',
+      aiSummaryMissingInformation: 'Thông tin còn thiếu',
+      aiSummaryModel: 'Mô hình',
+      aiSummaryNoItems: 'Không có mục nào được trả về.',
+      aiSummaryProvider: 'Nhà cung cấp',
+      aiSummaryRateLimited:
+        'Quá nhiều yêu cầu tóm tắt AI. Vui lòng thử lại sau.',
+      aiSummaryRecommendedNextActions: 'Bước tiếp theo đề xuất',
+      aiSummaryRisks: 'Rủi ro',
+      aiSummarySourceCounts:
+        '{{histories}} sự kiện lịch sử, {{appointments}} lịch hẹn, {{tasks}} công việc, {{documents}} tài liệu',
+      aiSummarySummary: 'Tóm tắt',
+      aiSummaryTimeline: 'Dòng thời gian',
+      aiSummaryTitle: 'Tóm tắt hồ sơ bằng AI',
       allPriorities: 'Tất cả mức ưu tiên',
       allStatuses: 'Tất cả trạng thái',
       assignCase: 'Phân công hồ sơ',
@@ -857,6 +887,7 @@ export const vi = {
       eyebrow: 'Quy trình hồ sơ',
       filterPriority: 'Lọc theo mức ưu tiên',
       filterStatus: 'Lọc theo trạng thái',
+      generateAiSummary: 'Tạo tóm tắt AI',
       historyBy: 'Bởi {{name}}',
       historyDescription: 'Hoạt động quy trình mới nhất hiển thị trước.',
       historyEmptyDescription: 'Các thay đổi của hồ sơ sẽ xuất hiện tại đây.',
@@ -931,6 +962,9 @@ export const vi = {
         title: 'Tiêu đề',
       },
       historyActions: {
+        AI_CASE_SUMMARY_FAILED: 'Tạo tóm tắt AI thất bại',
+        AI_CASE_SUMMARY_GENERATED: 'Đã tạo tóm tắt AI',
+        AI_CASE_SUMMARY_SKIPPED: 'Đã bỏ qua tóm tắt AI',
         CASE_ASSIGNED: 'Đã phân công hồ sơ',
         CASE_CREATED: 'Đã tạo hồ sơ',
         CASE_STATUS_CHANGED: 'Đã đổi trạng thái hồ sơ',
@@ -1704,6 +1738,9 @@ export const vi = {
   },
   status: {
     activityAction: {
+      AI_CASE_SUMMARY_FAILED: 'Tạo tóm tắt AI thất bại',
+      AI_CASE_SUMMARY_GENERATED: 'Đã tạo tóm tắt AI',
+      AI_CASE_SUMMARY_SKIPPED: 'Đã bỏ qua tóm tắt AI',
       APPOINTMENT_CREATED: 'Đã tạo lịch hẹn',
       CASE_ASSIGNED: 'Đã phân công hồ sơ',
       CASE_CREATED: 'Đã tạo hồ sơ',

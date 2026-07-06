@@ -49,6 +49,9 @@ export interface ActivitySummaryResponse {
 }
 
 export const activityActions = [
+  'AI_CASE_SUMMARY_GENERATED',
+  'AI_CASE_SUMMARY_FAILED',
+  'AI_CASE_SUMMARY_SKIPPED',
   'CASE_CREATED',
   'CASE_ASSIGNED',
   'CASE_UPDATED',

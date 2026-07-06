@@ -85,6 +85,9 @@ Internal Admin CRM:
 - Consultation workflow automation events in Activity Center and Dashboard.
 - Document management with source/visibility badges, scan/OCR metadata, and
   protected downloads.
+- AI Case Summary in the internal case detail modal, with mock/demo provider,
+  optional external provider mode, safe context building, and ActivityLog audit
+  events.
 - Activity Center for Admin and Manager users.
 - Internal user management, invitations, and workspace settings.
 - Role-aware navigation backed by backend authorization.
@@ -125,6 +128,7 @@ flowchart LR
   DB["PostgreSQL / Neon"]
   Docs["Document Storage\nLocal dev/demo or private S3-compatible"]
   Email["Email Provider\nConsole or Resend"]
+  AI["AI Case Summary\nDisabled / Mock / External"]
   Audit["Activity + Audit Logs\nActivityLog + CaseHistory + DownloadAudit"]
 
   Public --> Frontend
@@ -139,6 +143,7 @@ flowchart LR
   Prisma --> DB
   API --> Docs
   API --> Email
+  API --> AI
   API --> Audit
   Audit --> DB
 ```
@@ -155,6 +160,7 @@ For deeper request-flow diagrams, see [Architecture](docs/architecture.md).
 | Auth/Security | JWT purpose checks, bcryptjs, RBAC, Helmet, CORS, in-memory rate limits, redaction helpers |
 | Documents | Local storage provider by default; S3-compatible private storage ready; scan/OCR abstractions |
 | Email | Console provider for local/staging previews; Resend-ready provider |
+| AI Summary | Disabled/mock/external provider abstraction; mock provider works without API keys |
 | Deployment | Vercel frontend, Render backend, Neon database |
 
 ## Security Highlights
@@ -170,6 +176,8 @@ For deeper request-flow diagrams, see [Architecture](docs/architecture.md).
 - Downloads are permission-checked before streaming and write audit metadata.
 - API responses avoid exposing raw storage paths, signed URLs, password hashes,
   token hashes, and internal-only notes.
+- AI summary context excludes raw file binaries, storage paths, signed URLs,
+  full OCR text, tokens, hashes, IP addresses, user agents, and secrets.
 - Security headers, rate limits, body limits, and redacted logs are documented
   and covered by final QA.
 
@@ -292,13 +300,31 @@ rule-based automation:
 Email uses the existing `disabled`, `console`, or `resend` provider. Email
 delivery failures are logged as activity and do not fail or delete the saved
 consultation request. This is rule-based inline automation, not a full workflow
-builder, background job queue, realtime notification system, or AI feature.
+builder, background job queue, realtime notification system, chat AI, vector
+database, or agent workflow.
+
+## AI Case Summary
+
+Internal case detail includes an on-demand "Generate AI Summary" action. The
+backend builds a sanitized same-tenant context from case overview, customer
+basics, workflow history, appointments, tasks, document metadata, and OCR text
+preview only. It never sends raw files, storage paths, signed URLs, bucket
+metadata, full OCR text, token/hash fields, IP addresses, user agents, or
+secrets to the provider or response.
+
+Provider modes are `disabled`, `mock`, and `external`. `mock` is deterministic
+and demo-ready without an API key; `external` expects a secure
+OpenAI-compatible chat-completions endpoint configured through environment
+variables. The endpoint is internal-only, rate-limited, scoped by
+`organizationId`, and enforces the same assigned-case rule for Staff users.
+Each generated, failed, or skipped summary writes a safe `ActivityLog` event.
 
 ## Deployment Notes
 
 - Frontend: configure `VITE_API_BASE_URL` on Vercel.
 - Backend: configure `DATABASE_URL`, `CLIENT_URL`, `JWT_SECRET`, document
-  storage, email, scan/OCR, and rate-limit env vars on Render.
+  storage, email, scan/OCR, AI summary provider, and rate-limit env vars on
+  Render.
 - Database: run committed migrations against Neon with `npm run prisma:deploy`.
 - Smoke: run `npm run smoke:production` only when `SMOKE_*` credentials are
   configured outside the repository.

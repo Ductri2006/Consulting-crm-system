@@ -55,6 +55,7 @@ limiters. `RATE_LIMIT_ENABLED` defaults to `true`.
 | Public | 50 requests per 15 minutes | `POST /api/public/consultation-requests` |
 | Upload | 20 requests per 15 minutes | `POST /api/documents/upload`, `POST /api/portal/documents` |
 | Download | 100 requests per 15 minutes | `GET /api/documents/:id/download`, `GET /api/portal/documents/:id/download` |
+| AI summary | 20 requests per 15 minutes | `POST /api/cases/:id/ai-summary` |
 | Invitation | Auth defaults | `POST /api/invitations`, `POST /api/invitations/:id/resend`, `GET /api/invitations/public/:token`, `POST /api/invitations/public/:token/accept` |
 
 Environment variables:
@@ -69,6 +70,8 @@ UPLOAD_RATE_LIMIT_WINDOW_MINUTES=15
 UPLOAD_RATE_LIMIT_MAX=20
 DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES=15
 DOWNLOAD_RATE_LIMIT_MAX=100
+AI_RATE_LIMIT_WINDOW_MINUTES=15
+AI_RATE_LIMIT_MAX=20
 ```
 
 Rate-limit responses use HTTP `429` with the generic message:
@@ -149,6 +152,28 @@ or password reset flows. Do not print raw `Authorization`, JWTs, invitation
 tokens, reset tokens, `DATABASE_URL`, `JWT_SECRET`, `RESEND_API_KEY`, S3 keys,
 storage keys, signed URLs, local file paths, or uploaded file contents.
 
+## AI Case Summary Security
+
+`POST /api/cases/:id/ai-summary` is an internal CRM route only. It uses the
+same internal auth middleware as `/api/cases`, so customer portal JWTs and
+public callers cannot reach it. Admin and Manager users can summarize
+same-workspace cases; Staff users can summarize only cases assigned to them.
+
+The AI context builder reads by `organizationId + caseProfileId` and excludes
+raw file binaries, `fileUrl`, storage keys, buckets/regions, signed URLs, local
+paths, object keys, checksums, full OCR text, password hashes, token hashes,
+invite/JWT/API tokens, IP addresses, user-agent values, database URLs, and
+provider internals. Case notes, document names, and OCR previews are treated as
+untrusted text, redacted, truncated, and sent as data only. External provider
+mode sends only this sanitized context and is timeout-protected.
+
+Provider modes are `disabled`, `mock`, and `external`. The mock provider is
+deterministic for demo/CI and uses no network call or API key. Disabled,
+failed, and generated attempts write generic ActivityLog rows only:
+`AI_CASE_SUMMARY_SKIPPED`, `AI_CASE_SUMMARY_FAILED`, and
+`AI_CASE_SUMMARY_GENERATED`. Prompts, model output, OCR text, storage metadata,
+and provider secrets must never be logged.
+
 ## Audit Event Coverage
 
 The system uses `ActivityLog`, `CaseHistory`, and `DocumentDownloadAudit`.
@@ -163,6 +188,7 @@ Descriptions must stay generic and redacted.
 | Documents | `DOCUMENT_UPLOADED`, `DOCUMENT_DELETED`, `CUSTOMER_PORTAL_DOCUMENT_UPLOADED`, `DOCUMENT_PORTAL_VISIBILITY_UPDATED` |
 | Downloads | `DocumentDownloadAudit` rows for successful internal and portal downloads, plus Activity Center normalized `DOCUMENT_DOWNLOADED` items |
 | Cases | `CaseHistory` rows for status/history events |
+| AI summaries | `AI_CASE_SUMMARY_GENERATED`, `AI_CASE_SUMMARY_FAILED`, `AI_CASE_SUMMARY_SKIPPED` in `ActivityLog` with generic descriptions |
 | Activity Center | Read-only normalized feed for Admin/Manager, scoped by organization |
 | Portal Updates | Read-only customer-safe feed from case, appointment, document, download, and account events |
 

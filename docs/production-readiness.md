@@ -142,6 +142,12 @@ Server:
 | `CONSULTATION_AUTO_TASK_ENABLED` | Enables follow-up task creation. Defaults to `true`. |
 | `CONSULTATION_AUTO_EMAIL_ENABLED` | Enables assignee email attempts. Defaults to `true`; set `false` when email provider is not configured. |
 | `CONSULTATION_FOLLOW_UP_DUE_HOURS` | Due offset for generated follow-up tasks. Defaults to `24`. |
+| `AI_PROVIDER` | AI case summary provider: `disabled`, `mock`, or `external`. Use `mock` for demo/CI and review before production. |
+| `AI_MODEL` | Model/provider label returned with summaries. |
+| `AI_API_KEY` | External AI provider key. Required only when `AI_PROVIDER=external`; never commit it. |
+| `AI_API_BASE_URL` | External OpenAI-compatible chat-completions endpoint when `AI_PROVIDER=external`. |
+| `AI_REQUEST_TIMEOUT_MS` | External AI provider timeout. |
+| `AI_MAX_CONTEXT_CHARS` / `AI_MAX_OUTPUT_CHARS` | Sanitized context and output budgets for AI summary. |
 | `APP_NAME` | Name used in transactional email templates. |
 | `EMAIL_PROVIDER` | Outbound email provider for invitations and consultation automation: `disabled`, `console`, or `resend`. Defaults to `console`. |
 | `EMAIL_FROM` | Sender identity for outbound emails. Use a verified sender for real Resend delivery. |
@@ -152,6 +158,7 @@ Server:
 | `PUBLIC_RATE_LIMIT_WINDOW_MINUTES` / `PUBLIC_RATE_LIMIT_MAX` | Public intake limit window/count. Defaults to `15` and `50`. |
 | `UPLOAD_RATE_LIMIT_WINDOW_MINUTES` / `UPLOAD_RATE_LIMIT_MAX` | Upload limit window/count. Defaults to `15` and `20`. |
 | `DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES` / `DOWNLOAD_RATE_LIMIT_MAX` | Download limit window/count. Defaults to `15` and `100`. |
+| `AI_RATE_LIMIT_WINDOW_MINUTES` / `AI_RATE_LIMIT_MAX` | AI summary limit window/count. Defaults to `15` and `20`. |
 
 Client:
 
@@ -175,6 +182,9 @@ Production rules:
   staging, use `advisora-demo`.
 - `WORKSPACE_SIGNUP_ENABLED` should remain `false` for production unless
   signup abuse protection, monitoring, and token/session hardening are reviewed.
+- `AI_PROVIDER=mock` is demo-ready and does not call a network provider.
+  Production external mode requires `AI_API_KEY` and `AI_API_BASE_URL` from a
+  secret manager, never the repository.
 - Current rate limiting is in-memory and IP-based. Use Redis or another shared
   rate-limit store before multi-instance production.
 - Do not commit `.env`, tokens, local upload files, or generated secrets.
@@ -366,6 +376,14 @@ Production document requirements:
   without creating a task.
 - [ ] Email disabled/provider failure logs skipped/failed automation activity
   without failing public intake.
+- [ ] AI summary is internal-only, rate-limited, tenant-scoped, and Staff users
+  can generate summaries only for assigned cases.
+- [ ] AI context excludes raw files, storage paths, signed URLs, full OCR text,
+  token/hash fields, IP addresses, user agents, database URLs, and provider
+  secrets.
+- [ ] External AI provider secrets are supplied only through environment/secret
+  management; `AI_PROVIDER=mock` is used for demo/CI when no provider is
+  configured.
 - [ ] Public forms have abuse protection or a plan for rate limiting.
 - [ ] Logs do not include passwords, tokens, connection strings, or document
   contents.

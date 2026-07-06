@@ -137,6 +137,32 @@ const envSchema = z.object({
     .min(1, "CONSULTATION_FOLLOW_UP_DUE_HOURS must be at least 1.")
     .max(720, "CONSULTATION_FOLLOW_UP_DUE_HOURS must be at most 720.")
     .default(24),
+  AI_PROVIDER: z.enum(["disabled", "mock", "external"]).default("mock"),
+  AI_MODEL: z
+    .string()
+    .trim()
+    .min(1, "AI_MODEL cannot be empty.")
+    .default("mock-case-summary"),
+  AI_API_KEY: optionalTrimmedString,
+  AI_API_BASE_URL: optionalTrimmedString,
+  AI_REQUEST_TIMEOUT_MS: z.coerce
+    .number()
+    .int("AI_REQUEST_TIMEOUT_MS must be an integer.")
+    .min(1_000, "AI_REQUEST_TIMEOUT_MS must be at least 1000.")
+    .max(60_000, "AI_REQUEST_TIMEOUT_MS must be at most 60000.")
+    .default(20_000),
+  AI_MAX_CONTEXT_CHARS: z.coerce
+    .number()
+    .int("AI_MAX_CONTEXT_CHARS must be an integer.")
+    .min(1_000, "AI_MAX_CONTEXT_CHARS must be at least 1000.")
+    .max(50_000, "AI_MAX_CONTEXT_CHARS must be at most 50000.")
+    .default(12_000),
+  AI_MAX_OUTPUT_CHARS: z.coerce
+    .number()
+    .int("AI_MAX_OUTPUT_CHARS must be an integer.")
+    .min(500, "AI_MAX_OUTPUT_CHARS must be at least 500.")
+    .max(12_000, "AI_MAX_OUTPUT_CHARS must be at most 12000.")
+    .default(4_000),
   APP_NAME: z.string().trim().min(1, "APP_NAME cannot be empty.").default("Advisora CRM"),
   EMAIL_PROVIDER: z.enum(["disabled", "console", "resend"]).default("console"),
   EMAIL_FROM: z
@@ -187,7 +213,59 @@ const envSchema = z.object({
     .int("DOWNLOAD_RATE_LIMIT_MAX must be an integer.")
     .min(1, "DOWNLOAD_RATE_LIMIT_MAX must be at least 1.")
     .default(100),
+  AI_RATE_LIMIT_WINDOW_MINUTES: z.coerce
+    .number()
+    .int("AI_RATE_LIMIT_WINDOW_MINUTES must be an integer.")
+    .min(1, "AI_RATE_LIMIT_WINDOW_MINUTES must be at least 1.")
+    .default(15),
+  AI_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int("AI_RATE_LIMIT_MAX must be an integer.")
+    .min(1, "AI_RATE_LIMIT_MAX must be at least 1.")
+    .default(20),
 }).superRefine((value, context) => {
+  if (value.DOCUMENT_STORAGE_PROVIDER !== "s3") {
+    if (value.AI_PROVIDER !== "external") {
+      return;
+    }
+  }
+
+  if (value.AI_PROVIDER === "external") {
+    if (!value.AI_API_KEY) {
+      context.addIssue({
+        code: "custom",
+        path: ["AI_API_KEY"],
+        message: "AI_API_KEY is required when AI_PROVIDER=external.",
+      });
+    }
+
+    if (!value.AI_API_BASE_URL) {
+      context.addIssue({
+        code: "custom",
+        path: ["AI_API_BASE_URL"],
+        message: "AI_API_BASE_URL is required when AI_PROVIDER=external.",
+      });
+    } else if (!isHttpOrigin(value.AI_API_BASE_URL)) {
+      try {
+        const url = new URL(value.AI_API_BASE_URL);
+
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          context.addIssue({
+            code: "custom",
+            path: ["AI_API_BASE_URL"],
+            message: "AI_API_BASE_URL must use HTTP or HTTPS.",
+          });
+        }
+      } catch {
+        context.addIssue({
+          code: "custom",
+          path: ["AI_API_BASE_URL"],
+          message: "AI_API_BASE_URL must be a valid URL.",
+        });
+      }
+    }
+  }
+
   if (value.DOCUMENT_STORAGE_PROVIDER !== "s3") {
     return;
   }

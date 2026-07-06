@@ -27,6 +27,7 @@ flowchart TB
     InternalAuth["Internal Auth/RBAC\nJWT purpose internal"]
     PortalAuth["Customer Portal Auth\nJWT purpose customer_portal"]
     Modules["CRM modules\ncustomers, cases, tasks, appointments, docs, dashboard, activity"]
+    AIModule["AI summary module\nsafe context + provider abstraction"]
     PortalModules["Portal modules\nprofile, cases, docs, updates"]
     Email["Email provider\nConsole or Resend"]
   end
@@ -37,6 +38,7 @@ flowchart TB
     DB[("PostgreSQL / Neon")]
     Storage["Document storage abstraction\nLocal dev/demo or private S3-compatible"]
     Scanner["Scanner and OCR providers\ndisabled, mock, ClamAV, Tesseract-ready"]
+    AIProvider["AI provider modes\ndisabled, mock, external"]
     Audit["Activity and audit logs\nActivityLog, CaseHistory, DocumentDownloadAudit"]
   end
 
@@ -57,6 +59,7 @@ flowchart TB
   Hardening --> PortalAuth
   Hardening --> PublicRoutes
   InternalAuth --> Modules
+  InternalAuth --> AIModule
   PortalAuth --> PortalModules
   PublicRoutes --> Modules
 
@@ -68,6 +71,10 @@ flowchart TB
   PortalModules --> Storage
   Storage --> Scanner
   Modules --> Audit
+  AIModule --> Tenant
+  AIModule --> Prisma
+  AIModule --> AIProvider
+  AIModule --> Audit
   PortalModules --> Audit
   Audit --> DB
   Modules --> Email
@@ -108,8 +115,44 @@ Admin route and authorization examples:
 - `/admin/activity` is Admin/Manager-only in the frontend and backend.
 - `/admin/users`, `/admin/invitations`, and `/admin/settings` are Admin-only.
 - Internal document download uses `/api/documents/:id/download`.
+- AI case summary uses `/api/cases/:id/ai-summary` and the internal API client
+  only.
 - Staff document access is limited to documents they uploaded or documents
   linked to assigned cases.
+
+## AI Case Summary Request Flow
+
+```mermaid
+sequenceDiagram
+  actor User as Admin / Manager / assigned Staff
+  participant UI as Case detail modal
+  participant Client as Internal API client
+  participant API as POST /api/cases/:id/ai-summary
+  participant Auth as Internal auth + AI rate limit
+  participant AI as AI summary service
+  participant Prisma as Prisma ORM
+  participant Provider as Mock or external provider
+  participant DB as PostgreSQL
+
+  User->>UI: Click Generate AI Summary
+  UI->>Client: Send internal Bearer token
+  Client->>API: POST /api/cases/:id/ai-summary
+  API->>Auth: Reject portal/public tokens and enforce role guard
+  Auth->>AI: request.user with organizationId
+  AI->>Prisma: Read case access record by id + organizationId
+  Prisma->>DB: Same-tenant lookup
+  AI->>AI: Enforce Staff assigned-case rule
+  AI->>Prisma: Fetch safe case/history/appointment/task/document metadata
+  AI->>AI: Redact and truncate notes/OCR preview; exclude storage/raw fields
+  AI->>Provider: Send sanitized context only
+  Provider-->>AI: Structured summary
+  AI->>DB: ActivityLog generated/failed/skipped event
+  AI-->>API: Structured summary JSON
+  API-->>UI: Loading, error, empty, or result state
+
+  Note over AI,Provider: Document binaries, storage keys, signed URLs, full OCR, tokens, hashes, IPs, and user agents are never sent.
+  Note over Auth,AI: Customer portal and public callers cannot reach this route.
+```
 
 ## Request Flow For Customer Portal
 
@@ -227,6 +270,9 @@ The tenant boundary is the `Organization` model. Internal services derive scope
 from the authenticated internal user's `organizationId`; portal services derive
 scope from the authenticated portal account's `organizationId` and `customerId`;
 public consultation intake maps to the configured `DEFAULT_ORGANIZATION_SLUG`.
+AI case summary also derives scope from the internal user's `organizationId`
+and enforces Staff assigned-case access before fetching histories,
+appointments, tasks, document metadata, or OCR preview.
 
 `npm run verify:tenant-isolation` is a read-only verification script for the
 Advisora and Northstar demo workspaces. It does not reset the database or delete

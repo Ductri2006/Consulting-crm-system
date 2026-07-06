@@ -10,6 +10,7 @@ import {
   Plus,
   RefreshCw,
   SearchX,
+  Sparkles,
   Trash2,
   UserRoundCheck,
 } from 'lucide-react'
@@ -46,6 +47,7 @@ import {
   caseStatuses,
   createCase,
   deleteCase,
+  generateCaseAiSummary,
   getCase,
   getCaseHistory,
   listAssignableUsers,
@@ -60,6 +62,7 @@ import {
   toDateTimeLocalValue,
   updateCase,
   updateCaseStatus,
+  type CaseAiSummary,
   type CaseAssignValues,
   type CaseDetail,
   type CaseEditFormValues,
@@ -141,6 +144,23 @@ const isOverdue = (caseProfile: CaseProfile): boolean =>
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
+
+const getAiSummaryErrorMessage = (
+  error: unknown,
+  t: ReturnType<typeof useTranslation>['t'],
+): string => {
+  if (error instanceof ApiError) {
+    if (error.status === 429) {
+      return t('admin.cases.aiSummaryRateLimited')
+    }
+
+    if (error.status === 503) {
+      return t('admin.cases.aiSummaryDisabled')
+    }
+  }
+
+  return getErrorMessage(error, t('admin.cases.aiSummaryError'))
+}
 
 function FieldError({
   id,
@@ -226,6 +246,172 @@ function PriorityBadge({ priority }: { priority: Priority }) {
     >
       {getStatusLabel(t, 'priority', priority)}
     </span>
+  )
+}
+
+function SummaryList({
+  emptyLabel,
+  items,
+  title,
+}: {
+  emptyLabel: string
+  items: string[]
+  title: string
+}) {
+  return (
+    <div>
+      <h4 className="text-sm font-bold text-slate-900">{title}</h4>
+      {items.length > 0 ? (
+        <ul className="mt-2 space-y-1.5 text-sm leading-6 text-slate-600">
+          {items.map((item, index) => (
+            <li className="flex gap-2" key={`${title}-${index}`}>
+              <span
+                aria-hidden="true"
+                className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500"
+              />
+              <span className="min-w-0 break-words">{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-sm text-slate-500">{emptyLabel}</p>
+      )}
+    </div>
+  )
+}
+
+function CaseAiSummaryPanel({
+  error,
+  isLoading,
+  onGenerate,
+  summary,
+}: {
+  error: string | null
+  isLoading: boolean
+  onGenerate: () => void
+  summary: CaseAiSummary | null
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <section className="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="flex items-center gap-2 text-base font-bold text-slate-900">
+            <Sparkles className="h-4 w-4 text-blue-600" aria-hidden="true" />
+            {t('admin.cases.aiSummaryTitle')}
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            {t('admin.cases.aiSummaryEmpty')}
+          </p>
+        </div>
+        <button
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isLoading}
+          onClick={onGenerate}
+          type="button"
+        >
+          <Sparkles className="h-4 w-4" aria-hidden="true" />
+          {isLoading
+            ? t('admin.cases.aiSummaryGenerating')
+            : t('admin.cases.generateAiSummary')}
+        </button>
+      </div>
+
+      <p className="mt-3 text-xs font-medium text-blue-800">
+        {t('admin.cases.aiSummaryDisclaimer')}
+      </p>
+
+      {isLoading ? (
+        <div
+          className="mt-4 flex items-center gap-2 rounded-lg border border-blue-100 bg-white px-3 py-2 text-sm font-medium text-blue-700"
+          role="status"
+        >
+          <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+          {t('admin.cases.aiSummaryGenerating')}
+        </div>
+      ) : null}
+
+      {error ? (
+        <div
+          className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+          role="alert"
+        >
+          {error}
+        </div>
+      ) : null}
+
+      {summary ? (
+        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {t('admin.cases.aiSummaryConfidence')}: {t(
+                `admin.cases.aiSummaryConfidenceValues.${summary.confidence}`,
+              )}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {t('admin.cases.aiSummaryProvider')}: {summary.provider}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {t('admin.cases.aiSummaryModel')}: {summary.model}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {t('admin.cases.aiSummaryGeneratedAt')}:{' '}
+              {formatDateTime(summary.generatedAt)}
+            </span>
+          </div>
+
+          <h4 className="mt-4 text-sm font-bold text-slate-900">
+            {t('admin.cases.aiSummarySummary')}
+          </h4>
+          <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+            {summary.summary}
+          </p>
+
+          <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+            {t('admin.cases.aiSummarySourceCounts', {
+              histories: summary.sourceCounts.caseHistories,
+              appointments: summary.sourceCounts.appointments,
+              tasks: summary.sourceCounts.tasks,
+              documents: summary.sourceCounts.documents,
+            })}
+          </div>
+
+          <div className="mt-5 grid gap-5 lg:grid-cols-2">
+            <SummaryList
+              emptyLabel={t('admin.cases.aiSummaryNoItems')}
+              items={summary.keyFacts}
+              title={t('admin.cases.aiSummaryKeyFacts')}
+            />
+            <SummaryList
+              emptyLabel={t('admin.cases.aiSummaryNoItems')}
+              items={summary.timeline}
+              title={t('admin.cases.aiSummaryTimeline')}
+            />
+            <SummaryList
+              emptyLabel={t('admin.cases.aiSummaryNoItems')}
+              items={summary.documentHighlights}
+              title={t('admin.cases.aiSummaryDocumentHighlights')}
+            />
+            <SummaryList
+              emptyLabel={t('admin.cases.aiSummaryNoItems')}
+              items={summary.risks}
+              title={t('admin.cases.aiSummaryRisks')}
+            />
+            <SummaryList
+              emptyLabel={t('admin.cases.aiSummaryNoItems')}
+              items={summary.missingInformation}
+              title={t('admin.cases.aiSummaryMissingInformation')}
+            />
+            <SummaryList
+              emptyLabel={t('admin.cases.aiSummaryNoItems')}
+              items={summary.recommendedNextActions}
+              title={t('admin.cases.aiSummaryRecommendedNextActions')}
+            />
+          </div>
+        </div>
+      ) : null}
+    </section>
   )
 }
 
@@ -455,16 +641,24 @@ function CreateCaseForm({
 }
 
 interface CaseDetailFormProps {
+  aiSummary: CaseAiSummary | null
+  aiSummaryError: string | null
   caseDetail: CaseDetail
   error: string | null
+  isAiSummaryLoading: boolean
   onCancel: () => void
+  onGenerateAiSummary: () => void
   onSubmit: (values: CaseEditFormValues) => Promise<void>
 }
 
 function CaseDetailForm({
+  aiSummary,
+  aiSummaryError,
   caseDetail,
   error,
+  isAiSummaryLoading,
   onCancel,
+  onGenerateAiSummary,
   onSubmit,
 }: CaseDetailFormProps) {
   const { t } = useTranslation()
@@ -564,6 +758,13 @@ function CaseDetailForm({
             </p>
           </div>
         </section>
+
+        <CaseAiSummaryPanel
+          error={aiSummaryError}
+          isLoading={isAiSummaryLoading}
+          onGenerate={onGenerateAiSummary}
+          summary={aiSummary}
+        />
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
@@ -1063,6 +1264,9 @@ export function AdminCasesPage() {
   const [caseDetail, setCaseDetail] = useState<CaseDetail | null>(null)
   const [isDetailLoading, setIsDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [aiSummary, setAiSummary] = useState<CaseAiSummary | null>(null)
+  const [isAiSummaryLoading, setIsAiSummaryLoading] = useState(false)
+  const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
 
   const [statusTarget, setStatusTarget] = useState<CaseProfile | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
@@ -1084,6 +1288,7 @@ export function AdminCasesPage() {
   const listSequence = useRef(0)
   const lookupSequence = useRef(0)
   const detailSequence = useRef(0)
+  const aiSummarySequence = useRef(0)
   const historySequence = useRef(0)
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
@@ -1191,9 +1396,13 @@ export function AdminCasesPage() {
 
   const loadDetail = useCallback(async (target: CaseProfile) => {
     const sequence = ++detailSequence.current
+    aiSummarySequence.current += 1
     setIsDetailLoading(true)
     setDetailError(null)
     setCaseDetail(null)
+    setAiSummary(null)
+    setAiSummaryError(null)
+    setIsAiSummaryLoading(false)
 
     try {
       const result = await getCase(target.id)
@@ -1296,10 +1505,44 @@ export function AdminCasesPage() {
 
   const closeDetail = () => {
     detailSequence.current += 1
+    aiSummarySequence.current += 1
     setDetailTarget(null)
     setCaseDetail(null)
     setDetailError(null)
     setIsDetailLoading(false)
+    setAiSummary(null)
+    setAiSummaryError(null)
+    setIsAiSummaryLoading(false)
+  }
+
+  const handleGenerateAiSummary = async () => {
+    if (!caseDetail) {
+      return
+    }
+
+    const sequence = ++aiSummarySequence.current
+    setIsAiSummaryLoading(true)
+    setAiSummaryError(null)
+
+    try {
+      const result = await generateCaseAiSummary(caseDetail.id)
+
+      if (sequence === aiSummarySequence.current) {
+        setAiSummary(result)
+        setFeedback({
+          type: 'success',
+          message: t('admin.cases.aiSummaryGeneratedFeedback'),
+        })
+      }
+    } catch (error) {
+      if (sequence === aiSummarySequence.current) {
+        setAiSummaryError(getAiSummaryErrorMessage(error, t))
+      }
+    } finally {
+      if (sequence === aiSummarySequence.current) {
+        setIsAiSummaryLoading(false)
+      }
+    }
   }
 
   const handleEdit = async (values: CaseEditFormValues) => {
@@ -1865,9 +2108,13 @@ export function AdminCasesPage() {
       >
         {caseDetail ? (
           <CaseDetailForm
+            aiSummary={aiSummary}
+            aiSummaryError={aiSummaryError}
             caseDetail={caseDetail}
             error={detailError}
+            isAiSummaryLoading={isAiSummaryLoading}
             onCancel={closeDetail}
+            onGenerateAiSummary={handleGenerateAiSummary}
             onSubmit={handleEdit}
           />
         ) : (

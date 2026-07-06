@@ -1,6 +1,8 @@
 import { apiClient } from '../../lib/apiClient'
 import type {
   CaseAssignInput,
+  CaseAiSummary,
+  CaseAiSummaryResponse,
   CaseDetail,
   CaseHistoryParams,
   CaseHistoryResponse,
@@ -130,6 +132,15 @@ export const getCaseHistory = (
   return apiClient.get<CaseHistoryResponse>(
     `/cases/${id}/history?${query.toString()}`,
   )
+}
+
+export const generateCaseAiSummary = async (
+  id: string,
+): Promise<CaseAiSummary> => {
+  const response = await apiClient.post<CaseAiSummaryResponse>(
+    `/cases/${id}/ai-summary`,
+  )
+  return response.summary
 }
 
 export const deleteCase = async (id: string): Promise<CaseRecord> => {

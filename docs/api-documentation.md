@@ -6,7 +6,9 @@ auth, workspace signup, workspace settings, workspace invitations, CRM workflows
 internal users, documents, dashboard, reports, and the Organization / Workspace tenant
 foundation. Step 30 adds the Admin/Manager Activity Center and customer-safe
 Portal Updates feed. Step 31 adds security header, rate-limit, token-purpose,
-redaction, audit, and production smoke documentation.
+redaction, audit, and production smoke documentation. Step 37 adds the
+internal AI Case Summary endpoint with a safe context builder and provider
+abstraction.
 
 ## Base URL and Conventions
 
@@ -1117,6 +1119,76 @@ Returns incomplete cases whose deadline is earlier than the current date. Backen
 GET /api/cases/:id
 ```
 
+### Generate AI Case Summary
+
+```http
+POST /api/cases/:id/ai-summary
+```
+
+Access:
+
+- `ADMIN` and `MANAGER` can summarize any case in their own organization.
+- `STAFF` can summarize only assigned cases.
+- Customer portal tokens and public callers are rejected by the internal auth
+  middleware.
+
+The endpoint is rate-limited by `AI_RATE_LIMIT_WINDOW_MINUTES` and
+`AI_RATE_LIMIT_MAX`. It never accepts `organizationId` from the client.
+
+Response data:
+
+```json
+{
+  "summary": {
+    "summary": "Concise internal CRM summary.",
+    "keyFacts": ["Case: ADV-20260706-001 - Demo matter"],
+    "timeline": ["2026-07-06T10:00:00.000Z: CASE_CREATED"],
+    "documentHighlights": ["passport.pdf (IDENTITY, INTERNAL_ONLY, scan SKIPPED, OCR READY)"],
+    "risks": ["The case deadline appears overdue."],
+    "missingInformation": ["No OCR preview is available for linked documents."],
+    "recommendedNextActions": ["Review and update the linked open tasks."],
+    "confidence": "MEDIUM",
+    "provider": "mock",
+    "model": "mock-case-summary",
+    "generatedAt": "2026-07-06T10:30:00.000Z",
+    "sourceCounts": {
+      "caseHistories": 3,
+      "appointments": 1,
+      "tasks": 2,
+      "documents": 4
+    }
+  }
+}
+```
+
+Safe context inputs:
+
+- Case overview, status, priority, deadline, created/updated timestamps.
+- Customer basic info visible to internal users.
+- Service and assigned staff summary.
+- Latest case history, appointments, tasks, document metadata, and
+  `ocrTextPreview`.
+
+Excluded from prompt, response, and ActivityLog:
+
+- Raw file binary, full OCR text, `fileUrl`, storage key/bucket/region,
+  signed URLs, local paths, object keys, checksums, password/token hashes,
+  invite/JWT/API tokens, IP addresses, user-agent values, database URLs, and
+  provider internals.
+
+Provider modes:
+
+- `AI_PROVIDER=disabled` returns `503` with a controlled message and writes
+  `AI_CASE_SUMMARY_SKIPPED`.
+- `AI_PROVIDER=mock` returns deterministic structured output and requires no
+  API key.
+- `AI_PROVIDER=external` sends only sanitized context to the configured
+  OpenAI-compatible endpoint. Invalid provider responses fail safely without
+  exposing prompts or secrets.
+
+Successful and failed attempts write `AI_CASE_SUMMARY_GENERATED` or
+`AI_CASE_SUMMARY_FAILED` with generic descriptions only.
+
 ### Create Case Profile
 
 ```http
@@ -1658,6 +1730,12 @@ Consultation automation writes ActivityLog actions including
 `CONSULTATION_AUTOMATION_EMAIL_FAILED`. These events are organization-scoped
 and visible to Admin/Manager users through Activity Center and dashboard recent
 activity.
+
+AI case summary writes `AI_CASE_SUMMARY_GENERATED`,
+`AI_CASE_SUMMARY_FAILED`, and `AI_CASE_SUMMARY_SKIPPED` ActivityLog actions
+with generic descriptions only. The Activity Center must not return prompts,
+model output, OCR text, storage metadata, provider secrets, IP addresses, or
+user-agent values for these events.
 
 ### Get Activity Summary
 

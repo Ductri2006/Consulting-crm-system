@@ -3,12 +3,14 @@ import { Router } from "express";
 
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorizeRoles } from "../../middlewares/authorize.middleware";
+import { aiRateLimit } from "../../middlewares/rateLimit.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
 import {
   assignCaseController,
   createCaseController,
   deleteCaseController,
+  generateCaseAiSummaryController,
   getCaseController,
   listCaseHistoryController,
   listCasesController,
@@ -50,6 +52,12 @@ caseRouter.post(
   "/",
   validate({ body: createCaseSchema }),
   asyncHandler(createCaseController),
+);
+caseRouter.post(
+  "/:id/ai-summary",
+  aiRateLimit,
+  validate({ params: caseIdParamsSchema }),
+  asyncHandler(generateCaseAiSummaryController),
 );
 caseRouter.get(
   "/:id",

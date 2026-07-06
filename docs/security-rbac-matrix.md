@@ -32,6 +32,7 @@ Legend:
 | Customers | `/admin/customers`, `/api/customers` | R/C/U/D workspace | R/C/U/D workspace, subject to service rules | R scoped; mutations constrained by backend rules | Own safe profile via `/api/portal/me` only | Blocked |
 | Consultation Requests | `/admin/consultation-requests`, `/api/consultation-requests`, `/api/public/consultation-requests` | R/U workspace, convert flows when implemented | R/U workspace | R/U scoped by backend rules | Blocked | C public consultation request only |
 | Cases | `/admin/cases`, `/api/cases` | R/C/U/D workspace | R/C/U/D workspace | R/U scoped to assigned cases; destructive actions constrained | R own read-only cases via `/api/portal/cases` | Blocked |
+| AI Case Summary | `/api/cases/:id/ai-summary` | Generate for same-workspace cases | Generate for same-workspace cases | Generate assigned cases only | Blocked | Blocked |
 | Appointments | `/admin/appointments`, `/api/appointments` | R/C/U/D workspace | R/C/U/D workspace | R/U scoped to assigned/self work | R own appointment summaries through portal case/profile/update APIs | Public appointment form is frontend demo only in current backend |
 | Tasks | `/admin/tasks`, `/api/tasks` | R/C/U/D workspace | R/C/U/D workspace | R/C/U/D scoped to assignee/creator/assigned case rules | R safe task summaries on own portal case detail | Blocked |
 | Documents | `/admin/documents`, `/api/documents` | R/C/U/D workspace; toggle portal visibility | R/C/U/D workspace; toggle portal visibility | R/C/D scoped to uploaded docs or assigned cases; no visibility toggle | Blocked from internal routes | Blocked |
@@ -56,6 +57,8 @@ Legend:
 - `/api/documents/*` requires internal auth. Portal tokens return `401`.
 - `/api/documents/:id/download` is internal-only.
 - `/api/portal/documents/:id/download` is portal-only.
+- `/api/cases/:id/ai-summary` requires internal auth and the case route role
+  guard. Portal tokens return `401`; public callers receive an auth error.
 - Public invitation preview/accept routes are token-based and rate-limited.
   They must not log or return token hashes.
 
@@ -68,6 +71,7 @@ Legend:
 | Invitation | `POST /api/invitations`, `POST /api/invitations/:id/resend`, `GET /api/invitations/public/:token`, `POST /api/invitations/public/:token/accept` |
 | Upload | `POST /api/documents/upload`, `POST /api/portal/documents` |
 | Download | `GET /api/documents/:id/download`, `GET /api/portal/documents/:id/download` |
+| AI summary | `POST /api/cases/:id/ai-summary` |
 
 The current limiter is process-local and IP-based. Use a shared Redis-backed
 limiter or equivalent before multi-instance production.
@@ -120,10 +124,14 @@ Public services:
 | Invitation create/resend/revoke/accept | `ActivityLog` |
 | Portal account create/reset/activate/deactivate | `ActivityLog` |
 | Case status/history | `CaseHistory` |
+| AI case summary generated/failed/skipped | `ActivityLog` |
 | Internal and portal document upload | `ActivityLog` |
 | Document visibility toggle | `ActivityLog` |
 | Successful internal and portal download | `DocumentDownloadAudit` |
 
 Audit descriptions should be generic and redacted. Passwords, tokens, token
 hashes, storage paths, object keys, signed URLs, IP addresses, and user-agent
-values must not be exposed to portal responses.
+values must not be exposed to portal responses or AI summary responses.
+
+AI summary ActivityLog rows must not include prompts, model output, OCR text,
+storage metadata, provider errors with secrets, or external API keys.

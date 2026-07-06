@@ -86,6 +86,13 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `CONSULTATION_AUTO_TASK_ENABLED` | No | Enables automatic follow-up task creation; defaults to `true` |
 | `CONSULTATION_AUTO_EMAIL_ENABLED` | No | Enables consultation follow-up email attempts; defaults to `true` |
 | `CONSULTATION_FOLLOW_UP_DUE_HOURS` | No | Follow-up task due offset in hours, from 1 to 720; defaults to `24` |
+| `AI_PROVIDER` | No | AI case summary provider: `disabled`, `mock`, or `external`; defaults to `mock` |
+| `AI_MODEL` | No | Model/provider label returned with summaries; defaults to `mock-case-summary` |
+| `AI_API_KEY` | External only | External provider API key; never commit it |
+| `AI_API_BASE_URL` | External only | External OpenAI-compatible chat-completions endpoint |
+| `AI_REQUEST_TIMEOUT_MS` | No | External provider timeout; defaults to `20000` |
+| `AI_MAX_CONTEXT_CHARS` | No | Sanitized context prompt budget; defaults to `12000` |
+| `AI_MAX_OUTPUT_CHARS` | No | Structured summary output budget; defaults to `4000` |
 | `APP_NAME` | No | Name used in email templates; defaults to `Advisora CRM` |
 | `EMAIL_PROVIDER` | No | Email provider for invitations and consultation automation: `disabled`, `console`, or `resend`; defaults to `console` |
 | `EMAIL_FROM` | No | Sender identity for outbound emails |
@@ -100,6 +107,8 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `UPLOAD_RATE_LIMIT_MAX` | No | Upload requests per window, defaults to `20` |
 | `DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES` | No | Download rate-limit window, defaults to `15` |
 | `DOWNLOAD_RATE_LIMIT_MAX` | No | Download requests per window, defaults to `100` |
+| `AI_RATE_LIMIT_WINDOW_MINUTES` | No | AI summary rate-limit window, defaults to `15` |
+| `AI_RATE_LIMIT_MAX` | No | AI summary requests per window, defaults to `20` |
 
 Example:
 
@@ -134,6 +143,13 @@ CONSULTATION_AUTOMATION_ENABLED=true
 CONSULTATION_AUTO_TASK_ENABLED=true
 CONSULTATION_AUTO_EMAIL_ENABLED=true
 CONSULTATION_FOLLOW_UP_DUE_HOURS=24
+AI_PROVIDER=mock
+AI_MODEL=mock-case-summary
+AI_API_KEY=
+AI_API_BASE_URL=
+AI_REQUEST_TIMEOUT_MS=20000
+AI_MAX_CONTEXT_CHARS=12000
+AI_MAX_OUTPUT_CHARS=4000
 APP_NAME="Advisora CRM"
 EMAIL_PROVIDER=console
 EMAIL_FROM="Advisora CRM <no-reply@advisora.test>"
@@ -148,6 +164,8 @@ UPLOAD_RATE_LIMIT_WINDOW_MINUTES=15
 UPLOAD_RATE_LIMIT_MAX=20
 DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES=15
 DOWNLOAD_RATE_LIMIT_MAX=100
+AI_RATE_LIMIT_WINDOW_MINUTES=15
+AI_RATE_LIMIT_MAX=20
 ```
 
 `CLIENT_URL` can be a single origin such as `http://localhost:5173` or a
@@ -156,8 +174,8 @@ comma-separated allowlist such as
 no paths, queries, hashes, trailing slashes, or wildcard origins. Do not leave
 trailing commas.
 
-Do not commit `.env`, real email provider API keys, or verified sender
-credentials in a shared or production environment.
+Do not commit `.env`, real email provider API keys, AI provider keys, database
+URLs, or verified sender credentials in a shared or production environment.
 
 ## Security hardening
 
@@ -801,6 +819,7 @@ Authorization: Bearer <token>
 | `PATCH` | `/api/cases/:id` | `ADMIN`, `MANAGER`, assigned `STAFF` |
 | `PATCH` | `/api/cases/:id/status` | `ADMIN`, `MANAGER`, assigned `STAFF` |
 | `PATCH` | `/api/cases/:id/assign` | `ADMIN`, `MANAGER` |
+| `POST` | `/api/cases/:id/ai-summary` | `ADMIN`, `MANAGER`, assigned `STAFF` |
 | `GET` | `/api/cases/:id/history` | `ADMIN`, `MANAGER`, assigned `STAFF` |
 | `DELETE` | `/api/cases/:id` | `ADMIN`, `MANAGER` |
 
@@ -819,6 +838,36 @@ RECEIVED -> VERIFYING -> PROPOSING_SOLUTION -> PROCESSING -> COMPLETED
 Any non-terminal status can transition to `CANCELLED`. `COMPLETED` and
 `CANCELLED` are terminal states, backward transitions are rejected, and status
 changes are recorded in case history.
+
+#### AI case summary
+
+`POST /api/cases/:id/ai-summary` generates an on-demand structured summary for
+the internal Admin CRM. It reuses internal authentication, rejects customer
+portal/public tokens, scopes every read by `request.user.organizationId`, and
+enforces the same assigned-case rule for Staff users.
+
+The safe context includes case overview, customer basics, status/priority/
+deadline, case history, appointments, tasks, document metadata, and
+`ocrTextPreview` only. It excludes raw file binaries, `fileUrl`, storage keys,
+buckets/regions, signed URLs, local paths, checksums, full OCR text, password or
+token hashes, invite/JWT values, API keys, IP addresses, user agents, and
+database URLs. Notes and OCR previews are redacted and truncated before any AI
+provider call.
+
+Provider modes:
+
+- `AI_PROVIDER=disabled` records a skipped activity event and returns a
+  controlled `503`.
+- `AI_PROVIDER=mock` returns a deterministic demo-ready summary without network
+  calls or API keys.
+- `AI_PROVIDER=external` sends only the sanitized context to a configured
+  OpenAI-compatible endpoint using `AI_API_KEY`, `AI_API_BASE_URL`, and
+  `AI_REQUEST_TIMEOUT_MS`.
+
+Successful, failed, and skipped attempts write safe `ActivityLog` events:
+`AI_CASE_SUMMARY_GENERATED`, `AI_CASE_SUMMARY_FAILED`, and
+`AI_CASE_SUMMARY_SKIPPED`. Activity descriptions never include prompts, model
+output, OCR text, storage metadata, or provider secrets.
 
 ### Appointments
 

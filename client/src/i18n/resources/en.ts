@@ -821,6 +821,36 @@ export const en = {
       },
     },
     cases: {
+      aiSummaryConfidence: 'Confidence',
+      aiSummaryConfidenceValues: {
+        HIGH: 'High',
+        LOW: 'Low',
+        MEDIUM: 'Medium',
+      },
+      aiSummaryDisabled: 'AI summary is disabled by configuration.',
+      aiSummaryDisclaimer:
+        'AI output is assistive. Review source records before making decisions.',
+      aiSummaryDocumentHighlights: 'Document highlights',
+      aiSummaryEmpty:
+        'Generate a summary to review case facts, documents, risks, and next actions.',
+      aiSummaryError: 'AI summary could not be generated.',
+      aiSummaryGeneratedAt: 'Generated at',
+      aiSummaryGeneratedFeedback: 'AI summary generated.',
+      aiSummaryGenerating: 'Generating summary...',
+      aiSummaryKeyFacts: 'Key facts',
+      aiSummaryMissingInformation: 'Missing information',
+      aiSummaryModel: 'Model',
+      aiSummaryNoItems: 'No items were returned.',
+      aiSummaryProvider: 'Provider',
+      aiSummaryRateLimited:
+        'Too many AI summary requests. Please try again later.',
+      aiSummaryRecommendedNextActions: 'Recommended next actions',
+      aiSummaryRisks: 'Risks',
+      aiSummarySourceCounts:
+        '{{histories}} history events, {{appointments}} appointments, {{tasks}} tasks, {{documents}} documents',
+      aiSummarySummary: 'Summary',
+      aiSummaryTimeline: 'Timeline',
+      aiSummaryTitle: 'AI Case Summary',
       allPriorities: 'All priorities',
       allStatuses: 'All statuses',
       assignCase: 'Assign case',
@@ -856,6 +886,7 @@ export const en = {
       eyebrow: 'Case workflow',
       filterPriority: 'Filter by priority',
       filterStatus: 'Filter by status',
+      generateAiSummary: 'Generate AI Summary',
       historyBy: 'By {{name}}',
       historyDescription: 'Newest workflow activity appears first.',
       historyEmptyDescription: 'Changes to this case will appear here.',
@@ -929,6 +960,9 @@ export const en = {
         title: 'Title',
       },
       historyActions: {
+        AI_CASE_SUMMARY_FAILED: 'AI case summary failed',
+        AI_CASE_SUMMARY_GENERATED: 'AI case summary generated',
+        AI_CASE_SUMMARY_SKIPPED: 'AI case summary skipped',
         CASE_ASSIGNED: 'Case assigned',
         CASE_CREATED: 'Case created',
         CASE_STATUS_CHANGED: 'Case status changed',
@@ -1704,6 +1738,9 @@ export const en = {
   },
   status: {
     activityAction: {
+      AI_CASE_SUMMARY_FAILED: 'AI case summary failed',
+      AI_CASE_SUMMARY_GENERATED: 'AI case summary generated',
+      AI_CASE_SUMMARY_SKIPPED: 'AI case summary skipped',
       APPOINTMENT_CREATED: 'Appointment created',
       CASE_ASSIGNED: 'Case assigned',
       CASE_CREATED: 'Case created',

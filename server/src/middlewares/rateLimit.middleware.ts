@@ -96,6 +96,12 @@ export const downloadRateLimit = createRateLimit({
   maxRequests: env.DOWNLOAD_RATE_LIMIT_MAX,
 });
 
+export const aiRateLimit = createRateLimit({
+  name: "ai-summary",
+  windowMinutes: env.AI_RATE_LIMIT_WINDOW_MINUTES,
+  maxRequests: env.AI_RATE_LIMIT_MAX,
+});
+
 export const invitationRateLimit = createRateLimit({
   name: "invitation",
   windowMinutes: env.AUTH_RATE_LIMIT_WINDOW_MINUTES,
