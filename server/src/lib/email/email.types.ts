@@ -35,3 +35,15 @@ export interface InvitationEmailTemplateInput {
   inviteUrl: string;
   expiresAt: Date;
 }
+
+export interface ConsultationFollowUpEmailTemplateInput {
+  appName: string;
+  assignedToName: string;
+  requesterName: string;
+  requesterEmail?: string | null;
+  requesterPhone?: string | null;
+  serviceName: string;
+  messageExcerpt?: string | null;
+  dueAt: Date;
+  adminUrl: string;
+}

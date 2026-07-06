@@ -128,6 +128,15 @@ const envSchema = z.object({
     )
     .default("advisora-demo"),
   WORKSPACE_SIGNUP_ENABLED: z.enum(["true", "false"]).default("false"),
+  CONSULTATION_AUTOMATION_ENABLED: booleanString("true"),
+  CONSULTATION_AUTO_TASK_ENABLED: booleanString("true"),
+  CONSULTATION_AUTO_EMAIL_ENABLED: booleanString("true"),
+  CONSULTATION_FOLLOW_UP_DUE_HOURS: z.coerce
+    .number()
+    .int("CONSULTATION_FOLLOW_UP_DUE_HOURS must be an integer.")
+    .min(1, "CONSULTATION_FOLLOW_UP_DUE_HOURS must be at least 1.")
+    .max(720, "CONSULTATION_FOLLOW_UP_DUE_HOURS must be at most 720.")
+    .default(24),
   APP_NAME: z.string().trim().min(1, "APP_NAME cannot be empty.").default("Advisora CRM"),
   EMAIL_PROVIDER: z.enum(["disabled", "console", "resend"]).default("console"),
   EMAIL_FROM: z

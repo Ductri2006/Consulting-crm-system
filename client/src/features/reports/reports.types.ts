@@ -81,7 +81,7 @@ export interface RecentActivityCase {
 }
 
 export interface RecentActivityItem {
-  type: 'CASE_HISTORY'
+  type: 'CASE_HISTORY' | 'ACTIVITY_LOG'
   id: string
   action: string
   description: string
@@ -89,7 +89,9 @@ export interface RecentActivityItem {
   newStatus: CaseStatus | null
   createdAt: string
   user: RecentActivityUser | null
-  caseProfile: RecentActivityCase
+  caseProfile: RecentActivityCase | null
+  entityType: string | null
+  entityId: string | null
 }
 
 export interface ReportDateRange {

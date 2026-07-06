@@ -3,12 +3,15 @@ import { Prisma } from "@prisma/client";
 import { env } from "../../config/env";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
+import { handleConsultationRequestAutomation } from "../automations/automation.service";
+import type { ConsultationAutomationRequest } from "../automations/automation.types";
 import { AppError } from "../../utils/AppError";
 import {
   createPaginationMeta,
   getPagination,
 } from "../../utils/pagination";
 import { isPrismaError } from "../../utils/prismaError";
+import { redactSensitiveText } from "../../utils/redact";
 import type {
   ConsultationRequestListQuery,
   CreateConsultationRequestInput,
@@ -41,6 +44,44 @@ const publicConsultationRequestSelect = {
     select: serviceSummarySelect,
   },
 } satisfies Prisma.ConsultationRequestSelect;
+
+const consultationAutomationRequestSelect = {
+  ...publicConsultationRequestSelect,
+  organizationId: true,
+  createdAt: true,
+} satisfies Prisma.ConsultationRequestSelect;
+
+const toPublicConsultationRequest = (
+  request: Prisma.ConsultationRequestGetPayload<{
+    select: typeof consultationAutomationRequestSelect;
+  }>,
+) => ({
+  id: request.id,
+  fullName: request.fullName,
+  phone: request.phone,
+  email: request.email,
+  serviceId: request.serviceId,
+  message: request.message,
+  status: request.status,
+  createdAt: request.createdAt,
+  service: request.service,
+});
+
+const runConsultationAutomation = async (
+  request: ConsultationAutomationRequest,
+): Promise<void> => {
+  try {
+    await handleConsultationRequestAutomation(request);
+  } catch (error) {
+    console.warn("Consultation automation failed unexpectedly.", {
+      requestId: request.id,
+      organizationId: request.organizationId,
+      error: redactSensitiveText(
+        error instanceof Error ? error.message : "Unknown error.",
+      ),
+    });
+  }
+};
 
 export const createConsultationRequest = async (
   input: CreateConsultationRequestInput,
@@ -82,13 +123,17 @@ export const createConsultationRequest = async (
   }
 
   try {
-    return await prisma.consultationRequest.create({
+    const request = await prisma.consultationRequest.create({
       data: {
         ...input,
         organizationId: organization.id,
       },
-      select: publicConsultationRequestSelect,
+      select: consultationAutomationRequestSelect,
     });
+
+    await runConsultationAutomation(request);
+
+    return toPublicConsultationRequest(request);
   } catch (error) {
     if (isPrismaError(error, "P2003")) {
       throw new AppError(

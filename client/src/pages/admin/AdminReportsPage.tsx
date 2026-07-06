@@ -560,7 +560,20 @@ function RecentActivitiesList({ items }: { items: RecentActivityItem[] }) {
               </time>
             </div>
             <p className="mt-1 truncate text-xs text-slate-400">
-              {activity.caseProfile.caseCode} - {activity.caseProfile.title}
+              {activity.caseProfile ? (
+                <>
+                  {activity.caseProfile.caseCode} - {activity.caseProfile.title}
+                </>
+              ) : (
+                <>
+                  {getStatusLabel(
+                    t,
+                    'entityType',
+                    activity.entityType ?? 'ActivityLog',
+                  )}{' '}
+                  - {getStatusLabel(t, 'activityAction', activity.action)}
+                </>
+              )}
             </p>
             {activity.newStatus ? (
               <div className="mt-2 flex items-center gap-2">

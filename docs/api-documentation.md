@@ -1006,6 +1006,26 @@ New requests receive the default status `NEW` and are assigned to the active
 workspace configured by `DEFAULT_ORGANIZATION_SLUG`, with `advisora-demo` as
 the fallback. Public clients cannot select another workspace.
 
+After a request is saved, Step 36 consultation automation can create a
+same-workspace follow-up task, record ActivityLog events, and optionally notify
+the assigned internal user by email. The public response remains a simple
+success payload and does not expose organization IDs, task IDs, file paths,
+email-provider responses, or automation internals.
+
+Automation behavior:
+
+- Assignment chooses the first active same-organization `MANAGER`, then first
+  active same-organization `ADMIN`.
+- If no manager/admin exists, the follow-up task is left unassigned.
+- The default task priority is `HIGH`, status is `TODO`, and due time is
+  controlled by `CONSULTATION_FOLLOW_UP_DUE_HOURS`.
+- `CONSULTATION_AUTOMATION_ENABLED`,
+  `CONSULTATION_AUTO_TASK_ENABLED`, and
+  `CONSULTATION_AUTO_EMAIL_ENABLED` can disable automation, task creation, or
+  email attempts without breaking public intake.
+- Email uses `EMAIL_PROVIDER=disabled|console|resend`; delivery failure is
+  logged and does not roll back the request or task.
+
 ### Get Consultation Requests
 
 ```http
@@ -1314,6 +1334,9 @@ Request body:
 ```
 
 The authenticated user is recorded as `createdById`; the initial status defaults to `TODO`.
+Consultation automation creates normal task rows with `createdById=null`, an
+optional same-tenant manager/admin assignee, and a safe consultation summary in
+the description.
 
 ### Update Task
 
@@ -1627,6 +1650,15 @@ Descriptions are sanitized before returning. Activity responses must not expose
 raw passwords, invite tokens, JWTs, token hashes, storage keys, object keys,
 signed URLs, local file paths, bucket names, or environment values.
 
+Consultation automation writes ActivityLog actions including
+`CONSULTATION_REQUEST_CREATED`, `CONSULTATION_FOLLOW_UP_TASK_CREATED`,
+`CONSULTATION_FOLLOW_UP_TASK_FAILED`,
+`CONSULTATION_AUTOMATION_EMAIL_SENT`,
+`CONSULTATION_AUTOMATION_EMAIL_SKIPPED`, and
+`CONSULTATION_AUTOMATION_EMAIL_FAILED`. These events are organization-scoped
+and visible to Admin/Manager users through Activity Center and dashboard recent
+activity.
+
 ### Get Activity Summary
 
 ```http
@@ -1642,9 +1674,10 @@ Returns:
 - `caseEventsToday`
 - `recentActivities` latest 5
 
-Activity Center endpoints are read-only. Step 30 does not add realtime
-websocket, push notification, email notification automation, or complex
-notification preferences.
+Activity Center endpoints are read-only. Step 36 adds rule-based consultation
+email notification automation, but realtime websocket, push notification,
+complex notification preferences, a workflow builder, and background job queue
+remain out of scope.
 
 ## 14. API Response Format
 
@@ -1744,6 +1777,8 @@ Rate-limited endpoint groups:
 - Validate request bodies, query parameters, and uploaded files at the API boundary.
 - Normalize pagination, filtering, sorting, error handling, and response envelopes across modules.
 - Record important mutations in `ActivityLog`.
+- Consultation intake automation is inline and best-effort after request
+  persistence; email delivery failure must not fail public intake.
 - Use database transactions for multi-record operations such as request conversion.
 - Prevent duplicate slugs, user emails, and case codes through both validation and database constraints.
 - Apply rate limiting and abuse protection to login and public form endpoints.

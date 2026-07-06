@@ -18,6 +18,7 @@ import {
   getServerCalendarDate,
   toUtcMonthKey,
 } from "../../utils/dateRange";
+import { redactSensitiveText } from "../../utils/redact";
 import type { SafeUser } from "../../utils/sanitizeUser";
 import type {
   CasesByMonthQuery,
@@ -59,6 +60,15 @@ const activityCaseSelect = {
   caseCode: true,
   title: true,
 } satisfies Prisma.CaseProfileSelect;
+
+const automationActivityActions = [
+  "CONSULTATION_REQUEST_CREATED",
+  "CONSULTATION_FOLLOW_UP_TASK_CREATED",
+  "CONSULTATION_FOLLOW_UP_TASK_FAILED",
+  "CONSULTATION_AUTOMATION_EMAIL_SENT",
+  "CONSULTATION_AUTOMATION_EMAIL_SKIPPED",
+  "CONSULTATION_AUTOMATION_EMAIL_FAILED",
+] as const;
 
 const assertDashboardActor = (actor: SafeUser): void => {
   if (!crmRoles.includes(actor.role)) {
@@ -661,48 +671,99 @@ const describeCaseActivity = (
     .join(" ");
 };
 
+const sanitizeActivityDescription = (description: string | null): string =>
+  description
+    ? redactSensitiveText(description).trim()
+    : "Workspace activity recorded.";
+
 export const getRecentActivities = async (
   query: RecentActivitiesQuery,
   actor: SafeUser,
 ) => {
   assertDashboardActor(actor);
 
-  const histories = await prisma.caseHistory.findMany({
-    where:
-      actor.role === UserRole.STAFF
-        ? {
+  const caseHistoryWhere: Prisma.CaseHistoryWhereInput =
+    actor.role === UserRole.STAFF
+      ? {
+          organizationId: actor.organizationId,
+          caseProfile: {
+            assignedToId: actor.id,
+          },
+        }
+      : { organizationId: actor.organizationId };
+  const [histories, activityLogs] = await Promise.all([
+    prisma.caseHistory.findMany({
+      where: caseHistoryWhere,
+      include: {
+        user: {
+          select: activityUserSelect,
+        },
+        caseProfile: {
+          select: activityCaseSelect,
+        },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: query.limit,
+    }),
+    actor.role === UserRole.ADMIN || actor.role === UserRole.MANAGER
+      ? prisma.activityLog.findMany({
+          where: {
             organizationId: actor.organizationId,
-            caseProfile: {
-              assignedToId: actor.id,
+            action: {
+              in: [...automationActivityActions],
             },
-          }
-        : { organizationId: actor.organizationId },
-    include: {
-      user: {
-        select: activityUserSelect,
-      },
-      caseProfile: {
-        select: activityCaseSelect,
-      },
-    },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: query.limit,
-  });
-
-  return {
-    items: histories.map((history) => ({
+          },
+          include: {
+            user: {
+              select: activityUserSelect,
+            },
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: query.limit,
+        })
+      : Promise.resolve([]),
+  ]);
+  const items = [
+    ...histories.map((history) => ({
       type: "CASE_HISTORY" as const,
       id: history.id,
       action: history.action,
-      description: describeCaseActivity(
-        history.action,
-        history.note,
+      description: sanitizeActivityDescription(
+        describeCaseActivity(
+          history.action,
+          history.note,
+        ),
       ),
       oldStatus: history.oldStatus,
       newStatus: history.newStatus,
       createdAt: history.createdAt,
       user: history.user,
       caseProfile: history.caseProfile,
+      entityType: "CaseProfile",
+      entityId: history.caseProfileId,
     })),
+    ...activityLogs.map((activity) => ({
+      type: "ACTIVITY_LOG" as const,
+      id: activity.id,
+      action: activity.action,
+      description: sanitizeActivityDescription(activity.description),
+      oldStatus: null,
+      newStatus: null,
+      createdAt: activity.createdAt,
+      user: activity.user,
+      caseProfile: null,
+      entityType: activity.entityType ?? "ActivityLog",
+      entityId: activity.entityId,
+    })),
+  ]
+    .sort(
+      (left, right) =>
+        right.createdAt.getTime() - left.createdAt.getTime() ||
+        right.id.localeCompare(left.id),
+    )
+    .slice(0, query.limit);
+
+  return {
+    items,
   };
 };

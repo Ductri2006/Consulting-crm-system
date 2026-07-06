@@ -32,6 +32,9 @@ data without completing the production limitations listed below.
 - Final QA documentation and release-oriented README polish.
 - GitHub Actions CI foundation for client/server build, lint, Prisma, i18n, and
   documentation safety checks without auto-deploying or mutating databases.
+- Rule-based consultation workflow automation that turns public intake into a
+  same-workspace follow-up task, ActivityLog events, and optional assignee
+  email notifications.
 
 ## Verification
 
@@ -62,6 +65,15 @@ Step 35 adds CI verification on push and pull request to `main`:
 - Manual production smoke workflow is available only through
   `workflow_dispatch` with `SMOKE_*` secrets.
 
+Step 36 adds consultation automation verification:
+
+- Public request creation remains tenant-mapped by
+  `DEFAULT_ORGANIZATION_SLUG`.
+- Auto follow-up task creation uses same-tenant Manager/Admin assignment.
+- Email provider disabled/failure paths are non-blocking.
+- Activity Center and dashboard recent activity can display automation events.
+- EN/VI labels and i18n key parity stay aligned.
+
 Production smoke live run remains conditional: run `npm run smoke:production`
 only when safe deployed `SMOKE_*` credentials are configured outside the
 repository.
@@ -82,6 +94,8 @@ repository.
 - Public contact and appointment forms are validation/demo flows only.
 - Public news/projects are typed frontend content, not backend CMS APIs.
 - Consultation-request conversion is not implemented yet.
+- Consultation automation is rule-based inline automation, not a workflow
+  builder or background job queue; email delivery depends on provider setup.
 - No realtime notifications, customer messaging, billing/payment, report
   exports, or automated Playwright E2E suite yet.
 - Screenshots are not committed yet; use the screenshots checklist before final

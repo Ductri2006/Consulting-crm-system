@@ -60,6 +60,9 @@ are resolved or explicitly accepted.
 - Step 35 adds GitHub Actions CI for non-deploying client/server quality
   checks, i18n checks, Prisma generate/validate, docs/safety checks, an optional
   manual production smoke workflow, and Dependabot dependency monitoring.
+- Step 36 adds rule-based consultation workflow automation: public intake can
+  create same-tenant follow-up tasks, ActivityLog events, and optional email
+  notifications without exposing automation internals to public users.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -135,10 +138,14 @@ Server:
 | `MAX_FILE_SIZE_MB` | Per-file upload limit from 1 to 50 MB. |
 | `DEFAULT_ORGANIZATION_SLUG` | Workspace slug used by public consultation requests, defaults to `advisora-demo`. |
 | `WORKSPACE_SIGNUP_ENABLED` | Public workspace signup flag. Defaults to `false`; use `true` only for controlled onboarding QA until production abuse protection and auth hardening are complete. |
+| `CONSULTATION_AUTOMATION_ENABLED` | Enables public consultation automation. Defaults to `true`. |
+| `CONSULTATION_AUTO_TASK_ENABLED` | Enables follow-up task creation. Defaults to `true`. |
+| `CONSULTATION_AUTO_EMAIL_ENABLED` | Enables assignee email attempts. Defaults to `true`; set `false` when email provider is not configured. |
+| `CONSULTATION_FOLLOW_UP_DUE_HOURS` | Due offset for generated follow-up tasks. Defaults to `24`. |
 | `APP_NAME` | Name used in transactional email templates. |
-| `EMAIL_PROVIDER` | Invitation email provider: `disabled`, `console`, or `resend`. Defaults to `console`. |
-| `EMAIL_FROM` | Sender identity for invitation emails. Use a verified sender for real Resend delivery. |
-| `EMAIL_REPLY_TO` | Optional reply-to address for invitation emails. |
+| `EMAIL_PROVIDER` | Outbound email provider for invitations and consultation automation: `disabled`, `console`, or `resend`. Defaults to `console`. |
+| `EMAIL_FROM` | Sender identity for outbound emails. Use a verified sender for real Resend delivery. |
+| `EMAIL_REPLY_TO` | Optional reply-to address for outbound emails. |
 | `RESEND_API_KEY` | Resend API key. Required only when `EMAIL_PROVIDER=resend`; never commit it. |
 | `RATE_LIMIT_ENABLED` | Enables in-memory rate limits. Defaults to `true`. |
 | `AUTH_RATE_LIMIT_WINDOW_MINUTES` / `AUTH_RATE_LIMIT_MAX` | Auth and invitation limit window/count. Defaults to `15` and `10`. |
@@ -353,6 +360,12 @@ Production document requirements:
   `npm run verify:tenant-isolation` when staging tenant-isolation evidence is
   required.
 - [ ] Public consultation requests map to `DEFAULT_ORGANIZATION_SLUG`.
+- [ ] Public consultation automation creates a same-tenant follow-up task and
+  ActivityLog events when enabled.
+- [ ] Disabling `CONSULTATION_AUTO_TASK_ENABLED` keeps public intake working
+  without creating a task.
+- [ ] Email disabled/provider failure logs skipped/failed automation activity
+  without failing public intake.
 - [ ] Public forms have abuse protection or a plan for rate limiting.
 - [ ] Logs do not include passwords, tokens, connection strings, or document
   contents.
@@ -432,6 +445,9 @@ deployed API smoke environment.
 - Workspace settings allow administrator-only profile edits and slug changes.
   Public consultation requests still resolve `DEFAULT_ORGANIZATION_SLUG`; keep
   that environment value aligned with the intended default workspace.
+- Consultation automation is rule-based and inline. It is not a full workflow
+  builder, has no background job queue, and email delivery depends on provider
+  configuration.
 - Workspace logo management is URL-only in this step; there is no logo upload
   pipeline yet.
 - Customer portal supports login/dashboard/profile, read-only case tracking, and

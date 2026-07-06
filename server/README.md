@@ -82,10 +82,14 @@ Copy `.env.example` to `.env` and adjust the values for your local environment.
 | `DOCUMENT_OCR_ENABLED_MIME_TYPES` | No | Optional comma-separated OCR MIME allowlist |
 | `DEFAULT_ORGANIZATION_SLUG` | No | Workspace slug used by public consultation requests, defaults to `advisora-demo` |
 | `WORKSPACE_SIGNUP_ENABLED` | No | Enables public `POST /api/workspaces/signup` only when set to `true`; defaults to `false` |
-| `APP_NAME` | No | Name used in invitation email templates; defaults to `Advisora CRM` |
-| `EMAIL_PROVIDER` | No | Invitation email provider: `disabled`, `console`, or `resend`; defaults to `console` |
-| `EMAIL_FROM` | No | Sender identity for invitation emails |
-| `EMAIL_REPLY_TO` | No | Optional reply-to address for invitation emails |
+| `CONSULTATION_AUTOMATION_ENABLED` | No | Enables consultation workflow automation; defaults to `true` |
+| `CONSULTATION_AUTO_TASK_ENABLED` | No | Enables automatic follow-up task creation; defaults to `true` |
+| `CONSULTATION_AUTO_EMAIL_ENABLED` | No | Enables consultation follow-up email attempts; defaults to `true` |
+| `CONSULTATION_FOLLOW_UP_DUE_HOURS` | No | Follow-up task due offset in hours, from 1 to 720; defaults to `24` |
+| `APP_NAME` | No | Name used in email templates; defaults to `Advisora CRM` |
+| `EMAIL_PROVIDER` | No | Email provider for invitations and consultation automation: `disabled`, `console`, or `resend`; defaults to `console` |
+| `EMAIL_FROM` | No | Sender identity for outbound emails |
+| `EMAIL_REPLY_TO` | No | Optional reply-to address for outbound emails |
 | `RESEND_API_KEY` | No | Resend API key, required only when `EMAIL_PROVIDER=resend`; never commit it |
 | `RATE_LIMIT_ENABLED` | No | Enables in-memory rate limits, defaults to `true` |
 | `AUTH_RATE_LIMIT_WINDOW_MINUTES` | No | Auth/invitation rate-limit window, defaults to `15` |
@@ -126,6 +130,10 @@ DOCUMENT_OCR_MAX_FILE_SIZE_MB=10
 DOCUMENT_OCR_ENABLED_MIME_TYPES=
 DEFAULT_ORGANIZATION_SLUG="advisora-demo"
 WORKSPACE_SIGNUP_ENABLED=false
+CONSULTATION_AUTOMATION_ENABLED=true
+CONSULTATION_AUTO_TASK_ENABLED=true
+CONSULTATION_AUTO_EMAIL_ENABLED=true
+CONSULTATION_FOLLOW_UP_DUE_HOURS=24
 APP_NAME="Advisora CRM"
 EMAIL_PROVIDER=console
 EMAIL_FROM="Advisora CRM <no-reply@advisora.test>"
@@ -641,6 +649,13 @@ Resend rotates the invitation token, sets the invitation back to `PENDING`,
 updates the expiry, and invalidates older links immediately. Accepted and
 revoked invitations cannot be resent.
 
+Consultation automation uses the same email provider. When
+`CONSULTATION_AUTO_EMAIL_ENABLED=true` and a same-workspace manager/admin is
+assigned to the generated follow-up task, the backend sends that user a safe
+summary of the public request. Email failure writes
+`CONSULTATION_AUTOMATION_EMAIL_FAILED` activity and never rolls back the saved
+consultation request or follow-up task.
+
 ```http
 GET /api/invitations/public/<invite-token>
 ```
@@ -719,6 +734,31 @@ Example public submission:
 ```
 
 `serviceId` is optional, but it must identify an active service when supplied.
+After the request is saved, rule-based automation can create a follow-up task,
+record ActivityLog entries, and optionally send an assignee email. The public
+response stays the same and never exposes tenant IDs, task IDs, provider
+responses, or automation internals.
+
+### Consultation workflow automation
+
+Step 36 adds inline CRM automation for public consultation intake:
+
+- `CONSULTATION_REQUEST_CREATED` is written after the request is saved.
+- If `CONSULTATION_AUTOMATION_ENABLED` and `CONSULTATION_AUTO_TASK_ENABLED` are
+  true, a HIGH-priority `TODO` task is created with a safe request summary.
+- Assignment is same-tenant only: first active `MANAGER` in the request
+  organization, then first active `ADMIN`; if no manager/admin exists, the task
+  is left unassigned.
+- `CONSULTATION_FOLLOW_UP_DUE_HOURS` controls the task deadline offset and
+  defaults to 24 hours.
+- If `CONSULTATION_AUTO_EMAIL_ENABLED` is true and an assignee has an email,
+  the existing email abstraction sends a safe summary through `console`,
+  `resend`, or skips when `EMAIL_PROVIDER=disabled`.
+- Email delivery failures are non-blocking and recorded as activity; task
+  creation failure is logged safely and does not delete the request.
+
+The automation is rule-based and inline. It is not AI, realtime messaging, a
+background job queue, or a configurable workflow builder.
 Public submissions are assigned to the active organization configured by
 `DEFAULT_ORGANIZATION_SLUG`, falling back to `advisora-demo`. The internal list
 supports `search`, `status`, `serviceId`, `page`, and `limit`. Status updates
@@ -1025,8 +1065,13 @@ secrets, storage keys, signed URLs, raw upload paths, or local file paths.
 
 `GET /api/activity/summary` returns today's total, case/document/portal event
 counts, and the latest five normalized activity items. The Activity Center is
-read-only; Step 30 does not add realtime websocket, push notifications, email
-notification automation, or notification preferences.
+read-only. Step 36 adds consultation automation activity actions such as
+`CONSULTATION_REQUEST_CREATED`, `CONSULTATION_FOLLOW_UP_TASK_CREATED`,
+`CONSULTATION_AUTOMATION_EMAIL_SENT`,
+`CONSULTATION_AUTOMATION_EMAIL_SKIPPED`, and
+`CONSULTATION_AUTOMATION_EMAIL_FAILED`. Realtime websocket, push
+notifications, notification preferences, and a background job queue remain out
+of scope.
 
 ### Dashboard and reporting
 

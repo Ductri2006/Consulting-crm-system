@@ -83,6 +83,8 @@ Activity Center:
 - [ ] Activity responses do not include raw passwords, invite tokens, JWTs,
   token hashes, storage keys, object keys, signed URLs, local file paths, bucket
   names, or environment values.
+- [ ] Activity Center shows consultation automation actions with readable EN/VI
+  labels.
 
 Customers:
 
@@ -213,6 +215,13 @@ Workspace Settings:
   updated workspace name.
 - [ ] Manager and staff can read workspace info if needed but cannot update it.
 - [ ] Public consultation requests still map to `DEFAULT_ORGANIZATION_SLUG`.
+- [ ] Public consultation creates a follow-up task when
+  `CONSULTATION_AUTOMATION_ENABLED=true` and
+  `CONSULTATION_AUTO_TASK_ENABLED=true`.
+- [ ] Auto-created task is assigned to an active same-workspace Manager first,
+  then Admin; no cross-tenant assignment occurs.
+- [ ] Automation disabled or task disabled keeps the public request submission
+  successful without creating a task.
 
 Invitations:
 
@@ -455,6 +464,21 @@ Step 33 results:
 - [x] No `.env`, secrets, tokens, uploaded files, or generated `dist` output are
   required for CI.
 
+## Step 36 Consultation Automation Checklist
+
+- [x] Public consultation automation creates normal CRM tasks without a schema
+  migration.
+- [x] Assignment strategy is same-tenant Manager first, then Admin.
+- [x] Automation email uses the existing `disabled`/`console`/`resend`
+  abstraction and is non-blocking on failure.
+- [x] ActivityLog actions cover request created, task created/failed, and email
+  sent/skipped/failed.
+- [x] Dashboard and Activity Center labels are updated for consultation
+  automation actions.
+- [x] Env flags are documented and CI uses safe dummy automation env values.
+- [x] No database reset, destructive migration, seed, secret, upload, or
+  generated `dist` output is required.
+
 ## Final Sign-Off
 
 | Area | Result | Notes |
@@ -467,6 +491,7 @@ Step 33 results:
 | Documents |  |  |
 | Reports |  |  |
 | Activity Center / Portal Updates |  |  |
+| Consultation workflow automation |  |  |
 | Step 31 security hardening |  |  |
 | Step 32 UI polish |  |  |
 | Step 33 final QA / bug fix | PASS | Local build/lint/prisma/i18n/tenant/API smoke passed; live production smoke skipped because no `SMOKE_*` env was available. |

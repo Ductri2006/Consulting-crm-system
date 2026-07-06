@@ -45,7 +45,7 @@ export interface ActivityCase {
 }
 
 export interface RecentActivityItem {
-  type: 'CASE_HISTORY'
+  type: 'CASE_HISTORY' | 'ACTIVITY_LOG'
   id: string
   action: string
   description: string
@@ -53,7 +53,9 @@ export interface RecentActivityItem {
   newStatus: string | null
   createdAt: string
   user: ActivityUser | null
-  caseProfile: ActivityCase
+  caseProfile: ActivityCase | null
+  entityType: string | null
+  entityId: string | null
 }
 
 export interface DashboardData {

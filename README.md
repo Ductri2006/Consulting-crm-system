@@ -73,6 +73,8 @@ Public Website:
 - Marketing pages for services, projects, news, about, contact, consultation,
   and appointment flows.
 - Public consultation request API mapped to `DEFAULT_ORGANIZATION_SLUG`.
+- Rule-based consultation automation creates same-workspace follow-up tasks,
+  activity events, and optional email notifications.
 - Workspace signup page gated by `WORKSPACE_SIGNUP_ENABLED`.
 - EN/VI language switcher persisted through `advisora_locale`.
 
@@ -80,6 +82,7 @@ Internal Admin CRM:
 
 - Dashboard and operational reports.
 - Customers, consultation requests, case workflow, appointments, and tasks.
+- Consultation workflow automation events in Activity Center and Dashboard.
 - Document management with source/visibility badges, scan/OCR metadata, and
   protected downloads.
 - Activity Center for Admin and Manager users.
@@ -269,6 +272,28 @@ npm run prisma:generate
 Never commit `.env`, database URLs, JWT secrets, access tokens, provider keys,
 uploaded files, or generated `dist` output.
 
+## CRM Workflow Automation
+
+When a public visitor submits `POST /api/public/consultation-requests`, the
+backend still maps the request to `DEFAULT_ORGANIZATION_SLUG`; the public client
+cannot choose a tenant. After the request is saved, Step 36 runs a small
+rule-based automation:
+
+- Write `CONSULTATION_REQUEST_CREATED` to `ActivityLog`.
+- Create a HIGH-priority follow-up `Task` due after
+  `CONSULTATION_FOLLOW_UP_DUE_HOURS` hours.
+- Assign the task to the first active same-workspace `MANAGER`, then first
+  active same-workspace `ADMIN`; if none exists, the task is left unassigned.
+- Write task/email automation activity events for Admin/Manager Activity Center
+  and dashboard visibility.
+- Send a safe summary email to the assignee when automation email and the email
+  provider are enabled.
+
+Email uses the existing `disabled`, `console`, or `resend` provider. Email
+delivery failures are logged as activity and do not fail or delete the saved
+consultation request. This is rule-based inline automation, not a full workflow
+builder, background job queue, realtime notification system, or AI feature.
+
 ## Deployment Notes
 
 - Frontend: configure `VITE_API_BASE_URL` on Vercel.
@@ -342,7 +367,9 @@ configured. See [Final QA Checklist](docs/final-qa-checklist.md) and
 - Browser local storage is used for demo Bearer tokens; higher-risk production
   should review HttpOnly cookie sessions or another hardened strategy.
 - Contact and appointment public forms are validation/demo flows; consultation
-  requests are the public backend intake.
+  requests are the public backend intake with rule-based follow-up automation.
+- Consultation automation is not a workflow builder yet and has no background
+  job queue; email delivery depends on configured provider availability.
 - No realtime notifications, customer messaging, billing/payment, report
   exports, or full Playwright E2E suite yet.
 

@@ -1,6 +1,10 @@
 export { sendEmail, skippedEmailDelivery } from "./email.client";
-export { createInvitationEmailTemplate } from "./email.templates";
+export {
+  createConsultationFollowUpEmailTemplate,
+  createInvitationEmailTemplate,
+} from "./email.templates";
 export type {
+  ConsultationFollowUpEmailTemplateInput,
   EmailDeliveryResult,
   EmailDeliveryStatus,
   EmailProvider,

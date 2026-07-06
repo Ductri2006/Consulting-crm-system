@@ -192,8 +192,11 @@ status badges, download counts, OCR previews, and an Admin/Manager
 customer-visible toggle for portal access.
 Activity Center adds `/admin/activity` for Admin and Manager users, with
 workspace-scoped summary cards, search, action/entity/date filters, reset, and
-pagination. The dashboard recent activity card links to the Activity Center for
-allowed roles. Staff users do not see the Activity navigation item.
+pagination. Step 36 adds readable consultation automation action labels, and
+auto-created follow-up tasks render in the existing Tasks page as normal task
+rows. The dashboard recent activity card can show consultation automation
+events and links to the Activity Center for allowed roles. Staff users do not
+see the Activity navigation item.
 Step 31 confirms that `/admin/activity` remains Admin/Manager-only and that
 `/admin/users`, `/admin/invitations`, and `/admin/settings` remain Admin-only
 at the route-guard layer. Backend authorization remains the source of truth.

@@ -231,3 +231,31 @@ public consultation intake maps to the configured `DEFAULT_ORGANIZATION_SLUG`.
 `npm run verify:tenant-isolation` is a read-only verification script for the
 Advisora and Northstar demo workspaces. It does not reset the database or delete
 staging data.
+
+## Consultation Automation Flow
+
+```mermaid
+flowchart TD
+  Public["Public website visitor"] --> Submit["POST /api/public/consultation-requests"]
+  Submit --> ResolveOrg["Resolve DEFAULT_ORGANIZATION_SLUG"]
+  ResolveOrg --> Request["Create ConsultationRequest"]
+  Request --> CreatedLog["ActivityLog: CONSULTATION_REQUEST_CREATED"]
+  Request --> Flags{"Automation + task enabled?"}
+  Flags -- No --> Done["Return public success response"]
+  Flags -- Yes --> Assignee["Find same-tenant assignee\n1. active MANAGER\n2. active ADMIN"]
+  Assignee --> Task["Create HIGH priority TODO follow-up Task"]
+  Task --> TaskLog["ActivityLog: CONSULTATION_FOLLOW_UP_TASK_CREATED"]
+  Task --> EmailFlag{"Email enabled and assignee exists?"}
+  EmailFlag -- No --> EmailSkipped["ActivityLog: email skipped"]
+  EmailFlag -- Yes --> Provider["Email provider\nconsole / resend / disabled"]
+  Provider --> EmailActivity["ActivityLog: sent / skipped / failed"]
+  EmailSkipped --> Done
+  EmailActivity --> Done
+
+  Request -. if task/email fails .-> SafeFailure["Keep saved request\nlog safe failure\nno rollback"]
+```
+
+Automation never accepts `organizationId` from the public client. Task
+assignment and ActivityLog writes use the request's organization only. The
+email body is a safe summary and does not include passwords, tokens, provider
+responses, database URLs, storage paths, or internal file metadata.
