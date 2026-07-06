@@ -526,6 +526,29 @@ Step 33 results:
 - [ ] Live Resend readiness email has been sent only to a staging/test
   recipient, if Resend test secrets are available.
 
+## Step 38.5 Modern Landing And CRM UI Polish Checklist
+
+- [x] Public landing hero uses a lightweight React/Tailwind mock CRM dashboard,
+  not a screenshot or external image URL.
+- [x] Landing page includes product capability, workflow, security, AI,
+  automation, document security, and provider-readiness highlights.
+- [x] Landing CTAs point to existing demo entry routes for consultation, Admin
+  CRM, Customer Portal, and the feature section.
+- [x] New public copy is backed by both English and Vietnamese translation
+  resources.
+- [x] Landing motion is CSS-only and guarded by `prefers-reduced-motion`.
+- [x] No Three.js, React Three Fiber, GSAP, WebGL scene, video background, or
+  heavy animation dependency is added.
+- [x] Admin CRM polish remains 2D, table/form-friendly, and business-focused.
+- [x] Shared admin surfaces, metric cards, tables, modal semantics, topbar, and
+  mobile sidebar semantics are refined without changing API calls.
+- [x] Customer Portal dashboard and document surfaces receive trust-focused UI
+  polish while continuing to use portal auth and portal API routes.
+- [x] No fake screenshot files or binary image assets are added.
+- [ ] Capture real screenshots for the modern landing hero, landing
+  feature/security section, admin dashboard polish, AI summary panel, and
+  customer portal dashboard before adding README image links.
+
 ## Final Sign-Off
 
 | Area | Result | Notes |
@@ -541,6 +564,7 @@ Step 33 results:
 | Consultation workflow automation |  |  |
 | AI Case Summary |  |  |
 | Provider Readiness |  |  |
+| Step 38.5 modern landing / CRM UI polish |  |  |
 | Step 31 security hardening |  |  |
 | Step 32 UI polish |  |  |
 | Step 33 final QA / bug fix | PASS | Local build/lint/prisma/i18n/tenant/API smoke passed; live production smoke skipped because no `SMOKE_*` env was available. |

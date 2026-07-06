@@ -14,6 +14,7 @@ import {
   UsersRound,
   X,
 } from 'lucide-react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import { useAuth, type UserRole } from '../../features/auth'
@@ -172,6 +173,21 @@ function SidebarContent({ onClose }: Pick<AdminSidebarProps, 'onClose'>) {
 export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const { t } = useTranslation()
 
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [isOpen, onClose])
+
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">
@@ -195,6 +211,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             ? 'translate-x-0'
             : 'pointer-events-none -translate-x-full',
         )}
+        id="admin-mobile-sidebar"
         inert={!isOpen}
       >
         <SidebarContent onClose={onClose} />

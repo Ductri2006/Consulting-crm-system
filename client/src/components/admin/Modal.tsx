@@ -15,6 +15,7 @@ export interface ModalProps {
   children: ReactNode
   onClose: () => void
   description?: string
+  describedById?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
   role?: 'dialog' | 'alertdialog'
   isDismissible?: boolean
@@ -33,6 +34,7 @@ export function Modal({
   children,
   onClose,
   description,
+  describedById,
   size = 'md',
   role = 'dialog',
   isDismissible = true,
@@ -41,6 +43,7 @@ export function Modal({
   const titleId = useId()
   const descriptionId = useId()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isOpen) {
@@ -51,6 +54,43 @@ export function Modal({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isDismissible) {
         onClose()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const panel = panelRef.current
+
+      if (!panel) {
+        return
+      }
+
+      const focusableElements = Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter(
+        (element) =>
+          !element.hasAttribute('disabled') &&
+          !element.getAttribute('aria-hidden'),
+      )
+
+      if (focusableElements.length === 0) {
+        event.preventDefault()
+        return
+      }
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
       }
     }
 
@@ -78,18 +118,20 @@ export function Modal({
 
   return (
     <div
-      aria-labelledby={titleId}
-      aria-describedby={description ? descriptionId : undefined}
-      aria-modal="true"
       className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm"
       onMouseDown={handleBackdropClick}
-      role={role}
+      role="presentation"
     >
       <div
+        aria-describedby={describedById ?? (description ? descriptionId : undefined)}
+        aria-labelledby={titleId}
+        aria-modal="true"
         className={cn(
           'my-auto w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl',
           sizeClasses[size],
         )}
+        ref={panelRef}
+        role={role}
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
           <div>

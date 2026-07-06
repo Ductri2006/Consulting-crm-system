@@ -46,11 +46,11 @@ export function PortalLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-emerald-50/40 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.12),transparent_30%),linear-gradient(180deg,#f8fafc,#ecfdf5)]">
+      <header className="border-b border-emerald-100/80 bg-white/90 shadow-sm shadow-emerald-950/[0.03] backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-600/20">
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
@@ -75,10 +75,10 @@ export function PortalLayout() {
                   <NavLink
                     className={({ isActive }) =>
                       cn(
-                        'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-bold transition',
+                        'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold transition',
                         isActive
-                          ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
-                          : 'text-slate-600 hover:bg-slate-50',
+                          ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-950/15'
+                          : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-800',
                       )
                     }
                     key={item.href}
@@ -94,7 +94,7 @@ export function PortalLayout() {
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               <LanguageSwitcher compact />
               <button
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
                 onClick={() => void handleLogout()}
                 type="button"
               >

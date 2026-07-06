@@ -23,10 +23,10 @@ export function DataTable<T>({
   caption,
 }: DataTableProps<T>) {
   return (
-    <div className="max-w-full overflow-x-auto overscroll-x-contain">
+    <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-xl">
       <table className="min-w-full table-auto divide-y divide-slate-200">
         <caption className="sr-only">{caption}</caption>
-        <thead className="bg-slate-50/80">
+        <thead className="bg-slate-50/90">
           <tr>
             {columns.map((column) => (
               <th
@@ -45,7 +45,7 @@ export function DataTable<T>({
         <tbody className="divide-y divide-slate-100 bg-white">
           {items.map((item) => (
             <tr
-              className="transition-colors hover:bg-slate-50/80"
+              className="transition-colors hover:bg-blue-50/40"
               key={getRowKey(item)}
             >
               {columns.map((column) => (

@@ -3,10 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-
   body {
     @apply m-0 min-w-80 bg-slate-50 font-sans text-slate-800 antialiased;
   }
@@ -17,6 +13,12 @@
 
   :focus-visible {
     @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 }
 
@@ -31,5 +33,44 @@
 
   .field-error {
     @apply mt-1.5 text-sm text-rose-600;
+  }
+}
+
+@layer utilities {
+  @keyframes landing-float-y {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes landing-gradient-shift {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .landing-float-slow {
+      animation: landing-float-y 7s ease-in-out infinite;
+    }
+
+    .landing-float-delayed {
+      animation: landing-float-y 8s ease-in-out 1.2s infinite;
+    }
+
+    .landing-gradient-motion {
+      animation: landing-gradient-shift 18s ease-in-out infinite;
+      background-size: 180% 180%;
+    }
   }
 }

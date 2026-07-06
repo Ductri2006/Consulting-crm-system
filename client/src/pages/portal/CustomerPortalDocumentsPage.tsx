@@ -176,7 +176,7 @@ function UploadDialog({
       <div
         aria-labelledby={titleId}
         aria-modal="true"
-        className="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-2xl"
+        className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
         role="dialog"
       >
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
@@ -333,7 +333,7 @@ function DocumentCard({
       : t('portal.documents.uploadedByWorkspaceTeam')
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+    <article className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -354,7 +354,7 @@ function DocumentCard({
           </p>
         </div>
         <button
-          className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg bg-emerald-600 px-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white shadow-sm shadow-emerald-950/15 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isDownloading || !document.downloadAvailable}
           onClick={() => onDownload(document)}
           title={
@@ -551,7 +551,7 @@ export function CustomerPortalDocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <header className="rounded-2xl border border-emerald-100 bg-white/90 p-5 shadow-sm shadow-emerald-950/[0.04]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold text-emerald-700">
@@ -566,7 +566,7 @@ export function CustomerPortalDocumentsPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <button
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-50"
               disabled={isLoading}
               onClick={() => void loadDocuments()}
               type="button"
@@ -578,7 +578,7 @@ export function CustomerPortalDocumentsPage() {
               {t('common.refresh')}
             </button>
             <button
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white shadow-sm shadow-emerald-950/15 transition hover:bg-emerald-700"
               onClick={() => {
                 setUploadError(null)
                 setIsUploadOpen(true)
@@ -601,7 +601,7 @@ export function CustomerPortalDocumentsPage() {
         </div>
       ) : null}
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03]">
         <form
           className="grid gap-3 lg:grid-cols-[minmax(16rem,1fr)_14rem_14rem_auto_auto]"
           noValidate
@@ -686,7 +686,7 @@ export function CustomerPortalDocumentsPage() {
       ) : isLoading && documents.length === 0 ? (
         <LoadingState hint={null} label={t('portal.documents.loading')} />
       ) : documents.length === 0 ? (
-        <section className="grid min-h-72 place-items-center rounded-lg border border-slate-200 bg-white p-8 text-center">
+        <section className="grid min-h-72 place-items-center rounded-2xl border border-slate-200 bg-white/90 p-8 text-center shadow-sm shadow-slate-950/[0.03]">
           <div>
             <SearchX className="mx-auto h-8 w-8 text-slate-400" />
             <h2 className="mt-4 font-bold text-slate-950">
@@ -719,7 +719,7 @@ export function CustomerPortalDocumentsPage() {
               />
             ))}
           </div>
-          <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm shadow-slate-950/[0.03] sm:flex-row sm:items-center sm:justify-between">
             <span>
               {t('portal.documents.pageOf', {
                 page: meta.page,

@@ -26,6 +26,21 @@ and the `consulting_crm_access_token` key. Portal routes use
 error, retry, responsive overflow, and bilingual EN/VI microcopy for the demo
 path.
 
+Step 38.5 modernizes the public home page toward a premium SaaS CRM portfolio
+style while staying inside the existing React/Vite app. The landing hero uses a
+lightweight HTML/Tailwind mock CRM dashboard, CSS-only motion with
+`prefers-reduced-motion` support, product capability cards, workflow preview,
+and security/provider readiness highlights. No Next.js app, WebGL, Three.js,
+GSAP, video background, fake screenshots, or heavy animation dependency is
+added.
+
+The Admin CRM polish remains intentionally 2D and business-focused: shared
+surfaces, metric cards, tables, modals, loading/empty/error states, topbar, and
+mobile sidebar semantics are refined without changing API calls, RBAC, auth, or
+tenant scope. The Customer Portal polish keeps a trust-focused visual treatment
+for dashboard/status cards, navigation, and document panels while continuing to
+use the separate portal auth context and portal API client.
+
 ## Stack
 
 - React

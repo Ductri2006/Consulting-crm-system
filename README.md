@@ -63,6 +63,8 @@ use the generated temporary password immediately.
 - Production-oriented hardening: rate limits, security headers, redacted logs,
   tenant verification, and smoke scripts.
 - Bilingual English/Vietnamese UI across public, admin, and portal surfaces.
+- Modern SaaS landing polish with lightweight React/CSS mock CRM visuals,
+  product capability highlights, and no heavy WebGL/3D dependency.
 - Deployment-ready fullstack application structure for Vercel, Render, and
   Neon PostgreSQL.
 
@@ -72,6 +74,9 @@ Public Website:
 
 - Marketing pages for services, projects, news, about, contact, consultation,
   and appointment flows.
+- Modern home page hero with a CSS/React mock CRM dashboard, capability strip,
+  workflow preview, security/provider readiness highlights, and clear admin
+  and customer portal demo entry points.
 - Public consultation request API mapped to `DEFAULT_ORGANIZATION_SLUG`.
 - Rule-based consultation automation creates same-workspace follow-up tasks,
   activity events, and optional email notifications.
@@ -82,6 +87,8 @@ Internal Admin CRM:
 
 - Dashboard and operational reports.
 - Customers, consultation requests, case workflow, appointments, and tasks.
+- Lightweight 2D CRM UI polish for layout surfaces, dashboard metrics, tables,
+  modals, loading/empty/error states, and mobile navigation semantics.
 - Consultation workflow automation events in Activity Center and Dashboard.
 - Document management with source/visibility badges, scan/OCR metadata, and
   protected downloads.
@@ -96,6 +103,8 @@ Customer Portal:
 
 - Separate portal login, dashboard, profile summary, case list/detail, document
   upload/download, and updates feed.
+- Trust-focused portal surface polish for dashboard/status cards, navigation,
+  and document panels without exposing admin-only data.
 - Portal token stored separately from the internal CRM token.
 - Portal responses exclude internal notes, storage paths, signed URLs, token
   hashes, password hashes, IP addresses, and user-agent values.
@@ -192,8 +201,11 @@ show fake or broken image links.
 Use the [screenshots checklist](docs/screenshots/README.md) before final
 portfolio publishing. Recommended captures include:
 
+- Modern landing hero with the mock CRM dashboard.
+- Landing feature/security section.
 - Public home and consultation flow.
-- Admin dashboard, cases, documents, and activity center.
+- Admin dashboard polish, cases, documents, activity center, and AI summary
+  panel.
 - Customer portal dashboard, case detail, documents, and updates.
 - EN/VI language switcher states.
 

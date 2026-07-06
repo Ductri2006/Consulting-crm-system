@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, CheckCircle2, LayoutDashboard, UserRoundCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Container } from '../common/Container'
@@ -31,13 +31,29 @@ export function CTASection() {
                 {t('public.cta.description')}
               </p>
             </div>
-            <Link
-              to="/consultation"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-800 shadow-lg transition hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-            >
-              {t('public.cta.button')}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <Link
+                to="/consultation"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-800 shadow-lg transition hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              >
+                {t('public.cta.button')}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link
+                to="/admin"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              >
+                <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                {t('public.cta.adminDemo')}
+              </Link>
+              <Link
+                to="/portal"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              >
+                <UserRoundCheck className="h-4 w-4" aria-hidden="true" />
+                {t('public.cta.customerPortal')}
+              </Link>
+            </div>
           </div>
         </div>
       </Container>

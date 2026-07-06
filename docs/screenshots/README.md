@@ -9,9 +9,12 @@ staging demo environment.
 Use lowercase kebab-case PNG files:
 
 - `public-home.png`
+- `public-home-modern-hero.png`
+- `public-home-features-security.png`
 - `public-consultation.png`
 - `admin-dashboard.png`
 - `admin-cases.png`
+- `admin-ai-summary-panel.png`
 - `admin-documents.png`
 - `admin-activity.png`
 - `portal-dashboard.png`
@@ -37,14 +40,21 @@ mobile screenshots for navigation, portal layout, and EN/VI switching.
 
 ## Screenshots To Capture
 
+- [ ] Modern landing hero with mock CRM dashboard:
+  `docs/screenshots/public-home-modern-hero.png`
+- [ ] Landing feature, workflow, and security/provider readiness section:
+  `docs/screenshots/public-home-features-security.png`
 - [ ] Public homepage: `docs/screenshots/public-home.png`
 - [ ] Public consultation form: `docs/screenshots/public-consultation.png`
-- [ ] Admin dashboard: `docs/screenshots/admin-dashboard.png`
+- [ ] Admin dashboard polish: `docs/screenshots/admin-dashboard.png`
 - [ ] Admin cases workflow: `docs/screenshots/admin-cases.png`
+- [ ] AI summary panel in internal case detail:
+  `docs/screenshots/admin-ai-summary-panel.png`
 - [ ] Admin documents with source/visibility/scan status:
   `docs/screenshots/admin-documents.png`
 - [ ] Admin Activity Center: `docs/screenshots/admin-activity.png`
-- [ ] Customer portal dashboard: `docs/screenshots/portal-dashboard.png`
+- [ ] Customer portal dashboard polish:
+  `docs/screenshots/portal-dashboard.png`
 - [ ] Customer portal case detail:
   `docs/screenshots/portal-case-detail.png`
 - [ ] Customer portal documents: `docs/screenshots/portal-documents.png`

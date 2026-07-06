@@ -25,13 +25,13 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        'grid min-h-72 place-items-center rounded-lg border border-rose-200 bg-white p-8 text-center shadow-sm',
+        'grid min-h-72 place-items-center rounded-2xl border border-rose-200 bg-white/90 p-8 text-center shadow-sm shadow-rose-950/[0.04] ring-1 ring-rose-100 backdrop-blur',
         className,
       )}
       role="alert"
     >
       <div className="max-w-md">
-        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-rose-50 text-rose-600">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-rose-600 ring-1 ring-rose-100">
           <AlertCircle className="h-6 w-6" aria-hidden="true" />
         </span>
         <h2 className="mt-4 text-lg font-bold text-slate-900">{title}</h2>

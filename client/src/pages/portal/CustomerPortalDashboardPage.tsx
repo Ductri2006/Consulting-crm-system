@@ -48,7 +48,7 @@ function InfoRow({
   value: string
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
+    <div className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-white/90 px-4 py-3 shadow-sm shadow-emerald-950/[0.03]">
       <span className="mt-0.5 text-slate-400">{icon}</span>
       <div className="min-w-0">
         <p className="text-xs font-bold uppercase text-slate-400">
@@ -72,7 +72,7 @@ function StatCard({
   value: number
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm shadow-emerald-950/[0.04]">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-slate-500">{label}</p>
@@ -96,7 +96,7 @@ function ComingSoonItem({
   description: string
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03]">
       <div className="flex items-center gap-3">
         <span className="grid h-10 w-10 place-items-center rounded-lg bg-sky-50 text-sky-700 ring-1 ring-sky-600/20">
           {icon}
@@ -117,7 +117,7 @@ function RecentCaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
 
   return (
     <Link
-      className="block rounded-lg border border-slate-200 bg-white p-4 transition hover:border-emerald-200 hover:shadow-md"
+      className="block rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
       to={`/portal/cases/${caseProfile.id}`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -145,7 +145,7 @@ function RecentUpdateCard({ update }: { update: PortalUpdateItem }) {
   const { t } = useTranslation()
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03]">
       <div className="flex gap-3">
         <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
           <Bell className="h-4 w-4" aria-hidden="true" />
@@ -248,7 +248,7 @@ export function CustomerPortalDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <header className="overflow-hidden rounded-2xl border border-emerald-100 bg-white/90 p-5 shadow-sm shadow-emerald-950/[0.04] sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-bold text-emerald-700">
@@ -263,7 +263,7 @@ export function CustomerPortalDashboardPage() {
             </p>
           </div>
           <button
-            className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-50"
             disabled={isLoading}
             onClick={() => void loadPortalData()}
             type="button"
@@ -309,7 +309,7 @@ export function CustomerPortalDashboardPage() {
         />
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm shadow-slate-950/[0.03]">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-slate-950">
@@ -320,7 +320,7 @@ export function CustomerPortalDashboardPage() {
             </p>
           </div>
           <Link
-            className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg bg-emerald-600 px-3 text-sm font-bold text-white transition hover:bg-emerald-700 sm:self-auto"
+            className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white shadow-sm shadow-emerald-950/15 transition hover:bg-emerald-700 sm:self-auto"
             to="/portal/updates"
           >
             <Bell className="h-4 w-4" aria-hidden="true" />
@@ -341,7 +341,7 @@ export function CustomerPortalDashboardPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm shadow-slate-950/[0.03]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-bold text-slate-950">
@@ -352,7 +352,7 @@ export function CustomerPortalDashboardPage() {
               </p>
             </div>
             <Link
-              className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-lg bg-emerald-600 px-3 text-sm font-bold text-white transition hover:bg-emerald-700 sm:self-auto"
+              className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white shadow-sm shadow-emerald-950/15 transition hover:bg-emerald-700 sm:self-auto"
               to="/portal/cases"
             >
               <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
@@ -376,12 +376,12 @@ export function CustomerPortalDashboardPage() {
           )}
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm shadow-slate-950/[0.03]">
           <h2 className="text-lg font-bold text-slate-950">
             {t('portal.dashboard.nextAppointment')}
           </h2>
           {caseSummary?.nextAppointment ? (
-            <div className="mt-5 rounded-lg border border-slate-200 p-4">
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
               <p className="font-bold text-slate-950">
                 {formatPortalDate(caseSummary.nextAppointment.appointmentDate)}
               </p>
@@ -406,7 +406,7 @@ export function CustomerPortalDashboardPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm shadow-slate-950/[0.03]">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold text-slate-950">
@@ -446,7 +446,7 @@ export function CustomerPortalDashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm shadow-slate-950/[0.03]">
           <h2 className="text-lg font-bold text-slate-950">
             {t('portal.dashboard.portalAccount')}
           </h2>

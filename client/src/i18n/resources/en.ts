@@ -203,20 +203,121 @@ export const en = {
     ourServices: 'Our services',
     insights: 'Insights',
     home: {
-      heroEyebrow: 'Clarity for complex business decisions',
-      heroTitlePrefix: 'Advisory expertise that turns complexity into',
-      heroTitleAccent: 'confident action.',
+      heroEyebrow: 'Modern consulting CRM for SaaS-style operations',
+      heroTitlePrefix: 'Run consulting operations from intake to',
+      heroTitleAccent: 'customer portal.',
       heroDescription:
-        'Advisora is a consulting business platform connecting organizations with practical guidance across real estate, legal, investment, and construction decisions.',
+        'A multi-tenant CRM demo for public intake, workflow automation, secure documents, AI case summaries, and a bilingual customer portal.',
+      openAdminDemo: 'Open Admin Demo',
+      viewCustomerPortal: 'View Customer Portal',
+      exploreFeatures: 'Explore Features',
       structuredAdvice: 'Structured advice',
       clearNextSteps: 'Clear next steps',
+      multiTenantOperations: 'Multi-tenant operations',
+      securePortal: 'Customer-safe portal',
+      aiReadyWorkflow: 'AI-ready workflow',
       advisoryWorkspace: 'Advisory workspace',
       engagementOverview: 'Engagement overview',
       onTrack: 'On track',
+      crmWorkspace: 'CRM workspace',
+      operationsCommand: 'Operations command center',
+      providerReady: 'Provider-ready',
+      casePipeline: 'Case pipeline health',
+      intake: 'Intake',
+      cases: 'Cases',
+      portal: 'Portal',
+      tasksAutomated: 'tasks automated',
       decisionReadiness: 'Decision readiness',
       actionsResolved: 'Actions resolved',
+      newConsultationRequest: 'New consultation request',
+      aiCaseSummary: 'AI case summary',
+      secureDocument: 'Secure document',
+      followUpTaskCreated: 'Follow-up task created',
+      liveSignal: 'Live signal',
+      liveSignalDescription: 'CI, storage, email, and smoke readiness are documented for staging.',
+      securitySignal: 'Security model',
+      securitySignalDescription: 'RBAC, tenant scope, token purpose, and redaction stay visible in the demo.',
       currentStage: 'Current stage',
+      currentCase: 'Current case',
       solutionAssessment: 'Solution assessment',
+      capabilities: {
+        multiTenantWorkspaces: 'Multi-tenant workspaces',
+        rbac: 'RBAC',
+        customerPortal: 'Customer portal',
+        documentSecurity: 'Document security',
+        aiSummaries: 'AI summaries',
+        workflowAutomation: 'Workflow automation',
+        providerReadiness: 'Provider readiness',
+      },
+      featuresEyebrow: 'Portfolio-grade CRM',
+      featuresTitle: 'A complete consulting workflow, polished for demo review',
+      featuresDescription:
+        'The landing page now introduces the real product surface: public intake, internal operations, secure document handling, portal updates, and readiness practices.',
+      features: {
+        publicIntake: {
+          title: 'Public intake',
+          description:
+            'Capture consultation requests and route them into the configured workspace.',
+        },
+        adminCrm: {
+          title: 'Admin CRM',
+          description:
+            'Manage customers, cases, appointments, tasks, reports, and activity in one workspace.',
+        },
+        caseWorkflow: {
+          title: 'Case workflow',
+          description:
+            'Track status, priority, assignment, history, deadlines, and next actions.',
+        },
+        secureDocuments: {
+          title: 'Secure documents',
+          description:
+            'Keep internal files private by default and expose only customer-visible records.',
+        },
+        customerPortal: {
+          title: 'Customer portal',
+          description:
+            'Give customers safe access to case progress, documents, and updates.',
+        },
+        aiCaseSummary: {
+          title: 'AI case summary',
+          description:
+            'Generate sanitized internal summaries without exposing storage paths or secrets.',
+        },
+        automation: {
+          title: 'Automation',
+          description:
+            'Turn public requests into same-tenant follow-up tasks and activity events.',
+        },
+        providerReadiness: {
+          title: 'Provider readiness',
+          description:
+            'Document cloud storage and email setup with safe dry-run verification.',
+        },
+      },
+      workflowEyebrow: 'Workflow preview',
+      workflowTitle: 'From public request to customer-visible progress',
+      workflowDescription:
+        'A simple operational flow shows how intake becomes internal work, protected documents, and portal-safe communication.',
+      workflowSteps: {
+        publicRequest: 'Public request',
+        automatedTask: 'Automated task',
+        internalCase: 'Internal case',
+        documentHandling: 'Document handling',
+        portalUpdate: 'Portal update',
+      },
+      securityEyebrow: 'Security posture',
+      securityTitle: 'Built to show the serious parts, not just the screens',
+      securityDescription:
+        'The UI highlights the controls that make the demo believable for a SaaS CRM review.',
+      securityItems: {
+        tokenSeparation: 'Internal and portal token purpose separation',
+        tenantIsolation: 'Organization-scoped tenant isolation',
+        rbac: 'Admin, Manager, Staff, and portal access boundaries',
+        redaction: 'Log and response redaction for sensitive values',
+        scanPolicy: 'Document scan/OCR policy and download blocking',
+        providerReadiness: 'Dry-run-first storage and email readiness',
+      },
       servicesEyebrow: 'What we do',
       servicesTitle: 'Expertise built around your decisions',
       servicesDescription:
@@ -394,6 +495,8 @@ export const en = {
       description:
         'Tell us what you are working through. We will help frame the challenge and identify the right advisory path.',
       button: 'Request a consultation',
+      adminDemo: 'Open Admin Demo',
+      customerPortal: 'Customer Portal',
     },
     projectsPreview: {
       eyebrow: 'Selected work',

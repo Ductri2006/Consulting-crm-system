@@ -5,6 +5,7 @@ import { useAuth } from '../../features/auth'
 import { getStatusLabel } from '../../i18n/statusLabels'
 
 export interface AdminTopbarProps {
+  isMenuOpen: boolean
   onMenuClick: () => void
 }
 
@@ -17,15 +18,17 @@ function initials(name: string) {
     .join('')
 }
 
-export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
+export function AdminTopbar({ isMenuOpen, onMenuClick }: AdminTopbarProps) {
   const { t } = useTranslation()
   const { user, logout } = useAuth()
   const workspaceName = user?.organization?.name?.trim() || t('admin.crmWorkspace')
 
   return (
-    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur md:px-6 lg:px-8">
+    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/85 px-4 shadow-sm shadow-slate-950/[0.03] backdrop-blur-xl md:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <button
+          aria-controls="admin-mobile-sidebar"
+          aria-expanded={isMenuOpen}
           aria-label={t('admin.openNavigation')}
           className="rounded-xl border border-slate-200 p-2.5 text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 lg:hidden"
           onClick={onMenuClick}
@@ -40,7 +43,7 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
           >
             {workspaceName}
           </p>
-          <p className="text-xs text-slate-400">{t('admin.topbarSubtitle')}</p>
+          <p className="text-xs text-slate-500">{t('admin.topbarSubtitle')}</p>
         </div>
       </div>
 
@@ -50,13 +53,13 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
           <p className="max-w-44 truncate text-sm font-semibold text-slate-900">
             {user?.fullName ?? t('admin.crmUser')}
           </p>
-          <p className="max-w-44 truncate text-xs text-slate-400">
+          <p className="max-w-44 truncate text-xs text-slate-500">
             {user?.email ?? ''}
           </p>
         </div>
         <div
           aria-hidden="true"
-          className="grid h-10 w-10 place-items-center rounded-xl bg-slate-900 text-sm font-bold text-white shadow-sm"
+          className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-slate-900 to-blue-900 text-sm font-bold text-white shadow-sm shadow-slate-950/20"
         >
           {initials(user?.fullName ?? 'CRM')}
         </div>

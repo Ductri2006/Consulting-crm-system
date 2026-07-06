@@ -40,6 +40,9 @@ data without completing the production limitations listed below.
   rate limit, and ActivityLog events.
 - Provider readiness documentation for private S3-compatible storage and Resend
   email, plus a dry-run-first `verify:providers` command.
+- Step 38.5 modern SaaS UI polish for the public landing page, Admin CRM
+  surfaces, and Customer Portal surfaces using lightweight React/Tailwind/CSS
+  visuals only.
 
 ## Verification
 
@@ -101,6 +104,20 @@ Step 38 adds provider readiness verification:
 - Live Resend test email requires `PROVIDER_READINESS_MODE=live` and
   `PROVIDER_READINESS_TEST_EMAIL_TO` pointing to a staging/test recipient.
 
+Step 38.5 adds modern landing and CRM UI polish verification:
+
+- Public home page presents a premium SaaS-style hero with a lightweight
+  HTML/Tailwind mock CRM dashboard, floating status cards, capability strip,
+  workflow preview, and security/provider readiness section.
+- Admin CRM remains a fast 2D business interface with polished shared surfaces,
+  metric cards, tables, modal semantics, loading/empty/error states, topbar,
+  and mobile navigation semantics.
+- Customer Portal keeps separate portal auth/API usage while adding a more
+  trust-focused dashboard, navigation, and document card treatment.
+- New visible public copy is covered by EN/VI i18n resources.
+- No Next.js project, WebGL/Three.js, GSAP, external image URLs, fake
+  screenshots, uploaded files, or heavy animation dependency is added.
+
 Production smoke live run remains conditional: run `npm run smoke:production`
 only when safe deployed `SMOKE_*` credentials are configured outside the
 repository.
@@ -132,7 +149,9 @@ repository.
 - No realtime notifications, customer messaging, billing/payment, report
   exports, or automated Playwright E2E suite yet.
 - Screenshots are not committed yet; use the screenshots checklist before final
-  public portfolio publishing.
+  public portfolio publishing, including the Step 38.5 modern landing hero,
+  landing feature/security section, admin dashboard polish, AI summary panel,
+  and customer portal dashboard.
 
 ## Next Improvements
 

@@ -16,7 +16,7 @@ export function EmptyState({
   return (
     <div className="grid min-h-72 place-items-center p-8 text-center">
       <div className="max-w-sm">
-        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-500">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-slate-100 to-white text-slate-500 shadow-sm ring-1 ring-slate-200">
           {icon}
         </span>
         <h2 className="mt-4 font-bold text-slate-900">{title}</h2>

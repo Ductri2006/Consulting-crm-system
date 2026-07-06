@@ -203,20 +203,121 @@ export const vi = {
     ourServices: 'Dịch vụ',
     insights: 'Bài viết',
     home: {
-      heroEyebrow: 'Sự rõ ràng cho quyết định kinh doanh phức tạp',
-      heroTitlePrefix: 'Năng lực tư vấn biến phức tạp thành',
-      heroTitleAccent: 'hành động tự tin.',
+      heroEyebrow: 'CRM tư vấn hiện đại cho vận hành kiểu SaaS',
+      heroTitlePrefix: 'Điều hành tư vấn từ tiếp nhận đến',
+      heroTitleAccent: 'cổng khách hàng.',
       heroDescription:
-        'Advisora là nền tảng tư vấn giúp tổ chức có định hướng thực tiễn trong các quyết định bất động sản, pháp lý, đầu tư và xây dựng.',
+        'Demo CRM đa tenant cho tiếp nhận công khai, tự động hóa quy trình, tài liệu an toàn, tóm tắt hồ sơ bằng AI và cổng khách hàng song ngữ.',
+      openAdminDemo: 'Mở demo quản trị',
+      viewCustomerPortal: 'Xem cổng khách hàng',
+      exploreFeatures: 'Khám phá tính năng',
       structuredAdvice: 'Tư vấn có cấu trúc',
       clearNextSteps: 'Bước tiếp theo rõ ràng',
+      multiTenantOperations: 'Vận hành đa tenant',
+      securePortal: 'Cổng khách hàng an toàn',
+      aiReadyWorkflow: 'Quy trình sẵn sàng AI',
       advisoryWorkspace: 'Không gian tư vấn',
       engagementOverview: 'Tổng quan hợp tác',
       onTrack: 'Đúng tiến độ',
+      crmWorkspace: 'Không gian CRM',
+      operationsCommand: 'Trung tâm điều phối vận hành',
+      providerReady: 'Sẵn sàng provider',
+      casePipeline: 'Sức khỏe pipeline hồ sơ',
+      intake: 'Tiếp nhận',
+      cases: 'Hồ sơ',
+      portal: 'Cổng',
+      tasksAutomated: 'việc tự động',
       decisionReadiness: 'Mức sẵn sàng quyết định',
       actionsResolved: 'Hành động đã xử lý',
+      newConsultationRequest: 'Yêu cầu tư vấn mới',
+      aiCaseSummary: 'Tóm tắt hồ sơ AI',
+      secureDocument: 'Tài liệu an toàn',
+      followUpTaskCreated: 'Đã tạo việc theo dõi',
+      liveSignal: 'Tín hiệu vận hành',
+      liveSignalDescription: 'CI, lưu trữ, email và smoke readiness đã được tài liệu hóa cho staging.',
+      securitySignal: 'Mô hình bảo mật',
+      securitySignalDescription: 'RBAC, phạm vi tenant, mục đích token và redaction được thể hiện rõ trong demo.',
       currentStage: 'Giai đoạn hiện tại',
+      currentCase: 'Hồ sơ hiện tại',
       solutionAssessment: 'Đánh giá giải pháp',
+      capabilities: {
+        multiTenantWorkspaces: 'Workspace đa tenant',
+        rbac: 'RBAC',
+        customerPortal: 'Cổng khách hàng',
+        documentSecurity: 'Bảo mật tài liệu',
+        aiSummaries: 'Tóm tắt AI',
+        workflowAutomation: 'Tự động hóa quy trình',
+        providerReadiness: 'Sẵn sàng provider',
+      },
+      featuresEyebrow: 'CRM cấp portfolio',
+      featuresTitle: 'Một quy trình tư vấn đầy đủ, được polish cho demo',
+      featuresDescription:
+        'Landing page giới thiệu đúng bề mặt sản phẩm: tiếp nhận công khai, vận hành nội bộ, xử lý tài liệu an toàn, cập nhật portal và quy trình readiness.',
+      features: {
+        publicIntake: {
+          title: 'Tiếp nhận công khai',
+          description:
+            'Ghi nhận yêu cầu tư vấn và đưa vào workspace đã cấu hình.',
+        },
+        adminCrm: {
+          title: 'Admin CRM',
+          description:
+            'Quản lý khách hàng, hồ sơ, lịch hẹn, công việc, báo cáo và hoạt động trong một workspace.',
+        },
+        caseWorkflow: {
+          title: 'Quy trình hồ sơ',
+          description:
+            'Theo dõi trạng thái, ưu tiên, phân công, lịch sử, hạn xử lý và hành động tiếp theo.',
+        },
+        secureDocuments: {
+          title: 'Tài liệu an toàn',
+          description:
+            'Giữ tài liệu nội bộ ở chế độ riêng tư mặc định và chỉ chia sẻ bản ghi được bật customer-visible.',
+        },
+        customerPortal: {
+          title: 'Cổng khách hàng',
+          description:
+            'Cho khách hàng truy cập an toàn vào tiến độ hồ sơ, tài liệu và cập nhật.',
+        },
+        aiCaseSummary: {
+          title: 'Tóm tắt hồ sơ AI',
+          description:
+            'Tạo tóm tắt nội bộ đã sanitize mà không lộ storage path hoặc secret.',
+        },
+        automation: {
+          title: 'Tự động hóa',
+          description:
+            'Biến yêu cầu công khai thành task cùng tenant và activity event.',
+        },
+        providerReadiness: {
+          title: 'Provider readiness',
+          description:
+            'Tài liệu hóa thiết lập lưu trữ cloud và email với kiểm tra dry-run an toàn.',
+        },
+      },
+      workflowEyebrow: 'Luồng vận hành',
+      workflowTitle: 'Từ yêu cầu công khai đến tiến độ khách hàng có thể xem',
+      workflowDescription:
+        'Luồng đơn giản cho thấy intake trở thành công việc nội bộ, tài liệu được bảo vệ và cập nhật an toàn cho portal.',
+      workflowSteps: {
+        publicRequest: 'Yêu cầu công khai',
+        automatedTask: 'Task tự động',
+        internalCase: 'Hồ sơ nội bộ',
+        documentHandling: 'Xử lý tài liệu',
+        portalUpdate: 'Cập nhật portal',
+      },
+      securityEyebrow: 'Tư thế bảo mật',
+      securityTitle: 'Thể hiện phần nghiêm túc, không chỉ là giao diện',
+      securityDescription:
+        'UI làm nổi bật các kiểm soát giúp demo CRM SaaS đáng tin khi review.',
+      securityItems: {
+        tokenSeparation: 'Tách mục đích token nội bộ và portal',
+        tenantIsolation: 'Cô lập tenant theo Organization',
+        rbac: 'Ranh giới Admin, Manager, Staff và portal',
+        redaction: 'Redaction log và response cho dữ liệu nhạy cảm',
+        scanPolicy: 'Chính sách scan/OCR và chặn download',
+        providerReadiness: 'Readiness lưu trữ/email ưu tiên dry-run',
+      },
       servicesEyebrow: 'Chúng tôi làm gì',
       servicesTitle: 'Chuyên môn xoay quanh quyết định của bạn',
       servicesDescription:
@@ -395,6 +496,8 @@ export const vi = {
       description:
         'Chia sẻ điều bạn đang xử lý. Chúng tôi sẽ giúp định hình thách thức và xác định hướng tư vấn phù hợp.',
       button: 'Yêu cầu tư vấn',
+      adminDemo: 'Mở demo quản trị',
+      customerPortal: 'Cổng khách hàng',
     },
     projectsPreview: {
       eyebrow: 'Dự án tiêu biểu',
