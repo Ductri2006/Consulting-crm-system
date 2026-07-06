@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "i18n:check": "node scripts/checkI18nParity.mjs && node scripts/checkMissingI18nKeys.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

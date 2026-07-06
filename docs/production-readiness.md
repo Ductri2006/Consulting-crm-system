@@ -57,6 +57,9 @@ are resolved or explicitly accepted.
 - Step 34 portfolio release documentation adds a recruiter-friendly README,
   Mermaid architecture diagrams, release notes, screenshot checklist, and a
   concise demo walkthrough script.
+- Step 35 adds GitHub Actions CI for non-deploying client/server quality
+  checks, i18n checks, Prisma generate/validate, docs/safety checks, an optional
+  manual production smoke workflow, and Dependabot dependency monitoring.
 - `GET /api/health` is available as a liveness check. It does not prove database
   readiness by itself.
 - Real production URLs, credentials, tokens, and connection strings are not
@@ -358,6 +361,7 @@ Production document requirements:
 
 - [ ] Complete the staging-specific checklist in
   [Staging Deployment Checklist](staging-deployment-checklist.md).
+- [ ] Confirm GitHub Actions CI passes on the target branch.
 - [ ] Configure production `DATABASE_URL`.
 - [ ] Configure production `JWT_SECRET`.
 - [ ] Configure server `CLIENT_URL`.
@@ -376,6 +380,28 @@ Production document requirements:
   are still accurate for the target environment.
 - [ ] Capture and review real screenshots before adding image links to the
   README.
+
+## CI/CD Readiness
+
+The default GitHub Actions CI workflow runs on push and pull request to `main`.
+It uses public dummy CI environment values and does not connect to Neon or any
+production database.
+
+Default CI runs:
+
+- Client `npm ci`, `npm run lint`, `npm run i18n:check`, and `npm run build`.
+- Server `npm ci`, `npm run prisma:generate`, `npx prisma validate`,
+  `npm run lint`, and `npm run build`.
+- Docs/safety whitespace checks and no-deploy/no-database-mutation guardrails.
+
+Default CI does not run deployments, Render/Vercel hooks, Prisma migrations,
+database resets, seed scripts, tenant-isolation verification, or live production
+smoke. Tenant isolation requires seeded Advisora/Northstar data and remains a
+local/staging command until a dedicated CI database is configured.
+
+The `Production Smoke` workflow is manual-only through `workflow_dispatch` and
+requires `SMOKE_*` repository secrets. It should be run only against a safe
+deployed API smoke environment.
 
 ## Known Limitations
 

@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  client:
+    name: Client
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    env:
+      VITE_API_BASE_URL: "http://localhost:5000/api"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check i18n resources
+        run: npm run i18n:check
+
+      - name: Build
+        run: npm run build
+
+  server:
+    name: Server
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    env:
+      NODE_ENV: test
+      DATABASE_URL: "postgresql://ci_user:ci_password@localhost:5432/ci_db"
+      CLIENT_URL: "http://localhost:5173"
+      JWT_SECRET: "ci-jwt-secret-at-least-32-characters-long"
+      JWT_EXPIRES_IN: "7d"
+      DEFAULT_ORGANIZATION_SLUG: "advisora-demo"
+      WORKSPACE_SIGNUP_ENABLED: "true"
+      APP_NAME: "Advisora CRM"
+      EMAIL_PROVIDER: "disabled"
+      EMAIL_FROM: "Advisora CRM <no-reply@advisora.test>"
+      DOCUMENT_STORAGE_PROVIDER: "local"
+      DOCUMENT_MALWARE_SCANNER: "disabled"
+      DOCUMENT_OCR_PROVIDER: "disabled"
+      RATE_LIMIT_ENABLED: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  docs-and-safety:
+    name: Docs and Safety
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check committed whitespace
+        run: |
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            git diff --check HEAD~1..HEAD
+          else
+            git diff --check
+          fi
+
+      - name: Confirm CI avoids deployment and database mutation
+        run: |
+          echo "CI intentionally does not deploy, run migrations, reset databases, seed data, or run live smoke checks."
+
+      - name: Guard against unsafe default CI commands
+        run: |
+          unsafe_regex="(prisma:migrate|prisma:deploy|prisma:reset|seed:demo|seed:second-workspace|npm run seed|smoke:production|render|vercel|deploy hook)"
+          matches="$(grep -RInE "${unsafe_regex}" .github/workflows/ci.yml | grep -v "unsafe_regex=" || true)"
+          if [ -n "${matches}" ]; then
+            echo "${matches}"
+            echo "::error::Default CI must not deploy, mutate databases, seed data, or run live smoke checks."
+            exit 1
+          fi

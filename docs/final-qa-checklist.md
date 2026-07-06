@@ -430,7 +430,30 @@ Step 33 results:
 - [x] Release notes are updated in `docs/release-notes.md`.
 - [x] Architecture diagrams are documented in `README.md` and
   `docs/architecture.md`.
+- [x] GitHub Actions CI workflow is added for client/server build, lint,
+  Prisma generate/validate, i18n checks, and docs/safety checks.
+- [x] Manual production smoke workflow is added with `workflow_dispatch` and
+  `SMOKE_*` repository secrets only.
+- [x] Dependabot npm monitoring is added for `/client` and `/server`.
 - [ ] Repository description and topics can be added manually on GitHub.
+
+## Step 35 CI/CD Checklist
+
+- [x] `.github/workflows/ci.yml` runs on push and pull request to `main`.
+- [x] Client CI runs `npm ci`, `npm run lint`, `npm run i18n:check`, and
+  `npm run build`.
+- [x] Server CI runs `npm ci`, `npm run prisma:generate`,
+  `npx prisma validate`, `npm run lint`, and `npm run build`.
+- [x] CI uses safe dummy env values and no production database, JWT, Resend, or
+  S3 secrets.
+- [x] Default CI does not deploy, call Vercel/Render hooks, run migrations,
+  reset the database, seed data, or run live production smoke.
+- [x] Tenant isolation remains a local/staging command because
+  `npm run verify:tenant-isolation` requires seeded Advisora/Northstar data.
+- [x] Manual production smoke workflow requires `SMOKE_*` repository secrets and
+  runs only through `workflow_dispatch`.
+- [x] No `.env`, secrets, tokens, uploaded files, or generated `dist` output are
+  required for CI.
 
 ## Final Sign-Off
 

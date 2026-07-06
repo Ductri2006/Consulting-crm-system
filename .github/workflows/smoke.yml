@@ -1,0 +1,57 @@
+name: Production Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-smoke:
+    name: Production Smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    env:
+      SMOKE_API_BASE_URL: ${{ secrets.SMOKE_API_BASE_URL }}
+      SMOKE_ADMIN_EMAIL: ${{ secrets.SMOKE_ADMIN_EMAIL }}
+      SMOKE_ADMIN_PASSWORD: ${{ secrets.SMOKE_ADMIN_PASSWORD }}
+      SMOKE_PORTAL_WORKSPACE_SLUG: ${{ secrets.SMOKE_PORTAL_WORKSPACE_SLUG }}
+      SMOKE_PORTAL_EMAIL: ${{ secrets.SMOKE_PORTAL_EMAIL }}
+      SMOKE_PORTAL_PASSWORD: ${{ secrets.SMOKE_PORTAL_PASSWORD }}
+      SMOKE_RATE_LIMIT_CHECK: ${{ secrets.SMOKE_RATE_LIMIT_CHECK }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required smoke secrets
+        run: |
+          missing=0
+          for name in \
+            SMOKE_API_BASE_URL \
+            SMOKE_ADMIN_EMAIL \
+            SMOKE_ADMIN_PASSWORD \
+            SMOKE_PORTAL_WORKSPACE_SLUG \
+            SMOKE_PORTAL_EMAIL \
+            SMOKE_PORTAL_PASSWORD
+          do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required repository secret: ${name}"
+              missing=1
+            fi
+          done
+          exit "${missing}"
+
+      - name: Run production smoke
+        run: npm run smoke:production

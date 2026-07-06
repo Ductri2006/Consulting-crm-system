@@ -1,5 +1,7 @@
 # Advisora CRM / Consulting CRM System
 
+[![CI](https://github.com/Ductri2006/Consulting-crm-system/actions/workflows/ci.yml/badge.svg)](https://github.com/Ductri2006/Consulting-crm-system/actions/workflows/ci.yml)
+
 Advisora CRM is a portfolio-ready, multi-tenant consulting CRM with public lead
 capture, an internal admin workspace, and a customer portal for case tracking,
 documents, and customer-safe updates.
@@ -275,6 +277,34 @@ uploaded files, or generated `dist` output.
 - Database: run committed migrations against Neon with `npm run prisma:deploy`.
 - Smoke: run `npm run smoke:production` only when `SMOKE_*` credentials are
   configured outside the repository.
+
+## CI/CD
+
+GitHub Actions are configured for quality checks only. Step 35 does not add
+automatic deployment.
+
+Automatic CI on push and pull request to `main`:
+
+- Client: `npm ci`, `npm run lint`, `npm run i18n:check`, `npm run build`.
+- Server: `npm ci`, `npm run prisma:generate`, `npx prisma validate`,
+  `npm run lint`, `npm run build`.
+- Docs/safety: committed whitespace check and an explicit no-deploy/no-DB-mutate
+  guard note.
+
+CI uses safe dummy environment values for Prisma validation and server checks.
+It does not run migrations, reset databases, seed data, deploy to Vercel/Render,
+or call live smoke endpoints.
+
+Manual production smoke is available through the `Production Smoke` workflow
+(`workflow_dispatch`) only after these repository secrets are configured:
+
+- `SMOKE_API_BASE_URL`
+- `SMOKE_ADMIN_EMAIL`
+- `SMOKE_ADMIN_PASSWORD`
+- `SMOKE_PORTAL_WORKSPACE_SLUG`
+- `SMOKE_PORTAL_EMAIL`
+- `SMOKE_PORTAL_PASSWORD`
+- Optional `SMOKE_RATE_LIMIT_CHECK`
 
 Detailed docs:
 

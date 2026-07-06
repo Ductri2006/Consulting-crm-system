@@ -233,6 +233,32 @@ npm run start
 
 The development server runs at `http://localhost:5000` with the example configuration.
 
+## CI Checks
+
+The GitHub Actions CI workflow validates the backend with safe dummy
+environment values. Prisma generate and schema validation do not require a live
+database connection.
+
+CI commands:
+
+```bash
+npm ci
+npm run prisma:generate
+npx prisma validate
+npm run lint
+npm run build
+```
+
+CI intentionally does not run `prisma:migrate`, `prisma:deploy`,
+`prisma:reset`, `seed`, `seed:demo`, `seed:second-workspace`, or
+`verify:tenant-isolation`. Tenant isolation verification requires a real
+`DATABASE_URL` with seeded Advisora and Northstar data, so it remains a local or
+staging verification command until a dedicated CI database is configured.
+
+The manual `Production Smoke` GitHub Actions workflow can run
+`npm run smoke:production` only through `workflow_dispatch` and only when the
+required `SMOKE_*` repository secrets are configured.
+
 ## Health check
 
 ```http

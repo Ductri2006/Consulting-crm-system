@@ -94,6 +94,7 @@ Run the frontend checks used by the final QA pass with:
 
 ```bash
 npm run lint
+npm run i18n:check
 npm run preview
 ```
 
@@ -105,6 +106,24 @@ validation/demo flows until their public backend intake endpoints are added.
 Public consultation submissions are mapped by the backend to the workspace
 configured with `DEFAULT_ORGANIZATION_SLUG`; the frontend never sends an
 `organizationId`.
+
+## CI Checks
+
+The GitHub Actions CI workflow runs the frontend with
+`VITE_API_BASE_URL=http://localhost:5000/api` and does not require a live
+backend for build validation.
+
+CI commands:
+
+```bash
+npm ci
+npm run lint
+npm run i18n:check
+npm run build
+```
+
+`npm run i18n:check` verifies EN/VI resource parity and scans common
+`t('...')` string-literal usage for missing keys.
 
 ## Admin Dashboard
 

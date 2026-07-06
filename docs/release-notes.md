@@ -30,6 +30,8 @@ data without completing the production limitations listed below.
 - Security hardening: JWT purpose separation, RBAC, tenant verification, rate
   limits, Helmet/security headers, body limits, and redacted logs/errors.
 - Final QA documentation and release-oriented README polish.
+- GitHub Actions CI foundation for client/server build, lint, Prisma, i18n, and
+  documentation safety checks without auto-deploying or mutating databases.
 
 ## Verification
 
@@ -51,6 +53,14 @@ Step 33 final QA passed before this release documentation pass:
 
 Step 34 release-doc verification re-ran the build/lint/Prisma/i18n and tenant
 checks after documentation changes.
+
+Step 35 adds CI verification on push and pull request to `main`:
+
+- Client install, lint, i18n check, and build.
+- Server install, Prisma generate/validate, lint, and build.
+- Docs/safety whitespace guard.
+- Manual production smoke workflow is available only through
+  `workflow_dispatch` with `SMOKE_*` secrets.
 
 Production smoke live run remains conditional: run `npm run smoke:production`
 only when safe deployed `SMOKE_*` credentials are configured outside the
