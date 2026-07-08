@@ -50,9 +50,9 @@ export function HeroSection() {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-slate-500">
-              <span className="case-chip">{t('public.home.ledger.chips.multiTenant')}</span>
-              <span className="case-chip">{t('public.home.ledger.chips.rbacScoped')}</span>
-              <span className="case-chip">{t('public.home.ledger.chips.auditReady')}</span>
+              <span className="case-chip">Multi-tenant</span>
+              <span className="case-chip">RBAC-scoped</span>
+              <span className="case-chip">Audit-ready</span>
             </div>
           </div>
 
@@ -61,37 +61,52 @@ export function HeroSection() {
             <div className="ops-ledger rounded-sm p-5 shadow-sm blueprint-grid">
               <div className="mb-3 flex items-center justify-between border-b border-slate-300 pb-3">
                 <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{t('public.home.ledger.board.eyebrow')}</div>
-                  <div className="text-sm font-semibold tracking-tight text-[#0b1428]">{t('public.home.ledger.board.title')}</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Operations ledger</div>
+                  <div className="text-sm font-semibold tracking-tight text-[#0b1428]">Case operations board</div>
                 </div>
-                <span className="case-chip case-chip-active">{t('public.home.ledger.chips.liveDemo')}</span>
+                <span className="case-chip case-chip-active">Live demo</span>
               </div>
 
               <div className="space-y-px text-sm">
-                {/* Ledger rows - IDs are visual mocks, kept hardcoded */}
-                {[
-                  { row: 'publicRequest', code: 'REQ-2407-0182', actor: 'tenantA', status: 'logged', active: true },
-                  { row: 'followUpTask', code: 'TASK-8821', actor: 'staff', status: 'assigned', active: false },
-                  { row: 'caseFile', code: 'CASE-391', actor: 'manager', status: 'inProgress', active: true },
-                  { row: 'documentVaulted', code: 'DOC-1147', actor: 'rbac', status: 'guarded', active: false },
-                  { row: 'portalUpdate', code: 'UPD-094', actor: 'customer', status: 'dispatched', active: true },
-                ].map((item) => {
-                  const label = t(`public.home.ledger.rows.${item.row}`);
-                  const actor = item.actor === 'rbac' ? 'RBAC' : t(`public.home.ledger.actors.${item.actor}`);
-                  const status = t(`public.home.ledger.statuses.${item.status}`);
-                  return (
-                    <div key={item.row} className="ledger-row grid grid-cols-12 items-center gap-x-3 text-xs">
-                      <div className="col-span-4 font-medium text-[#0b1428]">{label}</div>
-                      <div className="col-span-3 font-mono text-[11px] text-slate-500">{item.code}</div>
-                      <div className="col-span-3"><span className="case-chip">{actor}</span></div>
-                      <div className="col-span-2 text-right"><span className={`case-chip ${item.active ? 'case-chip-active' : ''}`}>{status}</span></div>
-                    </div>
-                  );
-                })}
+                {/* Ledger rows */}
+                <div className="ledger-row grid grid-cols-12 items-center gap-x-3 text-xs">
+                  <div className="col-span-4 font-medium text-[#0b1428]">Public request received</div>
+                  <div className="col-span-3 font-mono text-[11px] text-slate-500">REQ-2407-0182</div>
+                  <div className="col-span-3"><span className="case-chip">Tenant A</span></div>
+                  <div className="col-span-2 text-right"><span className="case-chip case-chip-active">Logged</span></div>
+                </div>
+
+                <div className="ledger-row grid grid-cols-12 items-center gap-x-3 text-xs">
+                  <div className="col-span-4 font-medium text-[#0b1428]">Follow-up task created</div>
+                  <div className="col-span-3 font-mono text-[11px] text-slate-500">TASK-8821</div>
+                  <div className="col-span-3"><span className="case-chip">Staff</span></div>
+                  <div className="col-span-2 text-right"><span className="case-chip">Assigned</span></div>
+                </div>
+
+                <div className="ledger-row grid grid-cols-12 items-center gap-x-3 text-xs">
+                  <div className="col-span-4 font-medium text-[#0b1428]">Case file opened</div>
+                  <div className="col-span-3 font-mono text-[11px] text-slate-500">CASE-391</div>
+                  <div className="col-span-3"><span className="case-chip">Manager</span></div>
+                  <div className="col-span-2 text-right"><span className="case-chip case-chip-active">In progress</span></div>
+                </div>
+
+                <div className="ledger-row grid grid-cols-12 items-center gap-x-3 text-xs">
+                  <div className="col-span-4 font-medium text-[#0b1428]">Document vaulted</div>
+                  <div className="col-span-3 font-mono text-[11px] text-slate-500">DOC-1147</div>
+                  <div className="col-span-3"><span className="case-chip">RBAC</span></div>
+                  <div className="col-span-2 text-right"><span className="case-chip">Guarded</span></div>
+                </div>
+
+                <div className="ledger-row grid grid-cols-12 items-center gap-x-3 text-xs">
+                  <div className="col-span-4 font-medium text-[#0b1428]">Portal-safe update</div>
+                  <div className="col-span-3 font-mono text-[11px] text-slate-500">UPD-094</div>
+                  <div className="col-span-3"><span className="case-chip">Customer</span></div>
+                  <div className="col-span-2 text-right"><span className="case-chip case-chip-active">Dispatched</span></div>
+                </div>
               </div>
 
               <div className="mt-4 border-t border-slate-300 pt-3 text-[10px] text-slate-500">
-                {t('public.home.ledger.board.footer')}
+                All records tenant-scoped • Purpose-separated tokens • Full ActivityLog
               </div>
             </div>
           </div>

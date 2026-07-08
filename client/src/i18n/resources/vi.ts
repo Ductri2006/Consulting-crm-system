@@ -336,48 +336,6 @@ export const vi = {
       servicesTitle: 'Chuyên môn xoay quanh quyết định của bạn',
       servicesDescription:
         'Tư vấn tập trung, tư duy chặt chẽ và lộ trình thực tiễn từ câu hỏi đến hành động.',
-      ledger: {
-        chips: {
-          multiTenant: 'Đa tenant',
-          rbacScoped: 'Phân quyền RBAC',
-          auditReady: 'Sẵn sàng audit',
-          liveDemo: 'Demo live',
-        },
-        board: {
-          eyebrow: 'Sổ vận hành',
-          title: 'Bảng xử lý hồ sơ',
-          footer: 'Mọi bản ghi theo tenant • Token tách mục đích • Đầy đủ ActivityLog',
-        },
-        rows: {
-          publicRequest: 'Nhận yêu cầu công khai',
-          followUpTask: 'Tạo việc theo dõi',
-          caseFile: 'Mở hồ sơ xử lý',
-          documentVaulted: 'Lưu tài liệu an toàn',
-          portalUpdate: 'Cập nhật an toàn lên portal',
-        },
-        actors: {
-          tenantA: 'Tenant A',
-          staff: 'Nhân viên',
-          manager: 'Quản lý',
-          customer: 'Khách hàng',
-        },
-        statuses: {
-          logged: 'Đã ghi nhận',
-          assigned: 'Đã phân công',
-          inProgress: 'Đang xử lý',
-          guarded: 'Được bảo vệ',
-          dispatched: 'Đã gửi',
-        },
-        product: {
-          eyebrow: 'Bề mặt vận hành',
-          lifecycleLabel: 'Vòng đời hồ sơ • Theo tenant • Đầy đủ audit trail',
-          rbac: 'RBAC',
-          tenantIsolation: 'Tách biệt tenant',
-          documentGuarded: 'Bảo vệ tài liệu',
-          aiSanitized: 'AI dùng dữ liệu đã lọc',
-          activityLog: 'ActivityLog',
-        },
-      },
     },
     news: {
       backToInsights: 'Quay lại bài viết',
