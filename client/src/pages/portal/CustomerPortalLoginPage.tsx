@@ -125,16 +125,16 @@ export function CustomerPortalLoginPage() {
             {t('auth.portalLogin.heading')}
           </h1>
           <div className="mt-8 grid max-w-2xl gap-3 text-sm font-medium text-slate-600">
-            <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
               {t('auth.portalLogin.profileCard')}
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
               {t('auth.portalLogin.caseCard')}
             </div>
           </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
             <div className="flex items-center justify-between gap-3">
               <Link
@@ -147,7 +147,7 @@ export function CustomerPortalLoginPage() {
               <LanguageSwitcher compact className="lg:hidden" />
             </div>
             <div className="mt-5 flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
                 <LockKeyhole className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>

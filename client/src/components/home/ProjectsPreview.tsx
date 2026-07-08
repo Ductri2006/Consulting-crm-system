@@ -21,7 +21,6 @@ export function ProjectsPreview() {
       <Container>
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
-            eyebrow={t('public.projectsPreview.eyebrow')}
             title={t('public.projectsPreview.title')}
             description={t('public.projectsPreview.description')}
             className="[&_h2]:text-white [&_p]:text-slate-400"
@@ -42,7 +41,7 @@ export function ProjectsPreview() {
             return (
               <article
                 key={project.id}
-                className="group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900"
+                className="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900"
               >
                 <div
                   className={`relative h-44 overflow-hidden bg-gradient-to-br ${accentStyles[index]}`}

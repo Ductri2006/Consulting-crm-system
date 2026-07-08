@@ -16,7 +16,7 @@ export function Card({
       className={cn(
         'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm',
         interactive &&
-          'transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-soft',
+          'transition duration-200 hover:border-blue-200 hover:shadow-md',
         className,
       )}
       {...props}

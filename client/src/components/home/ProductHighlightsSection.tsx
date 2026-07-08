@@ -88,7 +88,6 @@ export function ProductHighlightsSection() {
 
         <div className="mt-16 grid gap-12 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
           <SectionHeading
-            eyebrow={t('public.home.featuresEyebrow')}
             title={t('public.home.featuresTitle')}
             description={t('public.home.featuresDescription')}
           />
@@ -115,10 +114,7 @@ export function ProductHighlightsSection() {
 
         <div className="mt-16 grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
           <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-700">
-              {t('public.home.workflowEyebrow')}
-            </p>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
               {t('public.home.workflowTitle')}
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
@@ -149,10 +145,7 @@ export function ProductHighlightsSection() {
           </article>
 
           <article className="rounded-[1.75rem] border border-slate-800 bg-slate-950 p-6 text-white shadow-2xl shadow-slate-950/20 sm:p-8">
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-cyan-300">
-              {t('public.home.securityEyebrow')}
-            </p>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
               {t('public.home.securityTitle')}
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">

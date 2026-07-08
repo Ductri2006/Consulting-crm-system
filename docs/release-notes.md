@@ -1,5 +1,15 @@
 # Release Notes
 
+## Step 38.6 — Taste-skill guided UI audit & refinement (2026-07-08)
+
+- Used `leonxlnx/taste-skill` (via design-taste-frontend) strictly as audit/restraint guide.
+- Landing: reduced excessive glassmorphism and multi-gradient text clichés; lowered eyebrow count and repetitive section rhythm; polished hero surfaces for B2B trust; improved visual continuity and card consistency. Landing remains polished portfolio page at appropriate variance (6-7).
+- Admin CRM: restrained polish — removed decorative gradients/lifts/glass from StatCard, Layout, Topbar, states; standardized radii, headers, milder hovers; plainer enterprise surfaces while keeping fast table/form friendly experience (variance 5, motion 2-3, density 5-6).
+- Customer Portal: unified card radii/padding to rounded-2xl + calm surfaces; removed unnecessary lifts; improved login surface alignment and timeline separators for trust and readability (variance 5, density 4).
+- No heavy motion, 3D/WebGL/GSAP/Framer added. No new UI libs. No backend, API, auth, RBAC, or business logic changes.
+- All changes are small, high-confidence micro-refinements. i18n parity preserved (no new copy). Build/lint/i18n clean.
+- Design read: B2B SaaS consulting CRM portfolio demo for recruiters/technical reviewers, trust-first modern SaaS language, Tailwind, clean enterprise surfaces, restrained motion, strong hierarchy.
+
 ## v1.0.0 Portfolio Release
 
 This release packages Advisora CRM / Consulting CRM System as a portfolio-ready

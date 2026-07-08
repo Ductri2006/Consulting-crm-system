@@ -21,7 +21,6 @@ export function NewsPreview() {
       <Container>
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
-            eyebrow={t('public.news.previewEyebrow')}
             title={t('public.news.previewTitle')}
             description={t('public.news.previewDescription')}
           />

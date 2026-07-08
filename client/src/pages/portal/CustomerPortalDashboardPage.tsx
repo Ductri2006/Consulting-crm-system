@@ -78,7 +78,7 @@ function StatCard({
           <p className="text-sm font-bold text-slate-500">{label}</p>
           <p className="mt-2 text-3xl font-bold text-slate-950">{value}</p>
         </div>
-        <span className="grid h-11 w-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">
           {icon}
         </span>
       </div>
@@ -98,7 +98,7 @@ function ComingSoonItem({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03]">
       <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 place-items-center rounded-lg bg-sky-50 text-sky-700 ring-1 ring-sky-600/20">
+        <span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-600/20">
           {icon}
         </span>
         <div>
@@ -117,7 +117,7 @@ function RecentCaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
 
   return (
     <Link
-      className="block rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
+      className="block rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03] transition hover:border-emerald-200 hover:shadow-md"
       to={`/portal/cases/${caseProfile.id}`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

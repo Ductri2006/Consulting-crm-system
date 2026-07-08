@@ -25,7 +25,7 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        'grid min-h-72 place-items-center rounded-2xl border border-rose-200 bg-white/90 p-8 text-center shadow-sm shadow-rose-950/[0.04] ring-1 ring-rose-100 backdrop-blur',
+        'grid min-h-72 place-items-center rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm ring-1 ring-rose-100',
         className,
       )}
       role="alert"

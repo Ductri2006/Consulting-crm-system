@@ -42,13 +42,13 @@ export function HeroSection() {
 
       <Container className="grid items-center gap-16 lg:grid-cols-[1.04fr_.96fr]">
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-white/10 px-3.5 py-2 text-sm font-medium text-cyan-100 shadow-lg shadow-slate-950/20 backdrop-blur">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-slate-900/70 px-3.5 py-2 text-sm font-medium text-cyan-100 shadow-lg shadow-slate-950/20">
             <Sparkles className="h-4 w-4 text-amber-300" aria-hidden="true" />
             {t('public.home.heroEyebrow')}
           </div>
           <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl lg:leading-[1.05]">
             {t('public.home.heroTitlePrefix')}{' '}
-            <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-emerald-200 bg-clip-text text-transparent">
+            <span className="text-cyan-300">
               {t('public.home.heroTitleAccent')}
             </span>
           </h1>
@@ -94,8 +94,8 @@ export function HeroSection() {
             aria-hidden="true"
             className="absolute -inset-6 rounded-[2.5rem] bg-cyan-400/15 blur-3xl"
           />
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-3 shadow-2xl shadow-slate-950/60 backdrop-blur-xl sm:p-4">
-            <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/80 p-4 sm:p-5">
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/95 p-3 shadow-2xl shadow-slate-950/60 sm:p-4">
+            <div className="rounded-[1.5rem] border border-white/5 bg-slate-950 p-4 sm:p-5">
               <div className="flex items-center justify-between border-b border-slate-700/80 pb-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -166,7 +166,7 @@ export function HeroSection() {
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {floatingCards.map(({ labelKey, icon: Icon }, index) => (
                   <div
-                    className={`min-h-11 rounded-2xl border border-white/15 bg-white/90 px-3 py-2 text-xs font-bold leading-5 text-slate-800 shadow-lg shadow-slate-950/20 backdrop-blur ${
+                    className={`min-h-11 rounded-2xl border border-white/10 bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-800 shadow-lg shadow-slate-950/20 ${
                       index % 2 === 0 ? 'landing-float-slow' : 'landing-float-delayed'
                     }`}
                     key={labelKey}
@@ -185,13 +185,13 @@ export function HeroSection() {
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/15 bg-white/90 p-3 text-xs font-semibold leading-5 text-slate-700 shadow-xl shadow-slate-950/20 backdrop-blur">
+            <div className="rounded-2xl border border-white/10 bg-white/95 p-3 text-xs font-semibold leading-5 text-slate-700 shadow-xl shadow-slate-950/20">
               <span className="mb-2 block text-[10px] uppercase tracking-[0.16em] text-slate-500">
                 {t('public.home.liveSignal')}
               </span>
               {t('public.home.liveSignalDescription')}
             </div>
-            <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50 p-3 text-xs font-semibold leading-5 text-emerald-900 shadow-xl shadow-emerald-950/20">
+            <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50 p-3 text-xs font-semibold leading-5 text-emerald-900 shadow-xl shadow-emerald-950/20">
               <span className="mb-2 block text-[10px] uppercase tracking-[0.16em] text-emerald-700">
                 {t('public.home.securitySignal')}
               </span>

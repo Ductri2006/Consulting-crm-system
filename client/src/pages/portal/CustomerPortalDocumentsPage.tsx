@@ -333,7 +333,7 @@ function DocumentCard({
       : t('portal.documents.uploadedByWorkspaceTeam')
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
+    <article className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-950/[0.03] transition hover:border-emerald-200 hover:shadow-md">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">

@@ -49,7 +49,7 @@ function CaseCard({ caseProfile }: { caseProfile: PortalCaseSummary }) {
   const { t } = useTranslation()
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -193,7 +193,7 @@ export function CustomerPortalCasesPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold text-emerald-700">
@@ -221,7 +221,7 @@ export function CustomerPortalCasesPage() {
         </div>
       </header>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <form
           className="grid gap-3 lg:grid-cols-[minmax(16rem,1fr)_14rem_auto_auto]"
           noValidate

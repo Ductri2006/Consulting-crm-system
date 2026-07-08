@@ -24,7 +24,7 @@ export function AdminTopbar({ isMenuOpen, onMenuClick }: AdminTopbarProps) {
   const workspaceName = user?.organization?.name?.trim() || t('admin.crmWorkspace')
 
   return (
-    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/85 px-4 shadow-sm shadow-slate-950/[0.03] backdrop-blur-xl md:px-6 lg:px-8">
+    <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm md:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <button
           aria-controls="admin-mobile-sidebar"

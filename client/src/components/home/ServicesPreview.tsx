@@ -36,7 +36,7 @@ export function ServicesPreview() {
             return (
               <Card
                 key={service.id}
-                className="group relative flex h-full flex-col overflow-hidden p-6 transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/5"
+                className="group relative flex h-full flex-col overflow-hidden p-6 transition duration-200 hover:border-blue-200 hover:shadow-md"
               >
                 <span className="absolute right-5 top-4 text-5xl font-bold text-slate-100 transition group-hover:text-blue-50">
                   0{index + 1}

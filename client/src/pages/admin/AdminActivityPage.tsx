@@ -177,8 +177,8 @@ export function AdminActivityPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto max-w-[1600px]">
+      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-blue-600">
             {t('navigation.activity')}

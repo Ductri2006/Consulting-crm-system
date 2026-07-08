@@ -17,7 +17,7 @@ export function LoadingState({ className, hint, label }: LoadingStateProps) {
       className={cn('flex min-h-[360px] items-center justify-center', className)}
       role="status"
     >
-      <div className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-white/80 px-8 py-7 text-center shadow-sm shadow-slate-950/[0.03] backdrop-blur">
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-white px-8 py-7 text-center shadow-sm">
         <span className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
         <div>
           <p className="text-sm font-semibold text-slate-700">
