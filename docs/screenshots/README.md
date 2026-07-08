@@ -18,8 +18,6 @@ Use lowercase kebab-case PNG files:
 - `admin-documents.png`
 - `admin-activity.png`
 - `portal-dashboard.png`
-
-Note (Step 38.7): Landing art direction was overhauled. No new committed screenshots for the updated landing. Use real captures from the built demo when updating this list.
 - `portal-case-detail.png`
 - `portal-documents.png`
 - `portal-updates.png`

@@ -203,14 +203,14 @@ export const vi = {
     ourServices: 'Dịch vụ',
     insights: 'Bài viết',
     home: {
-      heroEyebrow: 'Sổ cái vận hành cho thực tiễn tư vấn',
-      heroTitlePrefix: 'Từ bản ghi tiếp nhận công khai đến',
-      heroTitleAccent: 'gửi khách hàng.',
+      heroEyebrow: 'CRM tư vấn hiện đại cho vận hành kiểu SaaS',
+      heroTitlePrefix: 'Điều hành tư vấn từ tiếp nhận đến',
+      heroTitleAccent: 'cổng khách hàng.',
       heroDescription:
-        'Hệ thống đa tenant cho yêu cầu công khai, phân loại nội bộ, hồ sơ vụ việc, tài liệu được bảo vệ và cập nhật hiển thị cho khách hàng.',
+        'Demo CRM đa tenant cho tiếp nhận công khai, tự động hóa quy trình, tài liệu an toàn, tóm tắt hồ sơ bằng AI và cổng khách hàng song ngữ.',
       openAdminDemo: 'Mở demo quản trị',
       viewCustomerPortal: 'Xem cổng khách hàng',
-      exploreFeatures: 'Xem luồng vận hành',
+      exploreFeatures: 'Khám phá tính năng',
       structuredAdvice: 'Tư vấn có cấu trúc',
       clearNextSteps: 'Bước tiếp theo rõ ràng',
       multiTenantOperations: 'Vận hành đa tenant',
@@ -250,9 +250,9 @@ export const vi = {
         providerReadiness: 'Sẵn sàng provider',
       },
       featuresEyebrow: 'CRM cấp portfolio',
-      featuresTitle: 'Bề mặt vận hành hồ sơ đầy đủ',
+      featuresTitle: 'Một quy trình tư vấn đầy đủ, được polish cho demo',
       featuresDescription:
-        'Tiếp nhận công khai, phân loại, xử lý hồ sơ, tài liệu, gửi khách hàng và dấu vết kiểm toán — hiển thị trong một workspace.',
+        'Landing page giới thiệu đúng bề mặt sản phẩm: tiếp nhận công khai, vận hành nội bộ, xử lý tài liệu an toàn, cập nhật portal và quy trình readiness.',
       features: {
         publicIntake: {
           title: 'Tiếp nhận công khai',
@@ -294,20 +294,6 @@ export const vi = {
           description:
             'Tài liệu hóa thiết lập lưu trữ cloud và email với kiểm tra dry-run an toàn.',
         },
-      },
-      phases: {
-        intake: 'Tiếp nhận',
-        intakeDesc: 'Yêu cầu tư vấn công khai được ghi nhận vào workspace với đầy đủ ngữ cảnh và nguồn gốc rõ ràng.',
-        triage: 'Phân loại',
-        triageDesc: 'Yêu cầu trở thành task cùng tenant, được phân công theo vai trò và mức độ khẩn cấp.',
-        casework: 'Xử lý hồ sơ',
-        caseworkDesc: 'Hồ sơ vụ việc theo dõi trạng thái, hạn chót, phân công, lịch sử và hành động tiếp theo tại một nơi.',
-        documents: 'Tài liệu',
-        documentsDesc: 'Bản ghi nội bộ được bảo vệ. Chỉ tài liệu được phê duyệt mới hiển thị cho khách hàng.',
-        portal: 'Gửi khách hàng',
-        portalDesc: 'Cập nhật và tài liệu đến cổng khách hàng mà không rò rỉ ghi chú nội bộ hoặc đường dẫn.',
-        audit: 'Dấu vết kiểm toán',
-        auditDesc: 'Mọi hành động được ghi lại với token tách biệt mục đích và ranh giới tenant.',
       },
       workflowEyebrow: 'Luồng vận hành',
       workflowTitle: 'Từ yêu cầu công khai đến tiến độ khách hàng có thể xem',

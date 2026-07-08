@@ -203,14 +203,14 @@ export const en = {
     ourServices: 'Our services',
     insights: 'Insights',
     home: {
-      heroEyebrow: 'Operations ledger for consulting practices',
-      heroTitlePrefix: 'From public intake record to',
-      heroTitleAccent: 'client dispatch.',
+      heroEyebrow: 'Modern consulting CRM for SaaS-style operations',
+      heroTitlePrefix: 'Run consulting operations from intake to',
+      heroTitleAccent: 'customer portal.',
       heroDescription:
-        'A multi-tenant system for public requests, internal triage, case files, protected documents, and client-visible updates.',
+        'A multi-tenant CRM demo for public intake, workflow automation, secure documents, AI case summaries, and a bilingual customer portal.',
       openAdminDemo: 'Open Admin Demo',
       viewCustomerPortal: 'View Customer Portal',
-      exploreFeatures: 'View the workflow',
+      exploreFeatures: 'Explore Features',
       structuredAdvice: 'Structured advice',
       clearNextSteps: 'Clear next steps',
       multiTenantOperations: 'Multi-tenant operations',
@@ -250,9 +250,9 @@ export const en = {
         providerReadiness: 'Provider readiness',
       },
       featuresEyebrow: 'Portfolio-grade CRM',
-      featuresTitle: 'The complete case operations surface',
+      featuresTitle: 'A complete consulting workflow, polished for demo review',
       featuresDescription:
-        'Public intake, triage, case work, document handling, client dispatch, and full audit trail — visible in one workspace.',
+        'The landing page now introduces the real product surface: public intake, internal operations, secure document handling, portal updates, and readiness practices.',
       features: {
         publicIntake: {
           title: 'Public intake',
@@ -294,20 +294,6 @@ export const en = {
           description:
             'Document cloud storage and email setup with safe dry-run verification.',
         },
-      },
-      phases: {
-        intake: 'Intake',
-        intakeDesc: 'Public consultation requests land in the workspace with full context and traceable origin.',
-        triage: 'Triage',
-        triageDesc: 'Requests become same-tenant follow-up tasks assigned according to role and urgency.',
-        casework: 'Case work',
-        caseworkDesc: 'Case files track status, deadlines, assignments, history, and next actions in one place.',
-        documents: 'Documents',
-        documentsDesc: 'Internal records stay guarded. Only approved documents are made visible to the client.',
-        portal: 'Client dispatch',
-        portalDesc: 'Updates and documents reach the customer portal without leaking internal notes or paths.',
-        audit: 'Audit trail',
-        auditDesc: 'Every action is recorded with purpose-separated tokens and tenant boundaries.',
       },
       workflowEyebrow: 'Workflow preview',
       workflowTitle: 'From public request to customer-visible progress',

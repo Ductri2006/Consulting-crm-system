@@ -1,17 +1,5 @@
 # Release Notes
 
-## Step 38.7 — Distinctive landing page art direction overhaul (2026-07-08)
-
-- Public landing only: complete art direction shift to premium consulting operating system.
-- New visual language: deep navy/ink + warm paper/ivory + muted emerald trust accents + slate rule lines + blueprint grids.
-- Hero: editorial left column + concrete “Case operations board” / ledger rows showing real workflow (Public request → Task → Case → Document → Portal dispatch). Removed generic dark gradient + floating glass mock.
-- Product narrative: replaced icon-heavy grids with ledger-style lifecycle (Intake / Triage / Case work / Documents / Client dispatch / Audit). Added phase-specific concrete copy.
-- All sections aligned: Services, Process, Projects, News, CTA now use editorial lists, rule dividers, high whitespace, reduced icon count, consistent paper/ink treatment.
-- Copy overhaul: replaced generic SaaS phrases with specific consulting ops language in both EN and VI.
-- No changes to Admin CRM, Customer Portal, backend, API, auth, RBAC or shared business logic.
-- Pure Tailwind + existing dependencies. No new libs, no external assets, no 3D/WebGL/GSAP/motion.
-- i18n parity maintained (new phases keys added in sync).
-
 ## Step 38.6 — Taste-skill guided UI audit & refinement (2026-07-08)
 
 - Used `leonxlnx/taste-skill` (via design-taste-frontend) strictly as audit/restraint guide.
