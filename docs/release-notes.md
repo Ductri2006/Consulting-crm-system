@@ -1,5 +1,15 @@
 # Release Notes
 
+## Step 38.7.1 — Localize landing ledger copy (2026-07-08)
+
+- All newly introduced hardcoded English visible strings in landing ledger/board/chips (Hero + ProductHighlights) moved to i18n under `public.home.ledger`.
+- Updated both en.ts and vi.ts with natural, concise translations.
+- Refactored Hero ledger rows to data-driven array using t() keys for labels/actors/statuses (IDs like REQ-... kept as visual mocks).
+- Product workflow chips and labels now fully localized.
+- No layout, design, or visual changes.
+- Admin CRM, Portal, backend untouched.
+- i18n:check, lint, build all pass.
+
 ## Step 38.7 — Distinctive landing page art direction overhaul (2026-07-08)
 
 - Public landing only: complete art direction shift to premium consulting operating system.

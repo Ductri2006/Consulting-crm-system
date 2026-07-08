@@ -17,7 +17,7 @@ export function ProductHighlightsSection() {
     <section id="workflow" className="bg-white py-20 sm:py-24">
       <Container>
         <div className="max-w-3xl">
-          <div className="editorial-eyebrow mb-3">Operations surface</div>
+          <div className="editorial-eyebrow mb-3">{t('public.home.ledger.product.eyebrow')}</div>
           <h2 className="text-3xl font-semibold tracking-tight text-[#0b1428] sm:text-4xl">
             {t('public.home.featuresTitle')}
           </h2>
@@ -29,7 +29,7 @@ export function ProductHighlightsSection() {
         {/* Product narrative ledger */}
         <div className="mt-10 border border-slate-200 bg-[#f8f5f0]">
           <div className="border-b border-slate-300 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Case lifecycle • Tenant-scoped • Full audit trail
+            {t('public.home.ledger.product.lifecycleLabel')}
           </div>
 
           <div className="divide-y divide-slate-200">
@@ -48,11 +48,11 @@ export function ProductHighlightsSection() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.12em] text-slate-500">
-          <span className="case-chip">RBAC</span>
-          <span className="case-chip">Tenant isolation</span>
-          <span className="case-chip">Document guarded</span>
-          <span className="case-chip">AI sanitized</span>
-          <span className="case-chip">ActivityLog</span>
+          <span className="case-chip">{t('public.home.ledger.product.rbac')}</span>
+          <span className="case-chip">{t('public.home.ledger.product.tenantIsolation')}</span>
+          <span className="case-chip">{t('public.home.ledger.product.documentGuarded')}</span>
+          <span className="case-chip">{t('public.home.ledger.product.aiSanitized')}</span>
+          <span className="case-chip">{t('public.home.ledger.product.activityLog')}</span>
         </div>
       </Container>
     </section>

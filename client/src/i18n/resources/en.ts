@@ -336,6 +336,48 @@ export const en = {
       servicesTitle: 'Expertise built around your decisions',
       servicesDescription:
         'Focused advice, rigorous thinking, and a practical route from question to action.',
+      ledger: {
+        chips: {
+          multiTenant: 'Multi-tenant',
+          rbacScoped: 'RBAC-scoped',
+          auditReady: 'Audit-ready',
+          liveDemo: 'Live demo',
+        },
+        board: {
+          eyebrow: 'Operations ledger',
+          title: 'Case operations board',
+          footer: 'All records tenant-scoped • Purpose-separated tokens • Full ActivityLog',
+        },
+        rows: {
+          publicRequest: 'Public request received',
+          followUpTask: 'Follow-up task created',
+          caseFile: 'Case file opened',
+          documentVaulted: 'Document vaulted',
+          portalUpdate: 'Portal-safe update',
+        },
+        actors: {
+          tenantA: 'Tenant A',
+          staff: 'Staff',
+          manager: 'Manager',
+          customer: 'Customer',
+        },
+        statuses: {
+          logged: 'Logged',
+          assigned: 'Assigned',
+          inProgress: 'In progress',
+          guarded: 'Guarded',
+          dispatched: 'Dispatched',
+        },
+        product: {
+          eyebrow: 'Operations surface',
+          lifecycleLabel: 'Case lifecycle • Tenant-scoped • Full audit trail',
+          rbac: 'RBAC',
+          tenantIsolation: 'Tenant isolation',
+          documentGuarded: 'Document guarded',
+          aiSanitized: 'AI sanitized',
+          activityLog: 'ActivityLog',
+        },
+      },
     },
     news: {
       backToInsights: 'Back to insights',
