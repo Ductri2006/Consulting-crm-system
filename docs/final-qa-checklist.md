@@ -566,6 +566,7 @@ Step 33 results:
 | Provider Readiness |  |  |
 | Step 38.5 modern landing / CRM UI polish |  |  |
 | Step 38.6 taste-skill guided UI audit & refinement | PASS | Landing/Admin/Portal micro polish using taste-skill as restraint only. No redesign, no heavy motion/libs, build/lint/i18n clean, restrained admin surfaces, polished landing/portfolio feel. |
+| Step 38.7 distinctive landing art direction overhaul | PASS | Public landing only. New editorial consulting-ops language (navy/paper/emerald + ledger boards + rule lines + concrete workflow narrative). Admin + Portal intentionally untouched. Build/lint/i18n clean. |
 | Step 31 security hardening |  |  |
 | Step 32 UI polish |  |  |
 | Step 33 final QA / bug fix | PASS | Local build/lint/prisma/i18n/tenant/API smoke passed; live production smoke skipped because no `SMOKE_*` env was available. |

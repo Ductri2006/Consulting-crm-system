@@ -3,15 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { projects } from '../../data/projects'
 import { getLocalizedProject } from '../../i18n/staticContent'
-import { Badge } from '../common/Badge'
 import { Container } from '../common/Container'
 import { SectionHeading } from '../common/SectionHeading'
-
-const accentStyles = [
-  'from-blue-700 via-blue-600 to-cyan-500',
-  'from-slate-900 via-slate-800 to-blue-800',
-  'from-amber-500 via-orange-500 to-rose-500',
-]
 
 export function ProjectsPreview() {
   const { t } = useTranslation()
@@ -34,47 +27,31 @@ export function ProjectsPreview() {
           </Link>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {projects.slice(0, 3).map((project, index) => {
+        <div className="mt-10 grid gap-6 lg:grid-cols-3">
+          {projects.slice(0, 3).map((project) => {
             const localizedProject = getLocalizedProject(t, project)
 
             return (
-              <article
-                key={project.id}
-                className="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900"
-              >
-                <div
-                  className={`relative h-44 overflow-hidden bg-gradient-to-br ${accentStyles[index]}`}
-                >
-                  <div
-                    aria-hidden="true"
-                    className="absolute -right-10 -top-12 h-40 w-40 rounded-full border-[26px] border-white/10 transition duration-500 group-hover:scale-110"
-                  />
-                  <div
-                    aria-hidden="true"
-                    className="absolute bottom-5 left-6 right-6 h-px bg-white/30"
-                  />
-                  <span className="absolute bottom-7 left-6 text-5xl font-bold text-white/15">
-                    0{index + 1}
-                  </span>
-                  <Badge className="absolute left-5 top-5 border-white/20 bg-white/15 text-white backdrop-blur">
-                    {localizedProject.category}
-                  </Badge>
-                  <span className="absolute bottom-5 right-6 text-sm font-semibold">
-                    {localizedProject.year}
-                  </span>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <MapPin className="h-4 w-4 text-blue-400" />
+              <article key={project.id} className="border border-slate-200 bg-white p-6">
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" />
                     {localizedProject.location}
                   </div>
-                  <h3 className="mt-3 text-xl font-bold">
-                    {localizedProject.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-400">
-                    {localizedProject.description}
-                  </p>
+                  <span>{localizedProject.year}</span>
+                </div>
+
+                <div className="ops-rule my-4" />
+
+                <h3 className="text-lg font-semibold tracking-tight text-[#0b1428]">
+                  {localizedProject.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                  {localizedProject.description}
+                </p>
+
+                <div className="mt-4 text-[10px] uppercase tracking-[0.12em] text-[#2a5a49]">
+                  {localizedProject.category}
                 </div>
               </article>
             )

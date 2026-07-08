@@ -11,8 +11,8 @@ export function HomePage() {
     <>
       <HeroSection />
       <ProductHighlightsSection />
-      <ServicesPreview />
       <ProcessSection />
+      <ServicesPreview />
       <ProjectsPreview />
       <NewsPreview />
       <CTASection />

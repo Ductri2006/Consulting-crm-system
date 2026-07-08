@@ -74,3 +74,80 @@
     }
   }
 }
+
+/* === STEP 38.7 Landing Art Direction: Premium Consulting Ops (public landing only) === */
+@layer utilities {
+  .landing-paper {
+    background-color: #f8f5f0;
+  }
+
+  .landing-ink {
+    color: #0b1428;
+  }
+
+  .landing-emerald {
+    color: #2a5a49;
+  }
+
+  .ops-ledger {
+    border: 1px solid #cbd5e1;
+    background-color: #f8f5f0;
+  }
+
+  .ledger-row {
+    border-bottom: 1px solid #e2e8f0;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .ledger-row:last-child {
+    border-bottom: none;
+  }
+
+  .section-rule {
+    border-top: 1px solid #cbd5e1;
+  }
+
+  .case-chip {
+    display: inline-flex;
+    align-items: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid #64748b;
+    color: #475569;
+    background: #ffffff;
+    border-radius: 0.25rem;
+  }
+
+  .case-chip-active {
+    border-color: #2a5a49;
+    color: #2a5a49;
+    background: #f0f5f2;
+  }
+
+  .blueprint-grid {
+    background-image:
+      linear-gradient(rgba(71, 85, 105, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(71, 85, 105, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .editorial-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #2a5a49;
+  }
+
+  .ops-rule {
+    height: 1px;
+    background: #cbd5e1;
+  }
+}
