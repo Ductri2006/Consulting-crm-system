@@ -3,32 +3,32 @@ import type { ProcessStep } from '../types'
 export const processSteps: ProcessStep[] = [
   {
     id: '01',
-    title: 'Receive Request',
+    title: 'Capture the inquiry',
     description:
-      'We listen to your priorities, intended outcome, timeline, and immediate concerns.',
+      'Public consultation requests land in the workspace with context and a clear owner path.',
   },
   {
     id: '02',
-    title: 'Verify Information',
+    title: 'Build the client profile',
     description:
-      'Our team organizes the available facts and confirms the gaps that need attention.',
+      'Convert interest into a structured customer record so history and cases stay connected.',
   },
   {
     id: '03',
-    title: 'Propose Solution',
+    title: 'Open the case workflow',
     description:
-      'You receive a clear scope, recommended approach, deliverables, and next steps.',
+      'Create the matter, assign the team, and keep every next action visible.',
   },
   {
     id: '04',
-    title: 'Process Case',
+    title: 'Deliver with portal updates',
     description:
-      'We execute the agreed work with transparent updates and decision-focused guidance.',
+      'Use appointments, tasks, and controlled documents while clients follow progress.',
   },
   {
     id: '05',
-    title: 'Complete and Archive',
+    title: 'Report, summarize & archive',
     description:
-      'We close with actionable outputs, a final review, and an organized engagement record.',
+      'Close with reports, optional AI summaries, and an organized engagement record.',
   },
 ]

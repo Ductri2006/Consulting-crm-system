@@ -1,8 +1,9 @@
 import {
+  BarChart3,
   Bot,
   BriefcaseBusiness,
+  CalendarClock,
   CheckCircle2,
-  ClipboardList,
   FileCheck2,
   FileStack,
   GitBranch,
@@ -12,6 +13,7 @@ import {
   MessageSquareText,
   ShieldCheck,
   Sparkles,
+  UserRound,
   UserRoundCheck,
   Workflow,
 } from 'lucide-react'
@@ -31,21 +33,23 @@ const capabilities = [
 
 const features = [
   { key: 'publicIntake', icon: MessageSquareText },
-  { key: 'adminCrm', icon: BriefcaseBusiness },
   { key: 'caseWorkflow', icon: GitBranch },
+  { key: 'automation', icon: CalendarClock },
   { key: 'secureDocuments', icon: FileStack },
   { key: 'customerPortal', icon: UserRoundCheck },
+  { key: 'providerReadiness', icon: BarChart3 },
   { key: 'aiCaseSummary', icon: Bot },
-  { key: 'automation', icon: ClipboardList },
-  { key: 'providerReadiness', icon: ShieldCheck },
+  { key: 'adminCrm', icon: BriefcaseBusiness },
 ] as const
 
 const workflowSteps = [
   { key: 'publicRequest', icon: MessageSquareText },
-  { key: 'automatedTask', icon: ClipboardList },
+  { key: 'customerProfile', icon: UserRound },
   { key: 'internalCase', icon: BriefcaseBusiness },
+  { key: 'appointmentTask', icon: CalendarClock },
   { key: 'documentHandling', icon: FileStack },
   { key: 'portalUpdate', icon: UserRoundCheck },
+  { key: 'reportSummary', icon: Sparkles },
 ] as const
 
 const securityItems = [
@@ -112,16 +116,16 @@ export function ProductHighlightsSection() {
           </div>
         </div>
 
-        <div className="mt-16 grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
+        <div className="mt-16 space-y-6">
           <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
               {t('public.home.workflowTitle')}
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
               {t('public.home.workflowDescription')}
             </p>
 
-            <div className="mt-8 grid gap-3 md:grid-cols-5">
+            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
               {workflowSteps.map(({ key, icon: Icon }, index) => (
                 <div
                   className="relative rounded-2xl border border-slate-200 bg-slate-50 p-4"
@@ -130,13 +134,13 @@ export function ProductHighlightsSection() {
                   {index > 0 ? (
                     <span
                       aria-hidden="true"
-                      className="absolute -left-3 top-8 hidden h-px w-6 bg-blue-200 md:block"
+                      className="absolute -left-3 top-8 hidden h-px w-6 bg-blue-200 xl:block"
                     />
                   ) : null}
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-white text-blue-700 shadow-sm">
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
-                  <p className="mt-4 text-sm font-bold text-slate-950">
+                  <p className="mt-4 text-sm font-bold leading-5 text-slate-950">
                     {t(`public.home.workflowSteps.${key}`)}
                   </p>
                 </div>
@@ -148,10 +152,10 @@ export function ProductHighlightsSection() {
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
               {t('public.home.securityTitle')}
             </h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
               {t('public.home.securityDescription')}
             </p>
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+            <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {securityItems.map(({ key, icon: Icon }) => (
                 <div
                   className="rounded-2xl border border-white/10 bg-white/5 p-4"
