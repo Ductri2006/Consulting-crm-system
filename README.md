@@ -1,15 +1,64 @@
 # Advisora CRM / Consulting CRM System
 
 [![CI](https://github.com/Ductri2006/Consulting-crm-system/actions/workflows/ci.yml/badge.svg)](https://github.com/Ductri2006/Consulting-crm-system/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Advisora CRM is a portfolio-ready, multi-tenant consulting CRM with public lead
-capture, an internal admin workspace, and a customer portal for case tracking,
+Advisora CRM is an **open-source, production-style full-stack SaaS CRM** built
+as a long-term portfolio project. It includes public lead capture, a
+multi-tenant internal admin workspace, and a customer portal for case tracking,
 documents, and customer-safe updates.
 
-It demonstrates a production-oriented fullstack SaaS path: React/Vite frontend,
+It demonstrates a production-oriented fullstack path: React/Vite frontend,
 Express/Prisma backend, PostgreSQL/Neon data model, role-based internal CRM,
 separate customer portal auth, secure document handling, bilingual EN/VI UI,
-and final QA documentation.
+provider abstractions, and final QA documentation.
+
+**License:** [MIT](LICENSE) — Copyright (c) 2026 Nguyễn Đức Trí.
+Educational contributions are welcome; see [Contributing](CONTRIBUTING.md).
+
+## Project Origin / Author Note
+
+This repository is maintained by **Nguyễn Đức Trí**, an AI student at
+**HUFLIT** ([GitHub @Ductri2006](https://github.com/Ductri2006)).
+
+It started as a consulting CRM learning system and grew into a portfolio-ready
+SaaS-style codebase: multi-tenant organization scope, internal RBAC, a
+separate customer portal, document controls, activity/audit trails, and
+staging deployment docs. The long-term goal is a clear, reviewable open-source
+portfolio that shows practical fullstack engineering—not a commercial product
+claiming certified compliance or enterprise SLAs.
+
+## Open Source & License
+
+- Licensed under the [MIT License](LICENSE).
+- Copyright (c) 2026 Nguyễn Đức Trí.
+- Community standards: [Code of Conduct](CODE_OF_CONDUCT.md).
+- How to contribute: [Contributing](CONTRIBUTING.md).
+- Security reporting: [Security Policy](SECURITY.md).
+- Short index: [Open Source Notes](docs/open-source.md).
+
+## Security Notice
+
+- **Never commit secrets.** Do not commit `.env` files, database URLs, JWT
+  secrets, provider API keys, access tokens, signed URLs, or private
+  certificates.
+- Configure environment variables **locally** (from `.env.example`) or in your
+  hosting provider’s secret store (Vercel, Render, etc.).
+- Treat auth, RBAC, tenant isolation, portal access, documents, signed URLs,
+  and audit logging as sensitive surfaces. See [SECURITY.md](SECURITY.md) and
+  [Security Hardening](docs/security-hardening.md).
+- This project demonstrates production-style hardening for portfolio and
+  staging use. It is **not** a certified compliance product (for example, not
+  a SOC 2 / ISO / HIPAA certification claim).
+
+## Demo Data Notice
+
+- Seeded users, customers, cases, documents, and walkthrough content are
+  **fictional only**.
+- Do **not** load real customer data, contracts, identity documents, or real
+  personal information into demo or shared environments.
+- Demo account tables below are for the fictional portfolio seed only—not for
+  real users or production systems.
 
 ## Live Demo
 
@@ -193,13 +242,21 @@ For deeper request-flow diagrams, see [Architecture](docs/architecture.md).
 Read more in [Security Hardening](docs/security-hardening.md) and the
 [Security RBAC Matrix](docs/security-rbac-matrix.md).
 
-## Screenshots
+## Screenshots & Media Caution
 
 No screenshot images are committed yet, and this README intentionally does not
 show fake or broken image links.
 
-Use the [screenshots checklist](docs/screenshots/README.md) before final
-portfolio publishing. Recommended captures include:
+**Important:** when capturing screenshots or recording demos, do **not** expose:
+
+- Environment variables, API keys, JWT values, or connection strings
+- Private cloud/provider dashboards or billing screens
+- Real names, emails, phone numbers, or addresses of real people
+- Internal notes that would be confidential in a real firm
+
+Use fictional seeded content only. Use the
+[screenshots checklist](docs/screenshots/README.md) before final portfolio
+publishing. Recommended captures include:
 
 - Modern landing hero with the mock CRM dashboard.
 - Landing feature/security section.
@@ -222,6 +279,16 @@ Suggested order:
    audit/download logging, rate limits, and security headers.
 
 ## Documentation Index
+
+Open source / community:
+
+- [License (MIT)](LICENSE)
+- [Contributing](CONTRIBUTING.md)
+- [Security Policy](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Open Source Notes](docs/open-source.md)
+
+Product & engineering:
 
 - [Architecture](docs/architecture.md)
 - [Demo Walkthrough](docs/demo-walkthrough.md)
@@ -293,7 +360,26 @@ npm run verify:providers
 ```
 
 Never commit `.env`, database URLs, JWT secrets, access tokens, provider keys,
-uploaded files, or generated `dist` output.
+uploaded files, or generated `dist` output. Configure secrets only on your
+machine or in private hosting dashboards. See [SECURITY.md](SECURITY.md).
+
+## Contributing
+
+Educational contributions are welcome: documentation fixes, accessibility
+improvements, small UI polish, bug reports, tests, and carefully scoped code
+changes.
+
+Please read:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — issues, PRs, local checks, completion
+  report format
+- [SECURITY.md](SECURITY.md) — private security reporting; do not post secrets
+  or exploit details publicly
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community expectations
+
+Before opening a large PR that touches auth, RBAC, tenant isolation, portal
+access, documents, or signed URLs, open an issue first so the change can be
+reviewed safely.
 
 ## CRM Workflow Automation
 
@@ -449,7 +535,10 @@ Suggested repository topics:
 
 ## Author
 
-Nguyen Duc Tri
+**Nguyễn Đức Trí**
 
-AI student / fullstack learner
-GitHub: <https://github.com/Ductri2006>
+- AI student at HUFLIT
+- Fullstack learner and portfolio project maintainer
+- GitHub: <https://github.com/Ductri2006>
+
+Copyright (c) 2026 Nguyễn Đức Trí. Released under the [MIT License](LICENSE).
