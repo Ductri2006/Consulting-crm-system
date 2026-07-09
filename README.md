@@ -287,6 +287,7 @@ Open source / community:
 - [Security Policy](SECURITY.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Open Source Notes](docs/open-source.md)
+- [Secret Hygiene Audit](docs/secret-hygiene-audit.md)
 
 Product & engineering:
 

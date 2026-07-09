@@ -101,6 +101,9 @@ Internal implementation references (for maintainers and careful contributors):
 - Prefer dummy values for CI; this repository’s CI is designed not to deploy
   or mutate production databases automatically.
 - Do not paste production connection strings into issues, PRs, or docs.
+- Do not share raw secret-scanner output in public issues or chat if it may
+  contain real credentials. Prefer redacted findings (path, type, masked
+  preview only) as in [docs/secret-hygiene-audit.md](docs/secret-hygiene-audit.md).
 
 ## Demo Data Policy
 

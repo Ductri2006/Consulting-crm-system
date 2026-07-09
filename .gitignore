@@ -14,12 +14,11 @@ coverage/
 .next/
 out/
 
-# Environment variables
+# Environment variables (never commit real secrets)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+!**/.env.example
 
 # Logs
 logs/
@@ -41,6 +40,9 @@ Thumbs.db
 *.db
 *.sqlite
 *.sqlite3
+*.dump
+*.sql.bak
+*.sql.gz
 
 # Uploads and temporary files
 uploads/
@@ -48,9 +50,24 @@ server/uploads/
 tmp/
 temp/
 
+# Key material and credential files (never commit)
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+credentials.json
+secrets.json
+*serviceAccount*.json
+*service-account*.json
+
 # Prisma
 prisma/dev.db
-prisma/migrations/migration_lock.toml
+server/prisma/dev.db
 
 # Miscellaneous caches
 .cache/
